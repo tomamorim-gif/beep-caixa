@@ -69,6 +69,7 @@ main{padding:28px 32px 80px;min-width:0}
 .opt:has(input:checked){border-color:var(--y);background:rgba(255,214,10,.05)}.opt input{accent-color:var(--y);margin-top:4px}
 .opt b{display:block}.opt small{color:var(--mu)}
 .vazio{padding:28px;text-align:center;color:var(--mu)}
+@media print{.side,.head .row,.barra{display:none!important}.app{display:block}body,html{background:#fff;color:#000}.tblwrap,.kpi,.card{background:#fff;border-color:#ccc}.tbl th{background:#fff;color:#333}}
 @media(max-width:900px){.app{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;overflow:auto;padding:12px}.side img,.side .quem{display:none}main{padding:20px 16px 80px}.grid4{grid-template-columns:1fr 1fr}}
 </style>
 </head>
@@ -95,7 +96,7 @@ const ICON={nf:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stro
  up:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>'};
 
 // ---------- estado ----------
-const S={user:null,emp:null,papel:null,locais:[],produtos:[],codigos:[],codForn:[],precos:[],portfolios:[],pitens:[],tela:'nf',nota:null,linhas:[],destino:null,pfNovos:new Set()};
+const S={user:null,emp:null,papel:null,locais:[],produtos:[],codigos:[],codForn:[],precos:[],portfolios:[],pitens:[],tela:'vend',nota:null,linhas:[],destino:null,pfNovos:new Set()};
 const lojas=()=>S.locais.filter(l=>l.tipo==='loja'&&l.ativo);
 const regra=()=>S.emp?.regra_preco||{divisor:.57,terminacaoCentavos:90};
 function precoSugerido(custo){const r=regra(),bruto=Math.ceil(custo/r.divisor),reais=Math.floor(bruto/100);let c=reais*100+r.terminacaoCentavos;if(c<bruto)c+=100;return c}
@@ -136,10 +137,15 @@ async function iniciar(){const {data:{session}}=await sb.auth.getSession();if(!s
  try{await carregar()}catch(e){$('#raiz').innerHTML=`<div class="login"><div class="card"><h2>Não foi possível carregar</h2><p class="mu">${esc(e.message)}</p><button class="btn" onclick="location.reload()">Tentar de novo</button></div></div>`;return}
  shell()}
 function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img src="../logo.png" alt="Beep">
-  <button class="nav" data-t="nf">${ICON.nf}Entrada de NF-e</button><button class="nav" data-t="pf">${ICON.pf}Portfólios</button><button class="nav" data-t="cfg">${ICON.cfg}Configurações</button>
+  <button class="nav" data-t="vend"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Vendas</button>
+  <button class="nav" data-t="est"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Estoque e reposição</button>
+  <button class="nav" data-t="nf">${ICON.nf}Entrada de NF-e</button><button class="nav" data-t="pf">${ICON.pf}Portfólios</button>
+  <button class="nav" data-t="cx"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>Caixas</button>
+  <button class="nav" data-t="vid"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg>Vídeos</button>
+  <button class="nav" data-t="cfg">${ICON.cfg}Configurações</button>
   <div class="quem"><b style="color:var(--ink)">${esc(S.emp.nome_exibicao||S.emp.razao_social)}</b><br>${esc(S.user.email)} · ${S.papel==='dono'?'Dono':'Gerente'}<br><button class="btn sm" id="sair" style="margin-top:10px">Sair</button></div></aside><main id="main"></main></div>`;
  document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{S.tela=b.dataset.t;render()});$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
-function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({nf:telaNF,pf:telaPF,cfg:telaCfg})[S.tela]()}
+function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({vend:telaVend,est:telaEst,nf:telaNF,pf:telaPF,cx:telaCx,vid:telaVid,cfg:telaCfg})[S.tela]()}
 
 // ---------- leitura do XML (NF-e modelo 55) ----------
 const tx=(el,sel)=>{if(!el)return '';const n=el.getElementsByTagName(sel)[0];return n?n.textContent.trim():''};
@@ -288,6 +294,73 @@ function editorPf(id,duplicar){const base=id?S.portfolios.find(p=>p.id===id):nul
     const r2=await sb.from('portfolio_itens').insert(rows);if(r2.error)throw r2.error;
     const usam=lojas().filter(l=>l.portfolio_id===pid);for(const l of usam){const r=await sb.rpc('aplicar_portfolio',{p_local:l.id,p_portfolio:pid});if(r.error)throw r.error}
     fechar();await carregar();render();toast('Portfólio salvo'+(usam.length?' e aplicado em '+usam.length+' loja(s)':''))}catch(err){b.disabled=false;toast('Erro: '+err.message)}}};desenha()}
+
+// ---------- tela: vendas ----------
+const hojeISO=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
+let VD={dia:null,teste:true};
+const FORMA={pix:'Pix',credito:'Crédito',debito:'Débito',dinheiro:'Dinheiro'};
+async function telaVend(){const M=$('#main');VD.dia=VD.dia||hojeISO();
+ M.innerHTML=`<div class="head"><div><h1>Vendas</h1><p>Resumo do dia por loja e por forma de pagamento.</p></div><div class="row"><label class="chk"><input type="checkbox" id="vTeste" ${VD.teste?'checked':''}> Incluir vendas de teste</label><input type="date" id="vDia" value="${VD.dia}" style="width:170px"></div></div><div id="vCorpo"><p class="vazio">Carregando…</p></div>`;
+ $('#vDia').onchange=e=>{VD.dia=e.target.value||hojeISO();telaVend()};$('#vTeste').onchange=e=>{VD.teste=e.target.checked;telaVend()};
+ const ini=new Date(VD.dia+'T00:00:00'),fim=new Date(ini.getTime()+864e5);
+ let q=sb.from('vendas').select('id,local_id,total,status,teste,finalizada_em,origem,pagamentos(forma,valor,status),venda_itens(quantidade)').eq('empresa_id',S.emp.id).gte('finalizada_em',ini.toISOString()).lt('finalizada_em',fim.toISOString()).order('finalizada_em',{ascending:false}).limit(1000);
+ if(!VD.teste)q=q.eq('teste',false);const {data,error}=await q;const C=$('#vCorpo');if(!C)return;if(error){C.innerHTML=`<p class="vazio">${esc(error.message)}</p>`;return}
+ const pagas=data.filter(v=>v.status==='paga'),tot=pagas.reduce((s,v)=>s+v.total,0),nome=id=>S.locais.find(l=>l.id===id)?.nome||'—';
+ const porLoja={},porForma={};pagas.forEach(v=>{(porLoja[v.local_id]??={n:0,t:0});porLoja[v.local_id].n++;porLoja[v.local_id].t+=v.total;(v.pagamentos||[]).filter(p=>p.status==='aprovado').forEach(p=>{(porForma[p.forma]??={n:0,t:0});porForma[p.forma].n++;porForma[p.forma].t+=p.valor})});
+ C.innerHTML=`<div class="grid4" style="margin-bottom:16px"><div class="kpi"><span>Faturamento</span><b class="num">${brl(tot)}</b></div><div class="kpi"><span>Vendas</span><b class="num">${pagas.length}</b></div><div class="kpi"><span>Ticket médio</span><b class="num">${brl(pagas.length?Math.round(tot/pagas.length):0)}</b></div><div class="kpi"><span>Itens vendidos</span><b class="num">${pagas.reduce((s,v)=>s+(v.venda_itens||[]).reduce((a,i)=>a+ +i.quantidade,0),0).toLocaleString('pt-BR')}</b></div></div>
+  <div class="row" style="align-items:stretch;gap:14px"><div class="tblwrap" style="flex:2;min-width:320px"><table class="tbl"><thead><tr><th>Loja</th><th class="n">Vendas</th><th class="n">Faturamento</th></tr></thead><tbody>${lojas().map(l=>{const x=porLoja[l.id]||{n:0,t:0};return `<tr><td>${esc(l.nome)}</td><td class="n num">${x.n}</td><td class="n num"><b>${brl(x.t)}</b></td></tr>`}).join('')}</tbody></table></div>
+  <div class="tblwrap" style="flex:1;min-width:260px"><table class="tbl"><thead><tr><th>Forma</th><th class="n">Qtd.</th><th class="n">Valor</th></tr></thead><tbody>${Object.entries(porForma).map(([f,x])=>`<tr><td>${esc(FORMA[f]||f)}</td><td class="n num">${x.n}</td><td class="n num">${brl(x.t)}</td></tr>`).join('')||'<tr><td colspan="3" class="vazio">Sem pagamentos</td></tr>'}</tbody></table></div></div>
+  <h2 style="font-size:18px;margin:24px 0 12px">Últimas vendas</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Hora</th><th>Loja</th><th class="n">Itens</th><th>Pagamento</th><th class="n">Total</th><th></th></tr></thead><tbody>${data.slice(0,50).map(v=>`<tr><td class="num">${new Date(v.finalizada_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</td><td>${esc(nome(v.local_id))}</td><td class="n num">${(v.venda_itens||[]).reduce((a,i)=>a+ +i.quantidade,0)}</td><td>${esc((v.pagamentos||[]).map(p=>FORMA[p.forma]||p.forma).join(', ')||'—')}</td><td class="n num"><b>${brl(v.total)}</b></td><td>${v.teste?'<span class="pill">teste</span>':''}${v.status!=='paga'?` <span class="pill warn">${esc(v.status)}</span>`:''}</td></tr>`).join('')||'<tr><td colspan="6" class="vazio">Nenhuma venda neste dia.</td></tr>'}</tbody></table></div>`}
+
+// ---------- tela: estoque e reposição ----------
+let EST_LOCAL=null;
+async function telaEst(){const M=$('#main');const locs=S.locais.filter(l=>l.ativo);EST_LOCAL=EST_LOCAL||lojas()[0]?.id||locs[0]?.id;
+ M.innerHTML=`<div class="head"><div><h1>Estoque e reposição</h1><p>Saldo de cada produto e o que levar para a loja, pelo portfólio dela.</p></div><div class="row"><select id="eLocal" style="width:260px">${locs.map(l=>`<option value="${l.id}" ${l.id===EST_LOCAL?'selected':''}>${esc(l.nome)}${l.tipo==='cd'?' (CD)':''}</option>`).join('')}</select><button class="btn" onclick="window.print()">Imprimir</button></div></div><div id="eCorpo"><p class="vazio">Carregando…</p></div>`;
+ $('#eLocal').onchange=e=>{EST_LOCAL=e.target.value;telaEst()};
+ const loc=S.locais.find(l=>l.id===EST_LOCAL);const {data:sal,error}=await sb.from('saldos_estoque').select('produto_id,saldo').eq('empresa_id',S.emp.id).eq('local_id',EST_LOCAL);const C=$('#eCorpo');if(!C)return;if(error){C.innerHTML=`<p class="vazio">${esc(error.message)}</p>`;return}
+ const saldo=new Map((sal||[]).map(s=>[s.produto_id,+s.saldo])),nomeP=id=>bonito(S.produtos.find(p=>p.id===id)?.nome||'—');
+ if(loc.tipo==='cd'){const linhas=S.produtos.filter(p=>p.ativo).map(p=>({p,s:saldo.get(p.id)||0})).sort((a,b)=>a.s-b.s);
+  C.innerHTML=`<div class="tblwrap"><table class="tbl"><thead><tr><th>Produto</th><th>Código</th><th class="n">Saldo no CD</th></tr></thead><tbody>${linhas.map(x=>`<tr><td>${esc(bonito(x.p.nome))}</td><td class="mu">${esc(x.p.ean||'—')}</td><td class="n num"><b style="color:${x.s<=0?'#f87171':'inherit'}">${x.s.toLocaleString('pt-BR')}</b></td></tr>`).join('')}</tbody></table></div>`;return}
+ const mix=S.precos.filter(x=>x.local_id===EST_LOCAL&&x.ativo_no_mix).map(x=>({id:x.produto_id,min:+x.estoque_min||0,max:+x.estoque_max||0,s:saldo.get(x.produto_id)||0}));
+ const repor=mix.filter(x=>x.s<x.min).map(x=>({...x,levar:Math.max(0,x.max-x.s)})),fora=[...saldo].filter(([id,s])=>s>0&&!mix.some(x=>x.id===id));
+ const pf=S.portfolios.find(p=>p.id===loc.portfolio_id);
+ C.innerHTML=`<div class="grid4" style="margin-bottom:16px"><div class="kpi"><span>Portfólio</span><b style="font-size:18px">${esc(pf?.nome||'Nenhum')}</b></div><div class="kpi"><span>Produtos à venda</span><b class="num">${mix.length}</b></div><div class="kpi"><span>Abaixo do mínimo</span><b class="num" style="color:${repor.length?'#fbbf24':'inherit'}">${repor.length}</b></div><div class="kpi"><span>Para recolher</span><b class="num">${fora.length}</b></div></div>
+  <h2 style="font-size:18px;margin:0 0 12px">Levar para a loja</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Produto</th><th class="n">Na loja</th><th class="n">Mínimo</th><th class="n">Máximo</th><th class="n">Levar</th></tr></thead><tbody>${repor.sort((a,b)=>b.levar-a.levar).map(x=>`<tr><td>${esc(nomeP(x.id))}</td><td class="n num">${x.s}</td><td class="n num mu">${x.min}</td><td class="n num mu">${x.max}</td><td class="n num"><b style="color:var(--y)">${x.levar}</b></td></tr>`).join('')||'<tr><td colspan="5" class="vazio">Nada abaixo do mínimo nesta loja.</td></tr>'}</tbody></table></div>
+  ${fora.length?`<h2 style="font-size:18px;margin:24px 0 12px">Recolher: fora do portfólio</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Produto</th><th class="n">Na loja</th></tr></thead><tbody>${fora.map(([id,s])=>`<tr><td>${esc(nomeP(id))}</td><td class="n num"><b>${s}</b></td></tr>`).join('')}</tbody></table></div>`:''}
+  <h2 style="font-size:18px;margin:24px 0 12px">Todos os produtos da loja</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Produto</th><th class="n">Saldo</th><th class="n">Mín.</th><th class="n">Máx.</th><th>Situação</th></tr></thead><tbody>${mix.map(x=>`<tr><td>${esc(nomeP(x.id))}</td><td class="n num">${x.s}</td><td class="n num mu">${x.min}</td><td class="n num mu">${x.max}</td><td>${x.s<=0?'<span class="pill bad">Zerado</span>':x.s<x.min?'<span class="pill warn">Repor</span>':'<span class="pill ok">OK</span>'}</td></tr>`).join('')||'<tr><td colspan="5" class="vazio">Esta loja não tem produtos à venda. Escolha um portfólio para ela.</td></tr>'}</tbody></table></div>`}
+
+// ---------- tela: caixas ----------
+async function telaCx(){const M=$('#main');
+ M.innerHTML=`<div class="head"><div><h1>Caixas</h1><p>Aparelhos ativados em cada loja. Gere um código para ativar um caixa novo.</p></div><button class="btn pri" id="novoCx">+ Ativar caixa novo</button></div><div id="cCorpo"><p class="vazio">Carregando…</p></div>`;
+ $('#novoCx').onclick=gerarCodigo;
+ const {data,error}=await sb.from('dispositivos').select('id,nome,local_id,ultimo_sinal,ativo,ativado_em,tipo').eq('empresa_id',S.emp.id).order('ativo',{ascending:false}).order('ultimo_sinal',{ascending:false,nullsFirst:false});const C=$('#cCorpo');if(!C)return;if(error){C.innerHTML=`<p class="vazio">${esc(error.message)}</p>`;return}
+ const agora=Date.now(),nome=id=>S.locais.find(l=>l.id===id)?.nome||'—',dono=S.papel==='dono';
+ const st=d=>{if(!d.ativo)return '<span class="pill">Desativado</span>';const m=d.ultimo_sinal?(agora-new Date(d.ultimo_sinal))/6e4:1e9;return m<15?'<span class="pill ok">Online</span>':m<1440?'<span class="pill warn">Sem sinal há '+(m<60?Math.round(m)+' min':Math.round(m/60)+' h')+'</span>':'<span class="pill bad">Offline</span>'};
+ C.innerHTML=`<div class="tblwrap"><table class="tbl"><thead><tr><th>Aparelho</th><th>Loja</th><th>Situação</th><th>Último sinal</th><th>Ativado em</th><th></th></tr></thead><tbody>${data.map(d=>`<tr style="${d.ativo?'':'opacity:.55'}"><td><b>${esc(d.nome)}</b><br><span class="mu sm">${esc(d.tipo||'')}</span></td><td>${esc(nome(d.local_id))}</td><td>${st(d)}</td><td class="mu">${d.ultimo_sinal?new Date(d.ultimo_sinal).toLocaleString('pt-BR'):'—'}</td><td class="mu">${d.ativado_em?new Date(d.ativado_em).toLocaleDateString('pt-BR'):'—'}</td><td class="n">${d.ativo&&dono?`<button class="btn sm dang" data-off="${d.id}">Desativar</button>`:''}</td></tr>`).join('')||'<tr><td colspan="6" class="vazio">Nenhum caixa ativado ainda.</td></tr>'}</tbody></table></div>
+  <p class="mu sm" style="margin-top:12px">Desativar corta o acesso do aparelho na hora (por exemplo, se o celular for perdido). Para voltar a usar, ative de novo com um código novo.</p>`;
+ C.querySelectorAll('[data-off]').forEach(b=>b.onclick=()=>{const d=data.find(x=>x.id===b.dataset.off);modal(`<h2>Desativar ${esc(d.nome)}?</h2><p class="mu">O caixa da ${esc(nome(d.local_id))} para de vender na hora e precisa de um código novo para voltar.</p><div class="row"><span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="okOff">Desativar</button></div>`);
+  $('#okOff').onclick=async()=>{const r=await sb.from('dispositivos').update({ativo:false}).eq('id',d.id).select('id');if(r.error||!r.data?.length)return toast('Não foi possível desativar'+(r.error?': '+r.error.message:''));fechar();toast('Caixa desativado');telaCx()}})}
+async function gerarCodigo(){const {data:{session}}=await sb.auth.getSession();const r=await fetch(SB_URL+'/functions/v1/gestao',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+session.access_token},body:JSON.stringify({acao:'gerar_ativacao'})});const j=await r.json();if(!r.ok)return toast(j.erro||'Não foi possível gerar');
+ const link=`https://tomamorim-gif.github.io/beep-caixa/#c=${j.codigo}`;let qr='';try{const {default:Q}=await import('https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/+esm');const q=Q(0,'M');q.addData(link);q.make();qr=q.createSvgTag({cellSize:6,margin:2,scalable:true})}catch(e){}
+ modal(`<h2>Código para ativar um caixa</h2><p class="mu">Leia o QR com a câmera do tablet ou do celular: ele abre o caixa com o código preenchido. Vale uma vez, até ${new Date(j.expira_em).toLocaleString('pt-BR')}.</p>
+  ${qr?`<div style="background:#fff;border-radius:16px;padding:12px;width:240px;margin:0 auto">${qr}</div>`:''}
+  <div style="text-align:center;font:800 34px Manrope,Inter,sans-serif;letter-spacing:.12em" class="num">${esc(j.codigo)}</div>
+  <div class="row"><input type="text" value="${esc(link)}" readonly id="lnk"><button class="btn" id="cpy">Copiar link</button></div>
+  <p class="mu sm">Na ativação, escolha a loja e crie o PIN do gerente daquele caixa.</p><div class="row"><span class="sp"></span><button class="btn pri" data-close>Pronto</button></div>`);
+ $('#cpy').onclick=async()=>{try{await navigator.clipboard.writeText(link);toast('Link copiado')}catch(e){$('#lnk').select()}}}
+
+// ---------- tela: vídeos de segurança ----------
+let VID={loja:'',motivo:''};
+const MOTIVO={cancelada:'Cancelada',abandonada:'Abandonada',recusada:'Pagamento recusado',paga:'Paga'};
+async function telaVid(){const M=$('#main');
+ M.innerHTML=`<div class="head"><div><h1>Vídeos de segurança</h1><p>Gravações da câmera do caixa. Ficam guardadas por ${S.emp.dias_video||3} dias e depois são apagadas.</p></div><div class="row"><select id="fLoja" style="width:220px"><option value="">Todas as lojas</option>${lojas().map(l=>`<option value="${l.id}" ${VID.loja===l.id?'selected':''}>${esc(l.nome)}</option>`).join('')}</select><select id="fMot" style="width:200px"><option value="">Todos os motivos</option>${Object.entries(MOTIVO).map(([k,v])=>`<option value="${k}" ${VID.motivo===k?'selected':''}>${v}</option>`).join('')}</select></div></div><div id="vidCorpo"><p class="vazio">Carregando…</p></div>`;
+ $('#fLoja').onchange=e=>{VID.loja=e.target.value;telaVid()};$('#fMot').onchange=e=>{VID.motivo=e.target.value;telaVid()};
+ let q=sb.from('videos_seguranca').select('id,local_id,path,motivo,inicio,fim,bytes,venda_id').eq('empresa_id',S.emp.id).eq('enviado',true).order('inicio',{ascending:false}).limit(200);if(VID.loja)q=q.eq('local_id',VID.loja);if(VID.motivo)q=q.eq('motivo',VID.motivo);
+ const {data,error}=await q;const C=$('#vidCorpo');if(!C)return;if(error){C.innerHTML=`<p class="vazio">${esc(error.message)}</p>`;return}
+ const nome=id=>S.locais.find(l=>l.id===id)?.nome||'—',dur=v=>{const s=Math.max(0,Math.round((new Date(v.fim)-new Date(v.inicio))/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+ C.innerHTML=`<div class="tblwrap"><table class="tbl"><thead><tr><th>Quando</th><th>Loja</th><th>Motivo</th><th class="n">Duração</th><th class="n">Tamanho</th><th></th></tr></thead><tbody>${data.map(v=>`<tr><td class="num">${new Date(v.inicio).toLocaleString('pt-BR')}</td><td>${esc(nome(v.local_id))}</td><td><span class="pill ${v.motivo==='paga'?'ok':'warn'}">${esc(MOTIVO[v.motivo]||v.motivo)}</span></td><td class="n num">${dur(v)}</td><td class="n num mu">${v.bytes?(v.bytes/1048576).toFixed(1).replace('.',',')+' MB':'—'}</td><td class="n"><button class="btn sm pri" data-ver="${v.id}">Assistir</button></td></tr>`).join('')||'<tr><td colspan="6" class="vazio">Nenhum vídeo no período guardado.</td></tr>'}</tbody></table></div>`;
+ C.querySelectorAll('[data-ver]').forEach(b=>b.onclick=async()=>{const v=data.find(x=>x.id===b.dataset.ver);const {data:u,error:e}=await sb.storage.from('seguranca').createSignedUrl(v.path,600);if(e)return toast('Não foi possível abrir o vídeo: '+e.message);
+  $('#modal').classList.add('wide');modal(`<h2>${esc(nome(v.local_id))} · ${new Date(v.inicio).toLocaleString('pt-BR')}</h2><video src="${esc(u.signedUrl)}" controls autoplay playsinline style="width:100%;max-height:70vh;border-radius:12px;background:#000"></video><div class="row"><span class="pill warn">${esc(MOTIVO[v.motivo]||v.motivo)}</span><span class="sp"></span><a class="btn" href="${esc(u.signedUrl)}" download>Baixar</a><button class="btn pri" data-close>Fechar</button></div>`)})}
 
 // ---------- tela: configurações ----------
 function telaCfg(){const M=$('#main'),g=S.emp.gravacao||'intercorrencias',d=S.emp.dias_video||3,dono=S.papel==='dono';
