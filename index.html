@@ -24,6 +24,10 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 input{font:inherit}
 .tela{position:fixed;inset:0;display:none;flex-direction:column;padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom))}
 .tela.on{display:flex}
+:root{--rw:118px;--rh:158px}
+/* câmera de segurança: o topo da tela reserva o espaço dela, nada fica por baixo */
+body.com-rosto .tela.on>.topo{min-height:var(--rh);flex-direction:column;align-items:flex-start;justify-content:center;gap:10px;padding-right:calc(var(--rw) + 14px)}
+body.com-rosto .vitrine{aspect-ratio:16/9}
 #pinNovo::placeholder{letter-spacing:0;text-transform:none;font-size:16px}#ativar{overflow-y:auto;-webkit-overflow-scrolling:touch}#ativar>*{flex-shrink:0}#ativar .cartao{margin-bottom:40vh}
 h1,h2,.num{font-family:Manrope,Inter,sans-serif;letter-spacing:-.02em}
 h1{font-size:34px;line-height:1.05;font-weight:800}
@@ -56,9 +60,9 @@ h2{font-size:22px;font-weight:800}
 .cam video{width:100%;height:100%;object-fit:cover}
 .cam .mira{position:absolute;left:12%;right:12%;top:38%;height:24%;border:3px solid var(--y);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
 .cam .aviso{position:absolute;left:0;right:0;bottom:10px;text-align:center;font:600 13px Inter;color:#fff;text-shadow:0 1px 4px #000}
-.rosto{position:fixed;top:max(14px,env(safe-area-inset-top));right:14px;width:88px;height:118px;border-radius:16px;overflow:hidden;border:2px solid var(--y);background:#000;z-index:5;display:none}
+.rosto{position:fixed;top:max(18px,env(safe-area-inset-top));right:18px;width:var(--rw);height:var(--rh);border-radius:16px;overflow:hidden;border:2px solid var(--y);background:#000;z-index:5;display:none}
 .rosto video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
-.rosto span{position:absolute;bottom:0;left:0;right:0;font:700 9px Inter;background:rgba(0,0,0,.6);text-align:center;padding:3px;letter-spacing:.02em}
+.rosto span{position:absolute;bottom:0;left:0;right:0;font:700 10px Inter;background:rgba(0,0,0,.6);text-align:center;padding:3px;letter-spacing:.02em}
 /* carrinho */
 .lista{flex:1;overflow:auto;margin:12px 0;border-radius:var(--r);background:var(--k2)}
 .item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:14px 16px;border-bottom:1px solid var(--line)}
@@ -227,7 +231,7 @@ const valorFalado=c=>{const r=Math.floor(c/100),cc=c%100;return (r?r+(r===1?' re
 async function api(acao,corpo={}){const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(r.status===401){desativar(true);throw new Error(j.erro)}if(!r.ok)throw new Error(j.erro||'Erro');return j}
 const uuid=()=>crypto.randomUUID?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
 
-function mostrar(id){document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on',t.id===id));const comRosto=['carrinho','pagamento','buscaT'].includes(id);$('#rosto').style.display=comRosto&&frontStream?'block':'none';desligarCamera();if(id==='carrinho'&&!carrinho.length)vitrine(null);if(['espera','carrinho','pagamento'].includes(id))setTimeout(()=>$('#leitor').focus({preventScroll:true}),60);armarInatividade(id)}
+function mostrar(id){document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on',t.id===id));const comRosto=['carrinho','pagamento','buscaT'].includes(id);$('#rosto').style.display=comRosto&&frontStream?'block':'none';document.body.classList.toggle('com-rosto',!!(comRosto&&frontStream));desligarCamera();if(id==='carrinho'&&!carrinho.length)vitrine(null);if(['espera','carrinho','pagamento'].includes(id))setTimeout(()=>$('#leitor').focus({preventScroll:true}),60);armarInatividade(id)}
 function armarInatividade(id){clearTimeout(inativo);if(['carrinho','pagamento','buscaT'].includes(id))inativo=setTimeout(()=>{if(carrinho.length)cancelar('Tempo esgotado: compra não finalizada');else mostrar('espera')},120000)}
 document.addEventListener('pointerdown',()=>{const t=document.querySelector('.tela.on');if(t)armarInatividade(t.id)},{passive:true});
 
