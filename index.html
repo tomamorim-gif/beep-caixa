@@ -80,6 +80,8 @@ h2{font-size:22px;font-weight:800}
 .forma b{font-size:18px}.forma small{color:var(--mu)}
 .forma.on{border-color:var(--y);background:#1d1a05}
 .cobranca{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+#pagamento{overflow-y:auto;-webkit-overflow-scrolling:touch}#pagamento>*{flex-shrink:0}#pagamento .cobranca{flex:1 0 auto;padding-bottom:6px}.qr svg{width:100%;height:100%}
+@media (max-height:900px){#pagamento h1{font-size:28px}#pagamento .total{padding:2px 4px 6px}#pagamento .total .num{font-size:34px}#pagamento .formas{margin:8px 0;gap:8px}#pagamento .forma{min-height:64px;padding:10px 14px;gap:2px}#pagamento .forma b{font-size:17px}#pagamento .cobranca{gap:10px}#pagamento .cobranca p{margin:0}.qr{width:min(200px,24vh);height:min(200px,24vh);padding:10px}}
 .qr{width:200px;height:200px;border-radius:16px;background:#fff;display:grid;place-items:center;padding:14px}
 .selo-sim{font:700 12px Inter;color:#111;background:var(--y);padding:6px 12px;border-radius:999px}
 /* resultado */
@@ -287,7 +289,7 @@ $('#btnPagar').onclick=()=>{clearTimeout(vozT);vozPend.clear();forma=null;docume
 $('#voltarCarrinho').onclick=()=>mostrar('carrinho');
 $('#formas').onclick=e=>{const b=e.target.closest('.forma');if(!b)return;forma=b.dataset.f;document.querySelectorAll('.forma').forEach(f=>f.classList.toggle('on',f===b));const txt={pix:'Abra o app do seu banco e leia o QR',debito:'Insira ou aproxime o cartão na maquininha',credito:'Insira ou aproxime o cartão na maquininha',tapon:'Encoste o cartão na parte de trás do aparelho'}[forma];
  $('#cobranca').innerHTML=(forma==='pix'?`<div class="qr" aria-label="QR do Pix (simulado)">${qrFake()}</div>`:'')+`<p style="font-size:18px">${txt}</p><p class="mu" style="font-size:13px">Teste: nada será cobrado. Escolha o resultado:</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%"><button class="btn bad" id="simNeg">Recusado</button><button class="btn ok" id="simOk">Aprovado</button></div>`;falar(txt);
- $('#simOk').onclick=aprovar;$('#simNeg').onclick=()=>{api('evento',{tipo:'pagamento_negado',venda_id:vendaId,itens:carrinho}).catch(()=>{});falar('Pagamento recusado. Tente outra forma.');toast('Pagamento recusado')}};
+ $('#simOk').onclick=aprovar;requestAnimationFrame(()=>$('#simOk').scrollIntoView({block:'end',behavior:'smooth'}));$('#simNeg').onclick=()=>{api('evento',{tipo:'pagamento_negado',venda_id:vendaId,itens:carrinho}).catch(()=>{});falar('Pagamento recusado. Tente outra forma.');toast('Pagamento recusado')}};
 function qrFake(){let s='<svg viewBox="0 0 29 29" width="172" height="172" shape-rendering="crispEdges">';const r=crypto.getRandomValues(new Uint8Array(841));for(let y=0;y<29;y++)for(let x=0;x<29;x++){const f=(x<8&&y<8)||(x>20&&y<8)||(x<8&&y>20);const on=f?((x%7===0||y%7===0||x%7===6||y%7===6||(x%7>1&&x%7<5&&y%7>1&&y%7<5))&&!(x===7||y===7||x===21||y===21)):r[y*29+x]>140;if(on)s+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}return s+'</svg>'}
 async function aprovar(){const v={id:vendaId,iniciada_em:iniciada,itens:carrinho.map(i=>({produto_id:i.id,quantidade:i.q})),forma:forma==='tapon'?'credito':forma,simulado:true};const tot=totalC();
  try{await api('venda',v)}catch(e){if(/inválid|sem preço|vazio/i.test(e.message)){toast(e.message);return}fila.push(v);ls.set('bp-fila',fila);atualizarRede()}
