@@ -24,6 +24,24 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 input{font:inherit}
 .tela{position:fixed;inset:0;display:none;flex-direction:column;padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom))}
 .tela.on{display:flex}
+.espera-voz{border-color:var(--y);color:var(--y)}
+.voz-escolha,.voz-fala{flex:1;display:flex;flex-direction:column;gap:16px;justify-content:center;min-height:0}
+.voz-tit{font:800 26px/1.2 Manrope,Inter,sans-serif;text-align:center;margin:0}
+.voz-op{display:flex;gap:16px;align-items:center;text-align:left;padding:20px;border-radius:20px;background:var(--k2);border:2px solid var(--line);color:#fff;min-height:96px}
+.voz-op:active{border-color:var(--y)}.voz-op b{display:block;font:800 20px Manrope,Inter,sans-serif}.voz-op small{display:block;color:var(--mu);font-size:15px;margin-top:4px;line-height:1.35}
+.voz-ic{flex:none;width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:rgba(255,214,10,.12);color:var(--y)}
+.voz-fala{justify-content:flex-start;padding-top:6px;overflow-y:auto}
+.voz-mic{align-self:center;width:112px;height:112px;border-radius:50%;background:var(--y);color:#111;display:grid;place-items:center;flex:none;box-shadow:0 0 0 0 rgba(255,214,10,.5)}
+.voz-mic.ouvindo{animation:vozPulso 1.2s ease-out infinite}.voz-mic.falando{background:var(--k3);color:var(--y)}
+@keyframes vozPulso{0%{box-shadow:0 0 0 0 rgba(255,214,10,.55)}100%{box-shadow:0 0 0 26px rgba(255,214,10,0)}}
+.voz-ouvido{text-align:center;min-height:22px;font-size:17px;font-style:italic;margin:0}
+.voz-opcoes{display:grid;gap:10px}.voz-opcoes button{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:var(--k2);border:2px solid var(--line);color:#fff;text-align:left;font:600 16px Inter}
+.voz-lista{display:grid;gap:10px}.voz-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:var(--k2)}
+.voz-th{width:52px;height:52px;border-radius:12px;background:#fff;display:grid;place-items:center;flex:none;overflow:hidden;color:var(--y);font:800 22px Manrope,Inter,sans-serif}.voz-th.sem{background:#1d1d1d}.voz-th img{max-width:100%;max-height:100%;object-fit:contain}
+.voz-item .n{flex:1;min-width:0;font:600 16px/1.25 Inter}.voz-item .n small{display:block;color:var(--y);font:800 16px Manrope,Inter,sans-serif;margin-top:2px}
+.voz-q{display:flex;align-items:center;gap:6px}.voz-q button{width:40px;height:40px;border-radius:12px;background:var(--k3);font:800 20px Inter}.voz-q b{min-width:24px;text-align:center;font-size:18px}
+.voz-acoes{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin-top:auto;padding-top:6px}
+.voz-acoes .btn{min-height:60px;font-size:17px}.voz-acoes .btn:disabled{opacity:.4}
 .voltar-grande{display:inline-flex;align-items:center;gap:6px;min-height:56px;padding:0 20px 0 12px;border-radius:16px;background:var(--k2);border:2px solid var(--line);color:#fff;font:700 19px Manrope,Inter,sans-serif}.voltar-grande:active{background:var(--k3)}.voltar-grande svg{color:var(--y)}
 :root{--rw:118px;--rh:158px}
 /* câmera de segurança: o topo da tela reserva o espaço dela, nada fica por baixo */
@@ -192,6 +210,7 @@ h2{font-size:22px;font-weight:800}
     <p class="mu">ou passe o código de barras no leitor</p>
   </div>
   <button class="espera-grade" id="esperaGrade"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>Escolher produtos pela tela</button>
+  <button class="espera-grade espera-voz" id="esperaVoz"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Atendimento por áudio</button>
   <p class="mu" style="text-align:center;font-size:12px">Ambiente monitorado por câmeras · teste: pagamento simulado</p>
 </section>
 
@@ -257,6 +276,24 @@ h2{font-size:22px;font-weight:800}
   </div>
 </div>
 
+<!-- atendimento por áudio -->
+<section class="tela" id="vozT">
+  <div class="topo"><button class="voltar-grande" id="vozVoltar" aria-label="Voltar para o início"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Início</button><span class="pill">Atendimento por áudio</span></div>
+  <div id="vozEscolha" class="voz-escolha">
+    <h2 class="voz-tit">Como prefere pedir?</h2>
+    <button class="voz-op" id="vozGuiado"><span class="voz-ic"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M4 5h16v10H8l-4 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span><b>Me guie</b><small>Eu pergunto e você responde, um produto por vez.</small></span></button>
+    <button class="voz-op" id="vozDireto"><span class="voz-ic"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span><b>Fazer o pedido direto</b><small>Fale tudo de uma vez: "duas Coca Zero lata e um Fini".</small></span></button>
+  </div>
+  <div id="vozFala" class="voz-fala" style="display:none">
+    <button class="voz-mic" id="vozMic" aria-label="Tocar para falar"><svg viewBox="0 0 24 24" width="44" height="44" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+    <h2 class="voz-tit" id="vozPergunta">O que você quer levar?</h2>
+    <p class="mu voz-ouvido" id="vozOuvido" aria-live="polite"></p>
+    <div id="vozOpcoes" class="voz-opcoes"></div>
+    <div id="vozLista" class="voz-lista"></div>
+    <div class="voz-acoes"><button class="btn g" id="vozDeNovo">Falar de novo</button><button class="btn" id="vozConfirmar" style="background:var(--y);color:#111" disabled>Confirmar e ir ao carrinho</button></div>
+  </div>
+</section>
+
 <!-- PIN do admin -->
 <section class="tela" id="pinT">
   <div class="topo"><h2 id="pinTit">PIN do gerente</h2><button class="pill" id="pinVoltar">Voltar</button></div>
@@ -277,6 +314,7 @@ h2{font-size:22px;font-weight:800}
     <button class="btn g" id="admVoz">Voz: ligada</button>
     <button class="btn g" id="admPin">Trocar PIN do gerente</button>
     <button class="btn g" id="admTela">Como travar o celular no caixa</button>
+    <button class="btn g" id="admMic">Liberar microfone (atendimento por áudio)</button>
     <button class="btn bad" id="admSair">Desativar este aparelho</button>
   </div>
   <p class="mu" style="margin-top:14px;font-size:13px">Teste: as vendas ficam marcadas como teste no sistema e não entram no faturamento. Para vender de verdade faltam a maquininha, o Pix real e a NFC-e.</p>
@@ -301,8 +339,8 @@ const valorFalado=c=>{const r=Math.floor(c/100),cc=c%100;return (r?r+(r===1?' re
 async function api(acao,corpo={}){const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(r.status===401){desativar(true);throw new Error(j.erro)}if(!r.ok)throw new Error(j.erro||'Erro');return j}
 const uuid=()=>crypto.randomUUID?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
 
-function mostrar(id){document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on',t.id===id));const comRosto=['carrinho','pagamento','buscaT'].includes(id);mostrarRosto();if(comRosto)reviverRosto();desligarCamera();if(id==='carrinho'&&!carrinho.length)vitrine(null);if(['carrinho','pagamento','buscaT'].includes(id))iniciarGravacao();else if(id==='espera'&&!carrinho.length)pararGravacao(null);if(['espera','carrinho','pagamento'].includes(id))setTimeout(()=>$('#leitor').focus({preventScroll:true}),60);armarInatividade(id)}
-function armarInatividade(id){clearTimeout(inativo);if(['carrinho','pagamento','buscaT'].includes(id))inativo=setTimeout(()=>{if(carrinho.length)cancelar('Tempo esgotado: compra não finalizada');else mostrar('espera')},120000)}
+function mostrar(id){document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on',t.id===id));const comRosto=['carrinho','pagamento','buscaT','vozT'].includes(id);mostrarRosto();if(comRosto)reviverRosto();desligarCamera();if(id==='carrinho'&&!carrinho.length)vitrine(null);if(['carrinho','pagamento','buscaT','vozT'].includes(id))iniciarGravacao();else if(id==='espera'&&!carrinho.length)pararGravacao(null);if(['espera','carrinho','pagamento'].includes(id))setTimeout(()=>$('#leitor').focus({preventScroll:true}),60);armarInatividade(id)}
+function armarInatividade(id){clearTimeout(inativo);if(['carrinho','pagamento','buscaT','vozT'].includes(id))inativo=setTimeout(()=>{if(carrinho.length)cancelar('Tempo esgotado: compra não finalizada');else mostrar('espera')},120000)}
 document.addEventListener('pointerdown',()=>{const t=document.querySelector('.tela.on');if(t)armarInatividade(t.id)},{passive:true});
 
 // ---------- ativação ----------
@@ -310,7 +348,7 @@ let codigoAtual='',lojaEscolhida=null;
 $('#codigo').addEventListener('input',e=>{let v=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);e.target.value=v.length>4?v.slice(0,4)+'-'+v.slice(4):v});
 $('#btnCodigo').onclick=async()=>{const b=$('#btnCodigo');codigoAtual=$('#codigo').value;$('#msg1').textContent='';b.disabled=true;try{const r=await api('lojas',{codigo:codigoAtual});$('#lojas').innerHTML=r.lojas.map(l=>`<button class="opcao" data-id="${l.id}">${l.nome.replace(/</g,'&lt;')}</button>`).join('');$('#passo1').style.display='none';$('#passo2').style.display='flex'}catch(e){$('#msg1').textContent=e.message}b.disabled=false};
 $('#lojas').onclick=e=>{const b=e.target.closest('.opcao');if(!b)return;lojaEscolhida=b.dataset.id;document.querySelectorAll('#lojas .opcao').forEach(x=>x.classList.toggle('on',x===b))};
-$('#btnAtivar').onclick=async()=>{if(!lojaEscolhida){$('#msg2').textContent='Escolha a loja';return}const pinN=$('#pinNovo').value.replace(/\D/g,'');if(pinN.length<4){$('#msg2').textContent='Crie um PIN de 4 a 6 números';return}const b=$('#btnAtivar');b.disabled=true;try{const r=await api('ativar',{codigo:codigoAtual,local_id:lojaEscolhida,nome:$('#nomeAp').value});token=r.token;loja=r.loja;ls.set('bp-token',token);ls.set('bp-loja',loja);ls.set('bp-pin',await hashPin(pinN));await sincronizar();iniciar();toast('Caixa ativado na '+loja.nome)}catch(e){$('#msg2').textContent=e.message}b.disabled=false};
+$('#btnAtivar').onclick=async()=>{if(!lojaEscolhida){$('#msg2').textContent='Escolha a loja';return}const pinN=$('#pinNovo').value.replace(/\D/g,'');if(pinN.length<4){$('#msg2').textContent='Crie um PIN de 4 a 6 números';return}const b=$('#btnAtivar');b.disabled=true;try{const r=await api('ativar',{codigo:codigoAtual,local_id:lojaEscolhida,nome:$('#nomeAp').value});token=r.token;loja=r.loja;ls.set('bp-token',token);ls.set('bp-loja',loja);ls.set('bp-pin',await hashPin(pinN));pedirMic();await sincronizar();iniciar();toast('Caixa ativado na '+loja.nome)}catch(e){$('#msg2').textContent=e.message}b.disabled=false};
 
 // ---------- catálogo e fila ----------
 async function sincronizar(silencioso){try{const r=await api('catalogo');cat={...r,mapa:null};ls.set('bp-cat',cat);setTimeout(()=>r.produtos.filter(p=>p.foto).forEach((p,i)=>setTimeout(()=>fetch(p.foto,{mode:'cors'}).catch(()=>{}),i*150)),1500);$('#lojaNome').textContent=r.loja||loja?.nome||'—';if(!silencioso)toast(r.produtos.length+' produtos atualizados');return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
@@ -326,7 +364,7 @@ function desligarCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());str
 async function loopLeitura(){if(lendo)return;lendo=true;const v=$('#video');while(lendo&&stream){try{const r=await detector.detect(v);if(r[0])lido(r[0].rawValue)}catch(e){}await new Promise(r=>setTimeout(r,180))}}
 // câmera frontal: o Android pausa ou congela o vídeo quando ele fica escondido ou a tela apaga; aqui ela é conferida e religada sozinha
 let rostoLigando=false,rostoUltT=-1,rostoParado=0,rostoMudo=0,rostoOk=false,rostoFalhas=0,rostoProx=0;
-const telaComRosto=()=>{const t=document.querySelector('.tela.on');return !!(t&&['carrinho','pagamento','buscaT'].includes(t.id))};
+const telaComRosto=()=>{const t=document.querySelector('.tela.on');return !!(t&&['carrinho','pagamento','buscaT','vozT'].includes(t.id))};
 function rostoVivo(){const t=frontStream&&frontStream.getVideoTracks()[0];return !!(t&&t.readyState==='live'&&frontStream.active)}
 // o quadro do rosto continua na tela enquanto a câmera é religada (não some por causa de uma falha passageira)
 function mostrarRosto(){const on=telaComRosto()&&(rostoOk||!!frontStream);$('#rosto').style.display=on?'block':'none';document.body.classList.toggle('com-rosto',on)}
@@ -435,6 +473,7 @@ $('#admSync').onclick=async()=>{await sincronizar();abrirAdmin()};
 $('#admFila').onclick=async()=>{await enviarFila();toast(fila.length?fila.length+' ainda na fila':'Fila enviada');abrirAdmin()};
 $('#admVoz').onclick=()=>{voz=!voz;ls.set('bp-voz',voz);abrirAdmin()};
 $('#admPin').onclick=()=>telaPin('criar');
+$('#admMic').onclick=async()=>{const ok=await pedirMic();toast(ok?'Microfone liberado neste aparelho':'Microfone bloqueado: libere no cadeado do Chrome › Permissões');};
 $('#admTela').onclick=()=>{$('#admInfo').innerHTML='<b>Para ninguém sair do caixa:</b> no Android, ative <b>Fixar app</b> (Samsung: Configurações › Segurança e privacidade › Mais configurações de segurança › Fixar janelas; outros: Configurações › Segurança › Fixação de app) e ligue "Pedir PIN para soltar". Depois abra o caixa, toque em Recentes (▢), no ícone do app e em Fixar. Para soltar: segure Voltar + Recentes e digite o PIN do celular.'};
 $('#admSair').onclick=()=>{if($('#admSair').dataset.c){desativar();return}$('#admSair').dataset.c=1;$('#admSair').textContent='Toque de novo para confirmar';setTimeout(()=>{delete $('#admSair').dataset.c;$('#admSair').textContent='Desativar este aparelho'},4000)};
 function desativar(expirado){['bp-token','bp-loja','bp-cat','bp-fila','bp-pin'].forEach(ls.del);token=null;loja=null;cat=null;fila=[];$('#passo1').style.display='flex';$('#passo2').style.display='none';mostrar('ativar');if(expirado)toast('Aparelho desativado. Ative de novo.')}
@@ -454,6 +493,83 @@ $('#pinNovo').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefaul
 
 // QR de ativação: o código vem no #c=XXXX-XXXX (fica só no aparelho, não vai para o servidor)
 (()=>{const m=location.hash.match(/c=([A-Za-z0-9-]{8,9})/);if(!m)return;history.replaceState(null,'',location.pathname);if(token)return;$('#codigo').value=m[1].toUpperCase();setTimeout(()=>$('#btnCodigo').click(),300)})();
+
+// ---------- atendimento por áudio: guiado ou pedido direto ----------
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const NUM={um:1,uma:1,hum:1,dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,meia:6,sete:7,oito:8,nove:9,dez:10,onze:11,doze:12,duzia:12,quinze:15,vinte:20};
+const PARADA=new Set(['quero','queria','vou','levar','comprar','me','ve','ver','da','de','do','das','dos','o','a','os','as','eu','por','favor','pra','para','mim','tambem','unidade','unidades','pacote','pacotes','um','uma','e','mais','com','gostaria','pode','colocar','botar','bota','coloca','adiciona','adicionar','ai','tá','ta','entao','também']);
+let vozModo=null,vozItens=[],vozRec=null,vozEtapa='',vozOpc=[],vozTimer=null;
+const tok=t=>semAc(t).replace(/(\d),(\d)/g,'$1.$2').split(/[^a-z0-9.]+/).filter(Boolean);
+function lev(a,b){if(Math.abs(a.length-b.length)>1)return 9;const d=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return d[b.length]}
+function parecido(q,w){if(q===w)return 1;if(q.length>=3&&w.length>=3&&(w.startsWith(q)||q.startsWith(w)))return .85;if(q.length>=4&&lev(q,w)<=1)return .8;if(q==='lata'&&/^\d+ml$/.test(w))return .6;return 0}
+function procurar(frase){const qt=tok(frase).filter(t=>!PARADA.has(t)&&!(t in NUM));if(!qt.length)return [];
+ return (cat?.produtos||[]).map(p=>{const pt=tok(p.nome);const s=qt.reduce((a,q)=>a+Math.max(0,...pt.map(w=>parecido(q,w))),0)/qt.length;return {p,s:s-pt.length*.002}}).filter(x=>x.s>=.4).sort((a,b)=>b.s-a.s)}
+function qtdDe(frase){const t=tok(frase);for(const w of t){if(/^\d+$/.test(w)&&+w>0&&+w<100)return +w;if(w in NUM)return NUM[w]}return null}
+// "duas coca zero lata e um fini" -> [{q:2,txt:'coca zero lata'},{q:1,txt:'fini'}]
+function partes(frase){const t=semAc(frase).replace(/[.,;!?]/g,' , ');const pedacos=t.split(/\s+(?:e|mais|,)\s+|\s*,\s*/).map(x=>x.trim()).filter(Boolean);const out=[];
+ pedacos.forEach(pc=>{let ws=pc.split(/\s+/);while(ws.length>1&&PARADA.has(ws[0])&&!(ws[0] in NUM))ws=ws.slice(1);let q=null,i=0;if(/^\d+$/.test(ws[0])){q=+ws[0];i=1}else if(ws[0] in NUM&&!(ws[0]==='meia'&&ws[1]!=='duzia')){q=NUM[ws[0]];i=1;if(ws[1]==='duzia')i=2}const txt=ws.slice(i).join(' ');if(txt)out.push({q,txt})});return out}
+const sim=f=>/\b(sim|isso|confirm|pode|claro|ok|beleza|certo|exato)/.test(semAc(f));
+const nao=f=>/\b(nao|so isso|mais nada|nada|terminei|acabou|pagar|finalizar|fechar|pronto)\b/.test(semAc(f));
+const ajuda=f=>/\b(ajuda|atendente|socorro|pessoa|humano)\b/.test(semAc(f));
+function falarE(t){return new Promise(res=>{if(!('speechSynthesis' in window)){res();return}try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';u.rate=1.05;let ok=false;const fim=()=>{if(!ok){ok=true;res()}};u.onend=fim;u.onerror=fim;setTimeout(fim,Math.min(15000,1200+t.length*85));$('#vozMic').classList.add('falando');speechSynthesis.speak(u)}catch(e){res()}}).then(()=>$('#vozMic').classList.remove('falando'))}
+function ouvir(){return new Promise(res=>{if(!SR){res(null);return}try{vozRec?.abort()}catch(e){}const r=new SR();vozRec=r;r.lang='pt-BR';r.interimResults=true;r.maxAlternatives=3;r.continuous=false;let final='',alt=[];
+ r.onresult=e=>{let txt='';for(const x of e.results){txt+=x[0].transcript;if(x.isFinal){final=txt;alt=[...x].map(a=>a.transcript)}}$('#vozOuvido').textContent='“'+txt+'”'};
+ r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed')$('#vozOuvido').textContent='Microfone bloqueado. Peça ajuda ao responsável pela loja.'};
+ r.onend=()=>{$('#vozMic').classList.remove('ouvindo');vozRec=null;if(!final&&$('#vozOuvido').textContent==='Pode falar…')$('#vozOuvido').textContent='';res(final?{txt:final,alt}:null)};
+ $('#vozOuvido').textContent='Pode falar…';$('#vozMic').classList.add('ouvindo');armarVozInativo();try{r.start()}catch(e){res(null)}})}
+function armarVozInativo(){clearTimeout(vozTimer);vozTimer=setTimeout(()=>{if(document.querySelector('#vozT.on')&&!vozItens.length)sairVoz()},90000)}
+function sairVoz(){try{vozRec?.abort()}catch(e){}speechSynthesis?.cancel();vozModo=null;vozItens=[];clearTimeout(vozTimer);mostrar(carrinho.length?'carrinho':'espera')}
+function thumb(p){return p.foto?`<span class="voz-th"><img src="${p.foto}" crossorigin="anonymous" alt=""></span>`:`<span class="voz-th sem">${esc(p.nome.trim().charAt(0).toUpperCase())}</span>`}
+function desenharVoz(){$('#vozLista').innerHTML=vozItens.map((it,k)=>`<div class="voz-item">${thumb(it.p)}<span class="n">${esc(it.p.nome)}<small>${brl(it.p.preco*it.q)}</small></span><span class="voz-q"><button data-k="${k}" data-d="-1" aria-label="Menos">−</button><b>${it.q}</b><button data-k="${k}" data-d="1" aria-label="Mais">+</button></span></div>`).join('');
+ $('#vozOpcoes').innerHTML=vozOpc.map((o,k)=>`<button data-o="${k}">${thumb(o.p)}<span><b>${k+1}.</b> ${esc(o.p.nome)} · ${brl(o.p.preco)}</span></button>`).join('');$('#vozConfirmar').disabled=!vozItens.length}
+function somar(p,q){const x=vozItens.find(i=>i.p.id===p.id);if(x)x.q=Math.min(99,x.q+q);else vozItens.push({p,q});desenharVoz()}
+const nomeCurto=p=>curto(p.nome);
+const listaFalada=()=>vozItens.map(i=>i.q+' '+unidFalada(nomeCurto(i.p))).join(', ').replace(/, ([^,]*)$/,' e $1');
+$('#vozLista').onclick=e=>{const b=e.target.closest('button[data-k]');if(!b)return;const it=vozItens[+b.dataset.k];it.q+= +b.dataset.d;if(it.q<=0)vozItens.splice(+b.dataset.k,1);desenharVoz();armarVozInativo()};
+$('#vozOpcoes').onclick=e=>{const b=e.target.closest('button[data-o]');if(!b)return;escolherOpcao(+b.dataset.o)};
+let escolhaRes=null;function escolherOpcao(k){const o=vozOpc[k];if(!o)return;vozOpc=[];desenharVoz();if(escolhaRes){const r=escolhaRes;escolhaRes=null;r(o.p)}}
+function qualOpcao(f){const t=semAc(f);const ord={primeiro:0,primeira:0,um:0,'1':0,segundo:1,segunda:1,dois:1,'2':1,terceiro:2,terceira:2,tres:2,'3':2};for(const w of t.split(/\s+/))if(w in ord&&vozOpc[ord[w]])return ord[w];const m=procurar(f);if(m.length){const k=vozOpc.findIndex(o=>o.p.id===m[0].p.id);if(k>=0)return k}return -1}
+// resolve um pedaço: produto certo, ou pergunta entre as opções
+async function resolver(txt){const m=procurar(txt);if(!m.length)return null;if(m.length===1||m[0].s-m[1].s>=.15||m[0].s>=.99&&m[1].s<.99)return m[0].p;
+ vozOpc=m.slice(0,3);desenharVoz();const nomes=vozOpc.map((o,k)=>(k+1)+', '+unidFalada(nomeCurto(o.p))).join('; ');
+ const escolha=new Promise(r=>escolhaRes=r);await falarE('Encontrei mais de um. '+nomes+'. Qual deles?');$('#vozPergunta').textContent='Qual deles? Toque ou fale o número.';
+ const corrida=Promise.race([escolha,(async()=>{for(let t=0;t<2;t++){const o=await ouvir();if(!document.querySelector('#vozT.on'))return null;if(o){const k=qualOpcao(o.txt);if(k>=0)return vozOpc[k].p}if(!vozOpc.length)return null}return null})()]);
+ const p=await corrida;escolhaRes=null;vozOpc=[];desenharVoz();return p}
+async function modoDireto(){vozEtapa='direto';$('#vozPergunta').textContent='Fale tudo o que você quer levar';await falarE('Pode falar tudo o que você quer levar. Por exemplo: duas Coca Zero lata e um Fini.');
+ for(let t=0;t<2&&document.querySelector('#vozT.on');t++){const o=await ouvir();if(!o){if(t===0)await falarE('Não ouvi. Pode repetir?');continue}if(ajuda(o.txt)){chamarAjuda();return}
+  const ps=partes(o.txt);let naoAchou=[];for(const pc of ps){const p=await resolver(pc.txt);if(p)somar(p,pc.q||1);else naoAchou.push(pc.txt)}
+  if(!vozItens.length){await falarE('Não encontrei esse produto. Tente falar só o nome, ou use o leitor de código de barras.');continue}
+  await confirmarPorVoz(naoAchou);return}}
+async function confirmarPorVoz(naoAchou){$('#vozPergunta').textContent='Confere o pedido?';const extra=naoAchou?.length?' Não encontrei: '+naoAchou.join(', ')+'.':'';
+ await falarE('Entendi: '+listaFalada()+'. Total: '+valorFalado(vozItens.reduce((s,i)=>s+i.p.preco*i.q,0))+'.'+extra+' Posso colocar no carrinho?');
+ const o=await ouvir();if(!document.querySelector('#vozT.on'))return;if(o&&sim(o.txt)&&!nao(o.txt)){confirmarVoz();return}if(o&&/\b(nao|errado|corrig)/.test(semAc(o.txt))){await falarE('Tudo bem. Ajuste as quantidades na tela ou toque em falar de novo.')}
+ $('#vozPergunta').textContent='Confira e toque em confirmar'}
+async function modoGuiado(){vozEtapa='guiado';let primeira=true;
+ while(document.querySelector('#vozT.on')&&vozModo==='guiado'){$('#vozPergunta').textContent=primeira?'O que você quer levar?':'Mais alguma coisa?';
+  await falarE(primeira?'Olá! Eu vou te ajudar. O que você quer levar?':'Mais alguma coisa? Se não, diga: só isso.');
+  const o=await ouvir();if(!document.querySelector('#vozT.on'))return;if(!o){await falarE('Não ouvi. Vamos de novo.');continue}
+  if(ajuda(o.txt)){chamarAjuda();return}
+  if(!primeira&&nao(o.txt)&&!procurar(o.txt).length){if(vozItens.length){await confirmarPorVoz();return}primeira=true;continue}
+  const ps=partes(o.txt);if(!ps.length){await falarE('Não entendi. Fale o nome do produto.');continue}
+  for(const pc of ps){const p=await resolver(pc.txt);if(!p){await falarE('Não encontrei '+pc.txt+'.');continue}
+   let q=pc.q;if(!q){$('#vozPergunta').textContent='Quantas unidades?';await falarE(unidFalada(nomeCurto(p))+', '+valorFalado(p.preco)+'. Quantas unidades?');const r=await ouvir();q=r?(qtdDe(r.txt)||1):1}
+   somar(p,q);await falarE(q+' '+unidFalada(nomeCurto(p))+', anotado.')}
+  primeira=false}}
+async function iniciarVoz(modo){vozModo=modo;vozOpc=[];$('#vozEscolha').style.display='none';$('#vozFala').style.display='flex';desenharVoz();if(!SR){$('#vozPergunta').textContent='Este aparelho não tem reconhecimento de voz';$('#vozOuvido').textContent='Use o leitor ou escolha os produtos pela tela.';return}
+ if(!navigator.onLine){$('#vozPergunta').textContent='Sem internet agora';$('#vozOuvido').textContent='O atendimento por áudio precisa de internet. Use o leitor de código de barras.';return}
+ try{modo==='guiado'?await modoGuiado():await modoDireto()}catch(e){}}
+function abrirVoz(){vozItens=[];vozOpc=[];vozModo=null;$('#vozEscolha').style.display='flex';$('#vozFala').style.display='none';$('#vozOuvido').textContent='';mostrar('vozT');armarVozInativo();falarE('Atendimento por áudio. Você prefere que eu te guie, ou quer fazer o pedido direto?')}
+function confirmarVoz(){if(!vozItens.length)return;try{vozRec?.abort()}catch(e){}speechSynthesis?.cancel();const itens=vozItens.slice();vozItens=[];vozModo=null;clearTimeout(vozTimer);
+ let pulou=null;for(const it of itens){const p=it.p;if(p.maior18&&!maior18Em){pulou=p;continue}if(!vendaId){vendaId=uuid();iniciada=new Date().toISOString()}const x=carrinho.find(i=>i.id===p.id);if(x)x.q=Math.min(99,x.q+it.q);else carrinho.push({id:p.id,nome:p.nome,preco:p.preco,q:it.q});vitrine(p)}
+ mostrar('carrinho');desenhar();iniciarGravacao();if(pulou){adicionar(pulou);return}falar('Pronto. '+resumoFalado()+' Total: '+valorFalado(totalC())+'. Toque em pagar quando quiser.')}
+function chamarAjuda(){api('evento',{tipo:'item_removido',itens:[{alerta:'Cliente pediu ajuda pelo atendimento por áudio'}]}).catch(()=>{});$('#vozPergunta').textContent='Pedido de ajuda registrado';falarE('Registrei seu pedido de ajuda. Enquanto isso, você pode usar o leitor de código de barras ou escolher os produtos na tela.')}
+$('#esperaVoz').onclick=e=>{e.stopPropagation();abrirVoz()};
+$('#vozGuiado').onclick=()=>iniciarVoz('guiado');$('#vozDireto').onclick=()=>iniciarVoz('direto');
+$('#vozVoltar').onclick=sairVoz;$('#vozConfirmar').onclick=confirmarVoz;
+$('#vozDeNovo').onclick=()=>{if(vozRec)return;vozModo==='guiado'?modoGuiado():modoDireto()};
+$('#vozMic').onclick=()=>{if(vozRec||$('#vozMic').classList.contains('falando'))return;$('#vozDeNovo').click()};
+// microfone liberado uma vez, na ativação ou pelo admin: os clientes nunca veem o pedido de permissão
+const pedirMic=async()=>{try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());return true}catch(e){return false}};
 
 // ---------- trava de navegador ----------
 const instalado=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
