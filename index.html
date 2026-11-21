@@ -173,6 +173,20 @@ h2{font-size:22px;font-weight:800}
 #leitor{position:fixed;opacity:0;pointer-events:none;left:-100px;top:0;width:10px}
 .pinb{height:84px;border-radius:20px;background:var(--k2);font:700 28px Manrope,Inter,sans-serif}.pinb:active{background:var(--k3)}
 .ponto{width:18px;height:18px;border-radius:50%;border:2px solid var(--mu)}.ponto.on{background:var(--y);border-color:var(--y)}
+#descanso{position:fixed;inset:0;z-index:40;background:#000;display:none;cursor:pointer;overflow:hidden}#descanso.on{display:block;animation:dsIn .5s ease}
+@keyframes dsIn{from{opacity:0}to{opacity:1}}
+#descanso .ds{position:absolute;inset:0;opacity:0;transition:opacity .8s ease}#descanso .ds.on{opacity:1}
+#descanso .ds img,#descanso .ds video{position:absolute;inset:0;width:100%;height:calc(100% - 90px);object-fit:contain;object-position:50% 40%;filter:drop-shadow(0 30px 60px rgba(0,0,0,.5))}
+#descanso .ds .fundo{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(50px) brightness(.55) saturate(1.2);transform:scale(1.15)}
+#descanso .vel{position:absolute;inset:auto 0 0 0;height:46%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.88))}
+#descanso .tx{position:absolute;left:5vw;right:5vw;bottom:calc(120px + env(safe-area-inset-bottom));display:grid;gap:8px}
+#descanso .tx b{font:800 clamp(26px,5.4vw,52px)/1.1 Manrope,Inter,sans-serif;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.4)}
+#descanso .tx span{font-size:clamp(16px,2.6vw,24px);color:rgba(255,255,255,.88)}
+#descanso .tx .cp{display:inline-block;width:max-content;margin-top:4px;border:2px dashed rgba(255,255,255,.7);background:rgba(255,255,255,.12);color:#fff;font:800 clamp(16px,2.4vw,24px) Inter,sans-serif;letter-spacing:.08em;padding:6px 14px;border-radius:12px}
+#descanso .sl{position:absolute;left:5vw;top:max(22px,env(safe-area-inset-top));background:rgba(0,0,0,.55);color:#fff;font:700 13px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:7px 11px;border-radius:9px}#descanso .sl.casa{background:var(--y);color:#111}
+#descanso .barra{position:absolute;left:0;right:0;bottom:0;padding:18px 5vw calc(18px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:16px;background:rgba(10,10,10,.92);border-top:1px solid #2a2a2a}
+#descanso .barra img{height:38px;border-radius:8px}#descanso .barra b{flex:1;font:800 clamp(18px,3vw,26px) Manrope,Inter,sans-serif;color:var(--y)}
+#descanso .prog{display:flex;gap:6px}#descanso .prog i{width:8px;height:8px;border-radius:4px;background:#3f3f46;transition:.3s}#descanso .prog i.on{width:24px;background:var(--y)}
 .toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);background:#fff;color:#111;padding:12px 18px;border-radius:14px;font-weight:600;z-index:20;display:none;max-width:90vw;text-align:center}
 </style>
 </head>
@@ -266,6 +280,7 @@ h2{font-size:22px;font-weight:800}
 <section class="tela" id="ruim"><div class="marca"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></div><h1 class="big">Compra não finalizada</h1><p style="font-size:20px" id="ruimTxt">Os produtos devem voltar à prateleira</p></section>
 
 <!-- trava: caixa não vende em aba do navegador -->
+<div id="descanso" aria-label="Toque para comprar"><div id="dsSlides"></div><div class="barra"><img src="logo.png" alt="Beep"><b>Toque na tela para comprar</b><div class="prog" id="dsProg"></div></div></div>
 <div id="instalar" style="display:none;position:fixed;inset:0;z-index:90;background:#0b0b0b;padding:28px 24px;flex-direction:column;gap:18px;overflow:auto">
   <img src="logo.png" alt="Beep" id="logoInst" style="height:44px;width:auto;align-self:flex-start">
   <h2 style="font:800 28px/1.15 Manrope,Inter,sans-serif;margin-top:18px">Instale o caixa para usar</h2>
@@ -339,9 +354,28 @@ const valorFalado=c=>{const r=Math.floor(c/100),cc=c%100;return (r?r+(r===1?' re
 async function api(acao,corpo={}){const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(r.status===401){desativar(true);throw new Error(j.erro)}if(!r.ok)throw new Error(j.erro||'Erro');return j}
 const uuid=()=>crypto.randomUUID?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
 
-function mostrar(id){document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on',t.id===id));const comRosto=['carrinho','pagamento','buscaT','vozT'].includes(id);mostrarRosto();if(comRosto)reviverRosto();desligarCamera();if(id==='carrinho'&&!carrinho.length)vitrine(null);if(['carrinho','pagamento','buscaT','vozT'].includes(id))iniciarGravacao();else if(id==='espera'&&!carrinho.length)pararGravacao(null);if(['espera','carrinho','pagamento'].includes(id))setTimeout(()=>$('#leitor').focus({preventScroll:true}),60);armarInatividade(id)}
+function mostrar(id){document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on',t.id===id));const comRosto=['carrinho','pagamento','buscaT','vozT'].includes(id);mostrarRosto();if(comRosto)reviverRosto();desligarCamera();if(id==='carrinho'&&!carrinho.length)vitrine(null);if(['carrinho','pagamento','buscaT','vozT'].includes(id))iniciarGravacao();else if(id==='espera'&&!carrinho.length)pararGravacao(null);if(['espera','carrinho','pagamento'].includes(id))setTimeout(()=>$('#leitor').focus({preventScroll:true}),60);armarInatividade(id);armarDescanso(id)}
+// ---------- tela de descanso: anúncios em tela cheia quando o caixa está parado ----------
+let dsTimer=null,dsRoda=null,dsIdx=0,dsEv=ls.get('bp-midia-ev',[]),dsDesde=0;
+const DS_ESPERA=30000;
+function adsCaixa(){const h=new Date(Date.now()-3*36e5).toISOString().slice(11,19);return(cat?.midia||[]).filter(a=>!a.hora_inicio||!a.hora_fim||(h>=a.hora_inicio&&h<=a.hora_fim))}
+function armarDescanso(id){clearTimeout(dsTimer);if(id!=='espera'){fecharDescanso();return}dsTimer=setTimeout(()=>{const t=document.querySelector('.tela.on');if(t?.id==='espera'&&!carrinho.length&&!$('#idade')?.classList.contains('on'))abrirDescanso()},DS_ESPERA)}
+function abrirDescanso(){const L=adsCaixa();if(!L.length)return;const D=$('#descanso');dsIdx=0;
+ $('#dsSlides').innerHTML=L.map((a,i)=>`<div class="ds" data-i="${i}"><div class="fundo" style="background-image:url('${a.midia.replace(/'/g,'%27')}')"></div>${a.video?`<video src="${esc(a.midia)}" muted playsinline preload="auto"></video>`:`<img src="${esc(a.midia)}" alt="" crossorigin="anonymous">`}<div class="vel"></div><span class="sl${a.proprio?' casa':''}">${a.proprio?'Oferta Beep':'Patrocinado'}</span><div class="tx"><b>${esc(a.titulo)}</b>${a.texto?`<span>${esc(a.texto)}</span>`:''}${a.cupom?`<span class="cp">CUPOM ${esc(a.cupom)}</span>`:''}</div></div>`).join('');
+ $('#dsProg').innerHTML=L.length>1?L.map(()=>'<i></i>').join(''):'';D.classList.add('on');mostrarSlide(L,0)}
+function mostrarSlide(L,i){clearTimeout(dsRoda);if(!$('#descanso').classList.contains('on'))return;
+ if(dsDesde&&L[dsIdx])registrarDs(L[dsIdx],(Date.now()-dsDesde)/1000);dsIdx=i;dsDesde=Date.now();
+ document.querySelectorAll('#dsSlides .ds').forEach((el,k)=>{el.classList.toggle('on',k===i);const v=el.querySelector('video');if(v){if(k===i){v.currentTime=0;v.play().catch(()=>{})}else v.pause()}});
+ document.querySelectorAll('#dsProg i').forEach((el,k)=>el.classList.toggle('on',k===i));
+ const a=L[i],v=document.querySelector(`#dsSlides .ds[data-i="${i}"] video`),seg=Math.min(60,Math.max(5,a.segundos||10));
+ const prox=()=>mostrarSlide(L,(i+1)%L.length);if(v&&isFinite(v.duration)&&v.duration>0)dsRoda=setTimeout(prox,Math.min(60,v.duration)*1000);else dsRoda=setTimeout(prox,seg*1000)}
+function registrarDs(a,seg){if(seg<2)return;dsEv.push({anuncio_id:a.id,campanha_id:a.campanha_id,tipo:'exibicao',segundos:Math.round(seg),em:new Date().toISOString()});if(dsEv.length>2000)dsEv=dsEv.slice(-2000);ls.set('bp-midia-ev',dsEv)}
+function fecharDescanso(){const D=$('#descanso');if(!D.classList.contains('on'))return;const L=adsCaixa();if(dsDesde&&L[dsIdx])registrarDs(L[dsIdx],(Date.now()-dsDesde)/1000);dsDesde=0;clearTimeout(dsRoda);D.classList.remove('on');$('#dsSlides').innerHTML='';enviarDs()}
+async function enviarDs(){if(!dsEv.length||!navigator.onLine||!token)return;const lote=dsEv.slice(0,200);try{await api('midia_evento',{eventos:lote});dsEv=dsEv.slice(lote.length);ls.set('bp-midia-ev',dsEv)}catch(e){}}
+$('#descanso').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();fecharDescanso();armarDescanso('espera');setTimeout(()=>$('#leitor').focus({preventScroll:true}),60)});
+document.addEventListener('keydown',()=>{if($('#descanso').classList.contains('on'))fecharDescanso();const t=document.querySelector('.tela.on');if(t?.id==='espera')armarDescanso('espera')},true);
 function armarInatividade(id){clearTimeout(inativo);if(['carrinho','pagamento','buscaT','vozT'].includes(id))inativo=setTimeout(()=>{if(carrinho.length)cancelar('Tempo esgotado: compra não finalizada');else mostrar('espera')},120000)}
-document.addEventListener('pointerdown',()=>{const t=document.querySelector('.tela.on');if(t)armarInatividade(t.id)},{passive:true});
+document.addEventListener('pointerdown',()=>{const t=document.querySelector('.tela.on');if(t){armarInatividade(t.id);if(t.id==='espera')armarDescanso('espera')}},{passive:true});
 
 // ---------- ativação ----------
 let codigoAtual='',lojaEscolhida=null;
@@ -351,7 +385,7 @@ $('#lojas').onclick=e=>{const b=e.target.closest('.opcao');if(!b)return;lojaEsco
 $('#btnAtivar').onclick=async()=>{if(!lojaEscolhida){$('#msg2').textContent='Escolha a loja';return}const pinN=$('#pinNovo').value.replace(/\D/g,'');if(pinN.length<4){$('#msg2').textContent='Crie um PIN de 4 a 6 números';return}const b=$('#btnAtivar');b.disabled=true;try{const r=await api('ativar',{codigo:codigoAtual,local_id:lojaEscolhida,nome:$('#nomeAp').value});token=r.token;loja=r.loja;ls.set('bp-token',token);ls.set('bp-loja',loja);ls.set('bp-pin',await hashPin(pinN));pedirMic();await sincronizar();iniciar();toast('Caixa ativado na '+loja.nome)}catch(e){$('#msg2').textContent=e.message}b.disabled=false};
 
 // ---------- catálogo e fila ----------
-async function sincronizar(silencioso){try{const r=await api('catalogo');cat={...r,mapa:null};ls.set('bp-cat',cat);setTimeout(()=>r.produtos.filter(p=>p.foto).forEach((p,i)=>setTimeout(()=>fetch(p.foto,{mode:'cors'}).catch(()=>{}),i*150)),1500);$('#lojaNome').textContent=r.loja||loja?.nome||'—';if(!silencioso)toast(r.produtos.length+' produtos atualizados');return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
+async function sincronizar(silencioso){try{const r=await api('catalogo');cat={...r,mapa:null};ls.set('bp-cat',cat);setTimeout(()=>(r.midia||[]).filter(a=>!a.video).forEach(a=>fetch(a.midia,{mode:'cors'}).catch(()=>{})),800);setTimeout(()=>r.produtos.filter(p=>p.foto).forEach((p,i)=>setTimeout(()=>fetch(p.foto,{mode:'cors'}).catch(()=>{}),i*150)),1500);$('#lojaNome').textContent=r.loja||loja?.nome||'—';if(!silencioso)toast(r.produtos.length+' produtos atualizados');return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
 const nz=c=>String(c).replace(/\D/g,'').replace(/^0+/,'');
 function porCodigo(c){if(!cat)return null;const k=nz(c);return cat.produtos.find(p=>p.codigos.some(x=>nz(x)===k))||null}
 async function enviarFila(){if(!fila.length)return;const resto=[];for(const v of fila){try{await api('venda',v)}catch(e){if(!/inválid|sem preço|vazio/i.test(e.message))resto.push(v)}}fila=resto;ls.set('bp-fila',fila);atualizarRede()}
@@ -584,7 +618,7 @@ let liberarNav=false;
 setInterval(travaNav,1500);
 
 // ---------- início ----------
-function iniciar(){$('#lojaNome').textContent=cat?.loja||loja?.nome||'—';atualizarRede();mostrar('espera');ligarRosto();enviarFila();setInterval(()=>{sincronizar(true);enviarFila()},10*60*1000)}
+function iniciar(){$('#lojaNome').textContent=cat?.loja||loja?.nome||'—';atualizarRede();mostrar('espera');ligarRosto();enviarFila();setInterval(()=>{sincronizar(true);enviarFila();enviarDs()},10*60*1000)}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{setInterval(()=>r.update().catch(()=>{}),10*60000)}).catch(()=>{});
  // versão nova chegou: recarrega sozinho, mas nunca no meio de uma compra
  let recarregar=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(recarregar)return;recarregar=true;const tenta=()=>{if(typeof carrinho!=='undefined'&&carrinho.length){setTimeout(tenta,5000);return}location.reload()};tenta()})}

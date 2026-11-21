@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b0b0b">
+<title>Relatório da campanha · Beep</title>
+<link rel="icon" href="../icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0b0b0b;--k1:#141414;--k2:#1c1c1c;--line:#2a2a2a;--ink:#f5f5f5;--mu:#a1a1aa;--y:#ffd60a;--ok:#4ade80}
+html,body{background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:920px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 20px 56px}
+header{display:flex;align-items:center;gap:14px;justify-content:space-between;padding-bottom:22px;border-bottom:1px solid var(--line)}
+header img{height:34px}
+.btn{font:600 14px Inter,sans-serif;color:var(--ink);background:var(--k2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--y);margin-top:28px}
+h1{font:800 32px/1.15 Manrope,Inter,sans-serif;margin-top:6px;letter-spacing:-.01em}
+.meta{color:var(--mu);margin-top:8px}
+.topo{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;margin-top:24px;align-items:stretch}
+.prev{position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:var(--k2);border:1px solid var(--line)}
+.prev img,.prev video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.prev .vel{position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.82))}
+.prev .tx{position:absolute;left:14px;right:14px;bottom:12px}.prev .tx b{display:block;font:800 18px/1.2 Manrope,Inter,sans-serif;color:#fff}.prev .tx span{font-size:13px;color:rgba(255,255,255,.85)}
+.prev .selo{position:absolute;left:12px;top:12px;background:rgba(0,0,0,.55);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:8px}
+.info{background:var(--k1);border:1px solid var(--line);border-radius:18px;padding:18px;display:grid;gap:12px;align-content:start}
+.info div{display:grid;gap:2px}.info small{color:var(--mu);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}.info b{font-weight:600}
+.pill{display:inline-flex;width:max-content;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:rgba(74,222,128,.12);color:var(--ok)}.pill.off{background:#262626;color:var(--mu)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}
+.kpi{background:var(--k1);border:1px solid var(--line);border-radius:16px;padding:16px}
+.kpi span{font-size:12px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.05em}
+.kpi b{display:block;font:800 30px/1.1 Manrope,Inter,sans-serif;margin-top:6px}.kpi.y b{color:var(--y)}
+.kpi p{color:var(--mu);font-size:12.5px;margin-top:4px}
+.card{background:var(--k1);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:18px}
+.card h2{font:800 18px Manrope,Inter,sans-serif;margin-bottom:14px}
+.graf{display:flex;align-items:flex-end;gap:4px;height:180px;padding-top:10px;border-bottom:1px solid var(--line)}
+.graf .c{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:2px;min-width:0;position:relative;height:100%}
+.graf .v{width:100%;max-width:28px;background:var(--y);border-radius:6px 6px 2px 2px;min-height:2px}
+.graf .k{width:100%;max-width:28px;background:#38bdf8;border-radius:4px;min-height:0}
+.eixo{display:flex;gap:4px;margin-top:6px}.eixo span{flex:1;text-align:center;font-size:10.5px;color:var(--mu);min-width:0;overflow:hidden;white-space:nowrap}
+.leg{display:flex;gap:16px;margin-top:12px;font-size:13px;color:var(--mu)}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+.canais{display:grid;grid-template-columns:1fr 1fr;gap:12px}.canal{background:var(--k2);border:1px solid var(--line);border-radius:14px;padding:14px}.canal b{display:block;font-size:15px}.canal span{color:var(--mu);font-size:13px}
+.vazio{color:var(--mu);text-align:center;padding:30px 10px}
+footer{margin-top:28px;color:var(--mu);font-size:12.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.erro{min-height:70vh;display:grid;place-items:center;text-align:center;color:var(--mu)}
+@media(max-width:760px){.topo{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}h1{font-size:26px}.canais{grid-template-columns:1fr}}
+@media print{html,body{background:#fff;color:#111}.btn{display:none}.info,.kpi,.card,.canal{background:#fff;border-color:#ddd}.kpi.y b{color:#a16207}.graf .v{background:#eab308}.eixo span,.kpi span,.meta,.info small,.canal span,.leg,footer{color:#555}header{border-color:#ddd}.eyebrow{color:#a16207}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="erro">Carregando relatório…</div></div>
+<script>
+const API='https://gdnvjpmpfgautrmtkjmx.supabase.co/functions/v1/cliente';
+const $=s=>document.querySelector(s);
+const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const n=v=>Number(v||0).toLocaleString('pt-BR');
+const dBR=d=>new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}).replace(/\./g,'');
+const t=(location.hash.match(/t=([0-9a-f-]{36})/i)||[])[1];
+async function carregar(){
+ if(!t){$('#app').innerHTML='<div class="erro">Link de relatório inválido.</div>';return}
+ let r;try{const x=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({acao:'relatorio',t})});r=await x.json();if(!x.ok)throw new Error(r.erro||'Erro')}catch(e){$('#app').innerHTML=`<div class="erro">${esc(e.message)}</div>`;return}
+ const c=r.campanha,T=r.totais,taxa=T.visualizacoes?(T.cliques/T.visualizacoes*100):0;
+ // série diária do início até hoje (ou fim)
+ const hoje=new Date(Date.now()-3*36e5).toISOString().slice(0,10),ate=c.fim<hoje?c.fim:hoje,mapa=new Map(r.dias.map(d=>[d.d,d])),dias=[];
+ for(let d=new Date(c.inicio+'T12:00:00');d.toISOString().slice(0,10)<=ate&&dias.length<62;d.setDate(d.getDate()+1)){const k=d.toISOString().slice(0,10);dias.push({d:k,...(mapa.get(k)||{v:0,c:0})})}
+ const max=Math.max(1,...dias.map(d=>d.v)),noAr=c.status==='ativa'&&c.inicio<=hoje&&c.fim>=hoje,passo=Math.ceil(dias.length/10);
+ const nomeCanal={app_cliente:'App do cliente',caixa:'Tela do caixa'};
+ $('#app').innerHTML=`<header><img src="../logo.png" alt="Beep"><button class="btn" onclick="print()">Salvar PDF / imprimir</button></header>
+ <p class="eyebrow">Relatório de campanha</p><h1>${esc(r.anunciante||'')}</h1><p class="meta">Anúncio no ${esc(r.empresa)} · ${dBR(c.inicio)} a ${dBR(c.fim)}</p>
+ <div class="topo"><div class="prev">${c.midia?(c.video?`<video src="${esc(c.midia)}" muted autoplay loop playsinline></video>`:`<img src="${esc(c.midia)}" alt="">`):''}<span class="vel"></span><span class="selo">Patrocinado</span><div class="tx"><b>${esc(c.titulo)}</b><span>${esc(c.texto||'')}</span></div></div>
+  <div class="info"><div><small>Situação</small><span class="pill ${noAr?'':'off'}">${noAr?'No ar':c.status==='pausada'?'Pausada':c.fim<hoje?'Encerrada':c.inicio>hoje?'Agendada':'Encerrada'}</span></div>
+   <div><small>Onde aparece</small><b>${(c.canais||[]).map(x=>nomeCanal[x]||x).join(' e ')}</b></div>
+   <div><small>Lojas</small><b>${esc(c.lojas.join(', ')||'—')}</b></div>
+   ${c.cupom?`<div><small>Cupom divulgado</small><b>${esc(c.cupom)}</b></div>`:''}</div></div>
+ <div class="kpis"><div class="kpi y"><span>Visualizações</span><b>${n(T.visualizacoes)}</b><p>vezes que o anúncio apareceu na tela</p></div><div class="kpi"><span>Pessoas alcançadas</span><b>${n(T.pessoas)}</b><p>moradores diferentes no app</p></div><div class="kpi"><span>Cliques</span><b>${n(T.cliques)}</b><p>toques no anúncio</p></div><div class="kpi"><span>Taxa de clique</span><b>${taxa.toFixed(1).replace('.',',')}%</b><p>cliques ÷ visualizações</p></div></div>
+ <div class="card"><h2>Dia a dia</h2>${dias.length&&T.visualizacoes?`<div class="graf">${dias.map(d=>`<div class="c" title="${dBR(d.d)}: ${d.v} visualizações, ${d.c} cliques"><div class="k" style="height:${d.c/max*100}%"></div><div class="v" style="height:${d.v/max*100}%"></div></div>`).join('')}</div>
+  <div class="eixo">${dias.map((d,i)=>`<span>${i%passo===0?d.d.slice(8,10)+'/'+d.d.slice(5,7):''}</span>`).join('')}</div><div class="leg"><span><i style="background:var(--y)"></i>Visualizações</span><span><i style="background:#38bdf8"></i>Cliques</span></div>`:'<p class="vazio">Os números aparecem aqui assim que o anúncio começar a ser visto.</p>'}</div>
+ ${Object.keys(r.canais).length?`<div class="card"><h2>Por canal</h2><div class="canais">${Object.entries(r.canais).map(([k,x])=>`<div class="canal"><b>${esc(nomeCanal[k]||k)}</b><span>${n(x.v)} visualizações · ${n(x.c)} cliques</span></div>`).join('')}</div></div>`:''}
+ <footer><span>Atualizado em ${new Date(r.gerado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}. Números contados pelo sistema Beep, sem dados pessoais dos moradores.</span><span>Beep Smart Mercadinhos</span></footer>`}
+carregar();
+</script>
+</body>
+</html>
