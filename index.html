@@ -24,6 +24,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 input{font:inherit}
 .tela{position:fixed;inset:0;display:none;flex-direction:column;padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom))}
 .tela.on{display:flex}
+.voltar-grande{display:inline-flex;align-items:center;gap:6px;min-height:56px;padding:0 20px 0 12px;border-radius:16px;background:var(--k2);border:2px solid var(--line);color:#fff;font:700 19px Manrope,Inter,sans-serif}.voltar-grande:active{background:var(--k3)}.voltar-grande svg{color:var(--y)}
 :root{--rw:118px;--rh:158px}
 /* câmera de segurança: o topo da tela reserva o espaço dela, nada fica por baixo */
 body.com-rosto .tela.on>.topo{min-height:var(--rh);flex-direction:column;align-items:flex-start;justify-content:center;gap:10px;padding-right:calc(var(--rw) + 14px)}
@@ -160,7 +161,7 @@ h2{font-size:22px;font-weight:800}
 
 <!-- pagamento -->
 <section class="tela" id="pagamento">
-  <div class="topo"><button class="pill" id="voltarCarrinho">‹ Carrinho</button><span class="selo-sim">PAGAMENTO SIMULADO</span></div>
+  <div class="topo"><button class="voltar-grande" id="voltarCarrinho" aria-label="Voltar para o carrinho"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Carrinho</button><span class="selo-sim">PAGAMENTO SIMULADO</span></div>
   <h1>Como quer pagar?</h1>
   <div class="total"><span class="mu">Total</span><span class="num" id="totalPag">R$ 0,00</span></div>
   <div class="formas" id="formas">
