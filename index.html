@@ -97,6 +97,59 @@ h2{font-size:22px;font-weight:800}
 .opcao{min-height:56px;border-radius:14px;background:var(--k);border:2px solid var(--line);display:flex;align-items:center;padding:0 16px;font-weight:600;width:100%}
 .opcao.on{border-color:var(--y)}
 .msg{min-height:22px;font-size:14px;color:#ff8c8c}
+/* grade de produtos (comprar pela tela) */
+#buscaT{padding-bottom:0}
+#buscaT .topo{margin-bottom:10px}
+.g-busca{position:relative;flex:none}
+.g-busca svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--mu);pointer-events:none}
+.g-busca input{width:100%;min-height:56px;border-radius:16px;border:2px solid var(--line);background:var(--k2);color:#fff;padding:0 48px 0 50px;font:500 18px Inter;outline:none;user-select:text}
+.g-busca input:focus{border-color:var(--y)}
+.g-busca input::placeholder{color:#777}
+.g-limpa{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:12px;color:var(--mu);display:none;place-items:center}
+.g-busca.tem .g-limpa{display:grid}
+.cats{display:flex;gap:8px;overflow-x:auto;padding:12px 0 10px;margin:0 -18px;padding-left:18px;padding-right:18px;scrollbar-width:none;flex:none}
+.cats::-webkit-scrollbar{display:none}
+.cat{flex:none;min-height:44px;padding:0 16px;border-radius:999px;background:var(--k2);border:1.5px solid var(--line);color:#ddd;font:600 15px Inter;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.cat.on{background:var(--y);border-color:var(--y);color:#111}
+.cat .n{font-size:12px;opacity:.6;font-weight:700}
+.cat.m18:not(.on){border-color:#5a1d1f;color:#ffb3b5}
+.grade{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start;grid-auto-rows:max-content;padding:2px 0 16px;margin:0 -4px;padding-left:4px;padding-right:4px}
+.card{position:relative;display:flex;flex-direction:column;text-align:left;border-radius:18px;background:var(--k2);border:1.5px solid var(--line);overflow:hidden;transition:transform .12s ease,border-color .15s}
+.card:active{transform:scale(.97)}
+.card.no{border-color:var(--y)}
+.c-foto{aspect-ratio:1;background:#fff;display:grid;place-items:center;padding:12px}
+.c-foto img{max-width:100%;max-height:100%;object-fit:contain}
+.c-foto.sem{background:linear-gradient(145deg,#1f1f1f,#141414)}
+.c-foto .ini{font:800 44px Manrope,Inter,sans-serif;color:var(--y);letter-spacing:-.04em}
+.c-txt{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
+.c-nome{font:600 14.5px/1.25 Inter;color:#eee;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.c-rod{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto}
+.c-preco{font:800 18px Manrope,Inter,sans-serif;color:var(--y);white-space:nowrap}
+.c-add{width:38px;height:38px;border-radius:12px;background:var(--y);color:#111;display:grid;place-items:center;flex:none}
+.c-q{position:absolute;top:8px;right:8px;min-width:30px;height:30px;padding:0 8px;border-radius:999px;background:var(--y);color:#111;font:800 15px Manrope,Inter,sans-serif;display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.c-18{position:absolute;top:8px;left:8px;height:26px;padding:0 8px;border-radius:8px;background:var(--bad);color:#fff;font:800 12px Manrope,Inter,sans-serif;display:grid;place-items:center;letter-spacing:.02em}
+.g-rodape{flex:none;margin:0 -18px;padding:12px 18px max(14px,env(safe-area-inset-bottom));background:linear-gradient(to top,var(--k) 70%,rgba(11,11,11,0));}
+.g-ir{justify-content:space-between;white-space:nowrap;font-size:17px;gap:8px}
+.g-ir .q{background:rgba(0,0,0,.14);border-radius:10px;padding:4px 10px;font-size:15px}
+.g-ir:disabled{opacity:.45}
+.pulo{animation:pulo .35s ease}
+@keyframes pulo{40%{transform:scale(1.04)}}
+@media (prefers-reduced-motion:reduce){.pulo{animation:none}.card{transition:none}}
+.espera-grade{min-height:56px;border-radius:16px;border:2px solid var(--line);background:rgba(22,22,22,.8);color:#fff;font:700 17px Inter;display:flex;align-items:center;justify-content:center;gap:10px;width:min(100%,420px);margin:0 auto 14px}
+/* confirmação de maioridade */
+.idade{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.82);display:none;align-items:flex-end;justify-content:center;padding:16px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.idade.on{display:flex}
+.idade-box{width:min(100%,520px);background:#141414;border:1.5px solid #3a1416;border-radius:26px;padding:26px 22px max(20px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px;text-align:center;animation:sobe .25s ease}
+@keyframes sobe{from{transform:translateY(30px);opacity:0}}
+.idade-selo{width:84px;height:84px;margin:0 auto 4px;border-radius:50%;border:5px solid var(--bad);display:grid;place-items:center;font:800 34px Manrope,Inter,sans-serif;color:#fff;position:relative}
+.idade-selo::after{content:"";position:absolute;width:5px;height:96px;background:var(--bad);transform:rotate(45deg);border-radius:3px}
+.idade-box h2{font-size:24px;line-height:1.15}
+.idade-prod{font:600 15px Inter;color:var(--y)}
+.idade-lei{font-size:14px;color:#cfcfcf;line-height:1.45}
+.idade-cam{display:flex;align-items:center;justify-content:center;gap:8px;font:600 13px Inter;color:#ffb3b5;background:#2a0f10;border-radius:12px;padding:10px 12px}
+.idade-cam i{width:9px;height:9px;border-radius:50%;background:var(--bad);animation:pisca 1.2s infinite}
+@keyframes pisca{50%{opacity:.25}}
+.idade .btn.y{min-height:68px;font-size:19px}
 .busca{max-height:42vh;overflow:auto;border-radius:14px;background:var(--k)}
 .busca button{display:flex;justify-content:space-between;width:100%;padding:14px 16px;border-bottom:1px solid var(--line);text-align:left}
 #leitor{position:fixed;opacity:0;pointer-events:none;left:-100px;top:0;width:10px}
@@ -138,6 +191,7 @@ h2{font-size:22px;font-weight:800}
     <h1>Toque para começar</h1>
     <p class="mu">ou passe o código de barras no leitor</p>
   </div>
+  <button class="espera-grade" id="esperaGrade"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>Escolher produtos pela tela</button>
   <p class="mu" style="text-align:center;font-size:12px">Ambiente monitorado por câmeras · teste: pagamento simulado</p>
 </section>
 
@@ -150,16 +204,29 @@ h2{font-size:22px;font-weight:800}
   </div>
   <div class="lista" id="lista"></div>
   <div class="total"><span class="mu">Total</span><span class="num" id="total">R$ 0,00</span></div>
-  <div class="acoes"><button class="btn g" id="btnBusca">Sem código</button><button class="btn y" id="btnPagar" disabled>Pagar</button></div>
+  <div class="acoes"><button class="btn g" id="btnBusca">Produtos</button><button class="btn y" id="btnPagar" disabled>Pagar</button></div>
   <button class="btn" style="min-height:48px;color:var(--mu);font-size:15px" id="btnCancelar">Cancelar compra</button>
 </section>
 
 <!-- busca manual -->
 <section class="tela" id="buscaT">
-  <div class="topo"><h2>Buscar produto</h2><button class="pill" id="fecharBusca">Voltar</button></div>
-  <input class="campo" id="qBusca" placeholder="Digite o nome" style="letter-spacing:0;text-transform:none;font-size:18px">
-  <div class="busca" id="resBusca" style="margin-top:12px"></div>
+  <div class="topo"><button class="voltar-grande" id="fecharBusca" aria-label="Voltar para o carrinho"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Carrinho</button><h2 style="font-size:22px">Escolha os produtos</h2></div>
+  <div class="g-busca" id="gBusca"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><input id="qBusca" type="search" inputmode="search" autocomplete="off" placeholder="Digite o nome do produto" aria-label="Buscar produto"><button class="g-limpa" id="gLimpa" aria-label="Limpar busca"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button></div>
+  <div class="cats" id="cats" role="tablist" aria-label="Categorias"></div>
+  <div class="grade" id="resBusca"></div>
+  <div class="g-rodape"><button class="btn y g-ir" id="gradeIr" disabled><span class="q" id="gradeQ">0 itens</span><span>Ver carrinho</span><b id="gradeTot">R$ 0,00</b></button></div>
 </section>
+<div class="idade" id="idade" role="dialog" aria-modal="true" aria-labelledby="idadeTit">
+  <div class="idade-box">
+    <div class="idade-selo" aria-hidden="true">18</div>
+    <h2 id="idadeTit">Produto proibido para menores de 18 anos</h2>
+    <p class="idade-prod" id="idadeProd"></p>
+    <p class="idade-lei">Vender, fornecer ou entregar bebida alcoólica a menores de 18 anos é crime (art. 243 do Estatuto da Criança e do Adolescente). Ao confirmar, você declara ter 18 anos ou mais.</p>
+    <div class="idade-cam"><i aria-hidden="true"></i>Local monitorado por câmeras · sua imagem está sendo gravada</div>
+    <button class="btn y" id="idadeSim">Confirmo: tenho 18 anos ou mais</button>
+    <button class="btn g" id="idadeNao">Não tenho 18 anos</button>
+  </div>
+</div>
 
 <!-- pagamento -->
 <section class="tela" id="pagamento">
@@ -226,7 +293,7 @@ const $=s=>document.querySelector(s);
 const brl=c=>'R$ '+(c/100).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
 let token=ls.get('bp-token',null),loja=ls.get('bp-loja',null),cat=ls.get('bp-cat',null),fila=ls.get('bp-fila',[]),voz=ls.get('bp-voz',true);
-let carrinho=[],forma=null,vendaId=null,iniciada=null,stream=null,frontStream=null,detector=null,lendo=false,ultimoCod='',ultimoT=0,inativo=null;
+let maior18Em=null,carrinho=[],forma=null,vendaId=null,iniciada=null,stream=null,frontStream=null,detector=null,lendo=false,ultimoCod='',ultimoT=0,inativo=null;
 
 const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2600)};
 const falar=t=>{if(!voz||!('speechSynthesis' in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';u.rate=1.05;speechSynthesis.speak(u)}catch(e){}};
@@ -254,7 +321,7 @@ function atualizarRede(){const on=navigator.onLine;$('#rede').textContent=on?(fi
 addEventListener('online',()=>{atualizarRede();enviarFila()});addEventListener('offline',atualizarRede);
 
 // ---------- câmera e leitor ----------
-async function ligarCamera(){if(stream)return;try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});const v=$('#video');v.srcObject=stream;await v.play();if('BarcodeDetector' in window){detector=detector||new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});loopLeitura()}else $('#camAviso').textContent='Use o leitor ou "Sem código"'}catch(e){$('#camAviso').textContent='Câmera bloqueada: use o leitor ou "Sem código"'}}
+async function ligarCamera(){if(stream)return;try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});const v=$('#video');v.srcObject=stream;await v.play();if('BarcodeDetector' in window){detector=detector||new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});loopLeitura()}else $('#camAviso').textContent='Use o leitor ou "Produtos"'}catch(e){$('#camAviso').textContent='Câmera bloqueada: use o leitor ou "Produtos"'}}
 function desligarCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}lendo=false}
 async function loopLeitura(){if(lendo)return;lendo=true;const v=$('#video');while(lendo&&stream){try{const r=await detector.detect(v);if(r[0])lido(r[0].rawValue)}catch(e){}await new Promise(r=>setTimeout(r,180))}}
 // câmera frontal: o Android pausa ou congela o vídeo quando ele fica escondido ou a tela apaga; aqui ela é conferida e religada sozinha
@@ -286,17 +353,44 @@ function avisarQtd(id,nome,q){vozPend.set(id,{nome,q});clearTimeout(vozT);vozT=s
 const plural=w=>/[aeiouáéíóúâêôãõ]$/i.test(w)?w+'s':/m$/i.test(w)?w.slice(0,-1)+'ns':/(r|z)$/i.test(w)?w+'es':/al$/i.test(w)?w.slice(0,-2)+'ais':/s$/i.test(w)?w:w+'s';
 const unidFalada=t=>t.replace(/(\d+(?:[.,]\d+)?)\s*kg\b/gi,'$1 quilos').replace(/(\d+(?:[.,]\d+)?)\s*g\b/gi,'$1 gramas').replace(/(\d+(?:[.,]\d+)?)\s*ml\b/gi,'$1 mililitros').replace(/(\d+(?:[.,]\d+)?)\s*l\b/gi,'$1 litros');
 function resumoFalado(){const it=carrinho.map(i=>{const ws=i.nome.trim().split(/\s+/).slice(0,4);if(i.q>1)ws[0]=plural(ws[0]);return i.q+' '+unidFalada(ws.join(' '))});if(!it.length)return '';const lista=it.length>1?it.slice(0,-1).join(', ')+' e '+it.at(-1):it[0];return 'Confira seus produtos: '+lista+'.'}
-function adicionar(p){vitrine(p);iniciarGravacao();if(!vendaId){vendaId=uuid();iniciada=new Date().toISOString()}const x=carrinho.find(i=>i.id===p.id);navigator.vibrate?.(40);if(x){x.q++;avisarQtd(x.id,x.nome,x.q)}else{carrinho.push({id:p.id,nome:p.nome,preco:p.preco,q:1});vozPend.delete(p.id);falar(curto(p.nome)+', '+valorFalado(p.preco))}if(!document.querySelector('#carrinho.on'))mostrar('carrinho');desenhar()}
+function adicionar(p,ficar){if(!p)return;if(p.maior18&&!maior18Em){pedirIdade(p,ficar);return}vitrine(p);iniciarGravacao();if(!vendaId){vendaId=uuid();iniciada=new Date().toISOString()}const x=carrinho.find(i=>i.id===p.id);navigator.vibrate?.(40);if(x){x.q++;avisarQtd(x.id,x.nome,x.q)}else{carrinho.push({id:p.id,nome:p.nome,preco:p.preco,q:1});vozPend.delete(p.id);falar(curto(p.nome)+', '+valorFalado(p.preco))}if(!ficar&&!document.querySelector('#carrinho.on'))mostrar('carrinho');desenhar()}
 function totalC(){return carrinho.reduce((s,i)=>s+i.preco*i.q,0)}
 function desenhar(){const n=carrinho.reduce((s,i)=>s+i.q,0);$('#contItens').textContent=n+(n===1?' item':' itens');$('#lista').innerHTML=carrinho.length?carrinho.map((i,k)=>`<div class="item"><div><b>${i.nome.replace(/</g,'&lt;')}</b><div class="mu">${brl(i.preco)} un.</div></div><b class="num" style="font-size:18px;align-self:center">${brl(i.preco*i.q)}</b><div class="qtd"><button data-k="${k}" data-d="-1" aria-label="Menos um">–</button><b>${i.q}</b><button data-k="${k}" data-d="1" aria-label="Mais um">+</button></div></div>`).join(''):'<div class="vazio">Leia o código de barras do produto.<br>Sem código? Toque em "Sem código".</div>';$('#total').textContent=brl(totalC());$('#btnPagar').disabled=!carrinho.length}
 $('#lista').onclick=e=>{const b=e.target.closest('button[data-k]');if(!b)return;const i=carrinho[+b.dataset.k];i.q+=+b.dataset.d;navigator.vibrate?.(25);avisarQtd(i.id,i.nome,Math.max(i.q,0));if(i.q<=0){carrinho.splice(+b.dataset.k,1);api('evento',{tipo:'item_removido',venda_id:vendaId,itens:[{id:i.id,nome:i.nome}]}).catch(()=>{})}desenhar()};
 $('#toqueEspera').onclick=e=>{if(e.target.closest('#logoSecreto'))return;mostrar('carrinho');desenhar();falar('Olá! Passe o código de barras dos seus produtos.')};
 $('#btnCancelar').onclick=()=>cancelar('Compra cancelada');
-$('#btnBusca').onclick=()=>{mostrar('buscaT');$('#qBusca').value='';buscar('');setTimeout(()=>$('#qBusca').focus(),80)};
-$('#fecharBusca').onclick=()=>mostrar('carrinho');
-$('#qBusca').oninput=e=>buscar(e.target.value);
-function buscar(q){q=q.toLowerCase();const r=(cat?.produtos||[]).filter(p=>p.nome.toLowerCase().includes(q)).slice(0,40);$('#resBusca').innerHTML=r.map(p=>`<button data-id="${p.id}"><span>${p.nome.replace(/</g,'&lt;')}</span><b>${brl(p.preco)}</b></button>`).join('')||'<div class="vazio">Nada encontrado</div>'}
-$('#resBusca').onclick=e=>{const b=e.target.closest('button[data-id]');if(!b)return;adicionar(cat.produtos.find(p=>p.id===b.dataset.id));mostrar('carrinho')};
+// ---------- grade de produtos: comprar tudo pela tela ----------
+let gCat='todos';const semAc=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function abrirGrade(){gCat='todos';$('#qBusca').value='';$('#gBusca').classList.remove('tem');mostrar('buscaT');desenharCats();buscar('');$('#resBusca').scrollTop=0;falar('Escolha os produtos na tela. Toque no produto para adicionar.')}
+$('#btnBusca').onclick=abrirGrade;
+$('#esperaGrade').onclick=e=>{e.stopPropagation();abrirGrade()};
+$('#fecharBusca').onclick=()=>{mostrar('carrinho');desenhar()};
+$('#gradeIr').onclick=()=>{mostrar('carrinho');desenhar()};
+$('#qBusca').oninput=e=>{$('#gBusca').classList.toggle('tem',!!e.target.value);if(e.target.value&&gCat!=='todos'){gCat='todos';desenharCats()}buscar(e.target.value);armarInatividade('buscaT')};
+$('#qBusca').onkeydown=e=>{const v=e.target.value.trim();if(e.key==='Enter'&&/^\d{6,}$/.test(v)){e.preventDefault();lido(v);e.target.value='';$('#gBusca').classList.remove('tem');buscar('')}};
+$('#gLimpa').onclick=()=>{$('#qBusca').value='';$('#gBusca').classList.remove('tem');buscar('')};
+function desenharCats(){const ps=cat?.produtos||[];const cs=(cat?.categorias||[]).map(c=>({id:c.id,nome:c.nome,n:ps.filter(p=>p.categoria===c.id).length})).filter(c=>c.n);const m18=ps.filter(p=>p.maior18).length;const semCat=cs.length?ps.filter(p=>!p.categoria).length:0;
+ const it=[{id:'todos',nome:'Todos',n:ps.length},...cs,...(semCat?[{id:'outros',nome:'Outros',n:semCat}]:[]),...(m18?[{id:'m18',nome:'Bebidas alcoólicas · 18+',n:m18,m18:1}]:[])];
+ $('#cats').innerHTML=it.map(c=>`<button class="cat${c.id===gCat?' on':''}${c.m18?' m18':''}" role="tab" aria-selected="${c.id===gCat}" data-c="${c.id}">${esc(c.nome)}<span class="n">${c.n}</span></button>`).join('')}
+$('#cats').onclick=e=>{const b=e.target.closest('.cat');if(!b)return;gCat=b.dataset.c;$('#cats').querySelectorAll('.cat').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-selected',on)});b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});buscar($('#qBusca').value);$('#resBusca').scrollTop=0;armarInatividade('buscaT')};
+function buscar(q){const t=semAc(q).trim().split(/\s+/).filter(Boolean);let r=cat?.produtos||[];
+ if(gCat==='m18')r=r.filter(p=>p.maior18);else if(gCat==='outros')r=r.filter(p=>!p.categoria);else if(gCat!=='todos')r=r.filter(p=>p.categoria===gCat);
+ if(t.length)r=r.filter(p=>{const n=semAc(p.nome);return t.every(w=>n.includes(w))||p.codigos?.some(c=>String(c).includes(q.trim()))});
+ r=[...r].sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')).slice(0,300);
+ $('#resBusca').innerHTML=r.map(cardProduto).join('')||`<div class="vazio" style="grid-column:1/-1">Nenhum produto encontrado${q?' para “'+esc(q)+'”':''}</div>`;
+ $('#resBusca').querySelectorAll('img[data-src]').forEach(im=>{im.onerror=()=>{const f=im.parentNode;f.className='c-foto sem';f.innerHTML='<span class="ini">'+esc(im.alt.trim().charAt(0).toUpperCase())+'</span>'};im.src=im.dataset.src});
+ rodapeGrade()}
+function cardProduto(p){const q=carrinho.find(i=>i.id===p.id)?.q||0;const ini=esc(p.nome.trim().charAt(0).toUpperCase());
+ return `<button class="card${q?' no':''}" data-id="${p.id}" aria-label="${esc(p.nome)}, ${brl(p.preco)}${p.maior18?', proibido para menores de 18 anos':''}"><div class="c-foto${p.foto?'':' sem'}">${p.foto?`<img data-src="${esc(p.foto)}" alt="${esc(p.nome)}" loading="lazy" crossorigin="anonymous">`:`<span class="ini">${ini}</span>`}</div>${p.maior18?'<span class="c-18">18+</span>':''}${q?`<span class="c-q">${q}</span>`:''}<div class="c-txt"><span class="c-nome">${esc(p.nome)}</span><div class="c-rod"><span class="c-preco">${brl(p.preco)}</span><span class="c-add" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg></span></div></div></button>`}
+function rodapeGrade(){const n=carrinho.reduce((s,i)=>s+i.q,0);$('#gradeQ').textContent=n+(n===1?' item':' itens');$('#gradeTot').textContent=brl(totalC());$('#gradeIr').disabled=!n}
+function atualizarCard(id){const p=cat?.produtos.find(x=>x.id===id);const b=$('#resBusca').querySelector(`.card[data-id="${id}"]`);if(!p||!b)return;const q=carrinho.find(i=>i.id===id)?.q||0;b.classList.toggle('no',!!q);let c=b.querySelector('.c-q');if(q){if(!c){c=document.createElement('span');c.className='c-q';b.appendChild(c)}c.textContent=q;c.classList.remove('pulo');void c.offsetWidth;c.classList.add('pulo')}else c?.remove();rodapeGrade();const g=$('#gradeIr');g.classList.remove('pulo');void g.offsetWidth;g.classList.add('pulo')}
+$('#resBusca').onclick=e=>{const b=e.target.closest('.card[data-id]');if(!b)return;armarInatividade('buscaT');const p=cat.produtos.find(x=>x.id===b.dataset.id);adicionar(p,true);atualizarCard(p.id)};
+// ---------- maioridade: produto 18+ só entra no carrinho depois da confirmação na tela (uma vez por compra) ----------
+let idadePend=null;
+function pedirIdade(p,ficar){idadePend={p,ficar};$('#idadeProd').textContent=p.nome;$('#idade').classList.add('on');navigator.vibrate?.([60,40,60]);falar('Produto proibido para menores de 18 anos. Se você tem 18 anos ou mais, confirme na tela.');setTimeout(()=>$('#idadeSim').focus({preventScroll:true}),60)}
+function fecharIdade(ok){const pend=idadePend;idadePend=null;$('#idade').classList.remove('on');if(!pend)return;if(ok){maior18Em=new Date().toISOString();adicionar(pend.p,pend.ficar);atualizarCard(pend.p.id)}else{toast('Produto não adicionado');falar('Produto não adicionado.')}setTimeout(()=>$('#leitor').focus({preventScroll:true}),60)}
+$('#idadeSim').onclick=()=>fecharIdade(true);$('#idadeNao').onclick=()=>fecharIdade(false);
 
 // ---------- pagamento (simulado) ----------
 $('#btnPagar').onclick=()=>{clearTimeout(vozT);vozPend.clear();forma=null;document.querySelectorAll('.forma').forEach(f=>f.classList.remove('on'));$('#cobranca').innerHTML='<p class="mu">Escolha a forma de pagamento</p>';$('#totalPag').textContent=brl(totalC());mostrar('pagamento');falar(resumoFalado()+' Total: '+valorFalado(totalC())+'. Escolha como quer pagar.')};
@@ -305,11 +399,11 @@ $('#formas').onclick=e=>{const b=e.target.closest('.forma');if(!b)return;forma=b
  $('#cobranca').innerHTML=(forma==='pix'?`<div class="qr" aria-label="QR do Pix (simulado)">${qrFake()}</div>`:'')+`<p style="font-size:18px">${txt}</p><p class="mu" style="font-size:13px">Teste: nada será cobrado. Escolha o resultado:</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%"><button class="btn bad" id="simNeg">Recusado</button><button class="btn ok" id="simOk">Aprovado</button></div>`;falar(txt);
  $('#simOk').onclick=aprovar;requestAnimationFrame(()=>$('#simOk').scrollIntoView({block:'end',behavior:'smooth'}));$('#simNeg').onclick=()=>{api('evento',{tipo:'pagamento_negado',venda_id:vendaId,itens:carrinho}).catch(()=>{});falar('Pagamento recusado. Tente outra forma.');toast('Pagamento recusado')}};
 function qrFake(){let s='<svg viewBox="0 0 29 29" width="172" height="172" shape-rendering="crispEdges">';const r=crypto.getRandomValues(new Uint8Array(841));for(let y=0;y<29;y++)for(let x=0;x<29;x++){const f=(x<8&&y<8)||(x>20&&y<8)||(x<8&&y>20);const on=f?((x%7===0||y%7===0||x%7===6||y%7===6||(x%7>1&&x%7<5&&y%7>1&&y%7<5))&&!(x===7||y===7||x===21||y===21)):r[y*29+x]>140;if(on)s+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}return s+'</svg>'}
-async function aprovar(){const v={id:vendaId,iniciada_em:iniciada,itens:carrinho.map(i=>({produto_id:i.id,quantidade:i.q})),forma:forma==='tapon'?'credito':forma,simulado:true};const tot=totalC();
+async function aprovar(){const v={id:vendaId,iniciada_em:iniciada,itens:carrinho.map(i=>({produto_id:i.id,quantidade:i.q})),forma:forma==='tapon'?'credito':forma,simulado:true,maior18_confirmado_em:maior18Em};const tot=totalC();
  try{await api('venda',v)}catch(e){if(/inválid|sem preço|vazio/i.test(e.message)){toast(e.message);return}fila.push(v);ls.set('bp-fila',fila);atualizarRede()}
  $('#okTxt').textContent=brl(tot)+' · obrigado!';mostrar('ok');falar('Compra finalizada. Obrigado e volte sempre!');navigator.vibrate?.([60,40,60]);pararGravacao('paga');limpar();setTimeout(()=>mostrar('espera'),5000)}
 function cancelar(motivo){if(carrinho.length)pararGravacao(/Tempo/.test(motivo)?'abandonada':'cancelada');else pararGravacao(null);if(carrinho.length)api('evento',{tipo:'venda_cancelada',venda_id:vendaId,itens:carrinho.map(i=>({id:i.id,nome:i.nome,q:i.q}))}).catch(()=>{});const tinha=carrinho.length;limpar();if(!tinha){mostrar('espera');return}$('#ruimTxt').textContent=motivo+'. Devolva os produtos à prateleira.';mostrar('ruim');falar('Compra não finalizada. Devolva os produtos à prateleira.');navigator.vibrate?.([200,80,200]);setTimeout(()=>mostrar('espera'),6000)}
-function limpar(){clearTimeout(vozT);vozPend.clear();carrinho=[];vendaId=null;iniciada=null;forma=null;desenhar()}
+function limpar(){clearTimeout(vozT);vozPend.clear();fecharIdade(false);maior18Em=null;carrinho=[];vendaId=null;iniciada=null;forma=null;desenhar()}
 
 // ---------- admin escondido: 5 toques no logo + PIN ----------
 const hashPin=async p=>{const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('beep:'+p));return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')};
