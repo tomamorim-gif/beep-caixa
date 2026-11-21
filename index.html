@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b0b0b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Beep · Caixa</title>
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: balcão de conveniência premium, direto, sem atrito
+   IDEA: a etiqueta amarela de preço da gôndola, grande e legível de longe
+   PICTURE: a câmera lendo o código, o carrinho como recibo vivo
+   COLOUR and TYPE: preto da marca, amarelo Beep #FFD60A, verde aprovação, vermelho recusa; Manrope + Inter
+   LAYOUT: uma coluna em pé, polegar alcança tudo, botões de 64px */
+:root{--y:#FFD60A;--k:#0b0b0b;--k2:#161616;--k3:#232323;--w:#fff;--mu:#9a9a9a;--ok:#0fa958;--bad:#e5262d;--line:#2b2b2b;--r:22px}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent;min-width:0}
+html,body{height:100%;background:var(--k);color:var(--w);font:16px/1.45 Inter,system-ui,sans-serif;overscroll-behavior:none;user-select:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input{font:inherit}
+.tela{position:fixed;inset:0;display:none;flex-direction:column;padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom))}
+.tela.on{display:flex}
+h1,h2,.num{font-family:Manrope,Inter,sans-serif;letter-spacing:-.02em}
+h1{font-size:34px;line-height:1.05;font-weight:800}
+h2{font-size:22px;font-weight:800}
+.mu{color:var(--mu)}
+.btn{min-height:64px;border-radius:18px;font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 20px;width:100%}
+.btn.y{background:var(--y);color:#111}.btn.g{background:var(--k3)}.btn.ok{background:var(--ok)}.btn.bad{background:var(--bad)}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.4}
+.topo{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.logo{height:44px;border-radius:10px}
+.pill{font:600 12px Inter;padding:6px 10px;border-radius:999px;background:var(--k3);color:var(--mu);white-space:nowrap}
+.pill.on{color:#111;background:var(--y)}
+/* espera */
+#espera{justify-content:space-between;background:radial-gradient(120% 70% at 50% 0%,#2a2400 0%,var(--k) 60%)}
+#espera .centro{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px}
+#espera .logoG{width:min(78vw,360px);border-radius:24px;box-shadow:0 30px 80px rgba(255,214,10,.15)}
+.pulso{width:120px;height:120px;border-radius:50%;background:var(--y);color:#111;display:grid;place-items:center;animation:p 2.2s ease-in-out infinite}
+.pulso svg{width:56px;height:56px}
+@keyframes p{0%,100%{box-shadow:0 0 0 0 rgba(255,214,10,.45)}50%{box-shadow:0 0 0 26px rgba(255,214,10,0)}}
+@media (prefers-reduced-motion:reduce){.pulso{animation:none}}
+/* câmera */
+.vitrine{position:relative;border-radius:var(--r);overflow:hidden;background:var(--k2);aspect-ratio:4/3;flex:none;display:flex}
+.vit-vazio{margin:auto;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--mu);text-align:center;padding:20px}.vit-vazio svg{color:var(--y);opacity:.9}.vit-vazio b{color:#fff;font:700 19px Manrope,Inter,sans-serif}.vit-vazio span{font-size:14px}
+.vit-prod{flex:1;display:flex;flex-direction:column;animation:vitIn .28s cubic-bezier(.2,.8,.2,1)}
+.vit-foto{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#fff;padding:14px}.vit-foto img{max-width:100%;max-height:100%;object-fit:contain}
+.vit-foto.sem{background:linear-gradient(145deg,#1d1d1d,#121212)}.vit-foto .ini{font:800 72px Manrope,Inter,sans-serif;color:var(--y);letter-spacing:-.04em}
+.vit-info{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;background:var(--k2)}.vit-nome{font:600 16px Inter;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.vit-preco{font:800 22px Manrope,Inter,sans-serif;color:var(--y);white-space:nowrap}
+@keyframes vitIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.cam video{width:100%;height:100%;object-fit:cover}
+.cam .mira{position:absolute;left:12%;right:12%;top:38%;height:24%;border:3px solid var(--y);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.cam .aviso{position:absolute;left:0;right:0;bottom:10px;text-align:center;font:600 13px Inter;color:#fff;text-shadow:0 1px 4px #000}
+.rosto{position:fixed;top:max(14px,env(safe-area-inset-top));right:14px;width:88px;height:118px;border-radius:16px;overflow:hidden;border:2px solid var(--y);background:#000;z-index:5;display:none}
+.rosto video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.rosto span{position:absolute;bottom:0;left:0;right:0;font:700 9px Inter;background:rgba(0,0,0,.6);text-align:center;padding:3px;letter-spacing:.02em}
+/* carrinho */
+.lista{flex:1;overflow:auto;margin:12px 0;border-radius:var(--r);background:var(--k2)}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.item b{font-weight:600}
+.qtd{display:flex;align-items:center;gap:10px}
+.qtd button{width:44px;height:44px;border-radius:12px;background:var(--k3);font-size:22px;font-weight:700}
+.vazio{padding:36px 20px;text-align:center;color:var(--mu)}
+.total{display:flex;align-items:baseline;justify-content:space-between;padding:6px 4px 12px}
+.total .num{font-size:40px;font-weight:800;color:var(--y)}
+.acoes{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+/* pagamento */
+.formas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.forma{min-height:96px;border-radius:18px;background:var(--k2);border:2px solid var(--line);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:14px;gap:4px;text-align:left}
+.forma b{font-size:18px}.forma small{color:var(--mu)}
+.forma.on{border-color:var(--y);background:#1d1a05}
+.cobranca{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+.qr{width:200px;height:200px;border-radius:16px;background:#fff;display:grid;place-items:center;padding:14px}
+.selo-sim{font:700 12px Inter;color:#111;background:var(--y);padding:6px 12px;border-radius:999px}
+/* resultado */
+#ok{background:var(--ok);align-items:center;justify-content:center;text-align:center;gap:18px}
+#ruim{background:var(--bad);align-items:center;justify-content:center;text-align:center;gap:18px}
+.big{font-size:44px;line-height:1.02}
+.marca{width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center}
+.marca svg{width:80px;height:80px}
+/* ativação e admin */
+.cartao{background:var(--k2);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px}
+.campo{min-height:60px;border-radius:14px;border:2px solid var(--line);background:var(--k);color:#fff;padding:0 16px;font-size:20px;letter-spacing:.08em;text-transform:uppercase;width:100%}
+.campo:focus{outline:none;border-color:var(--y)}
+.opcao{min-height:56px;border-radius:14px;background:var(--k);border:2px solid var(--line);display:flex;align-items:center;padding:0 16px;font-weight:600;width:100%}
+.opcao.on{border-color:var(--y)}
+.msg{min-height:22px;font-size:14px;color:#ff8c8c}
+.busca{max-height:42vh;overflow:auto;border-radius:14px;background:var(--k)}
+.busca button{display:flex;justify-content:space-between;width:100%;padding:14px 16px;border-bottom:1px solid var(--line);text-align:left}
+#leitor{position:fixed;opacity:0;pointer-events:none;left:-100px;top:0;width:10px}
+.pinb{height:84px;border-radius:20px;background:var(--k2);font:700 28px Manrope,Inter,sans-serif}.pinb:active{background:var(--k3)}
+.ponto{width:18px;height:18px;border-radius:50%;border:2px solid var(--mu)}.ponto.on{background:var(--y);border-color:var(--y)}
+.toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);background:#fff;color:#111;padding:12px 18px;border-radius:14px;font-weight:600;z-index:20;display:none;max-width:90vw;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- ativação -->
+<section class="tela" id="ativar">
+  <div class="topo"><img class="logo" src="logo.png" alt="Beep"><span class="pill">Ativação do aparelho</span></div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px">
+    <h1>Ative este aparelho como caixa</h1>
+    <p class="mu">Digite o código de ativação que o dono da loja recebeu. Ele vale uma vez só.</p>
+    <div class="cartao" id="passo1">
+      <input class="campo" id="codigo" placeholder="XXXX-XXXX" maxlength="9" autocomplete="off" autocapitalize="characters" inputmode="text">
+      <div class="msg" id="msg1"></div>
+      <button class="btn y" id="btnCodigo">Continuar</button>
+    </div>
+    <div class="cartao" id="passo2" style="display:none">
+      <h2>Em qual loja ele fica?</h2>
+      <div id="lojas" style="display:flex;flex-direction:column;gap:8px;max-height:40vh;overflow:auto"></div>
+      <input class="campo" id="nomeAp" placeholder="Nome do aparelho" value="Telefone teste" style="letter-spacing:0;text-transform:none;font-size:17px">
+      <input class="campo" id="pinNovo" placeholder="Crie um PIN do gerente (4 a 6 números)" inputmode="numeric" maxlength="6" type="password" autocomplete="off" style="letter-spacing:.3em;font-size:18px">
+      <div class="msg" id="msg2"></div>
+      <button class="btn y" id="btnAtivar">Ativar caixa</button>
+    </div>
+  </div>
+</section>
+
+<!-- espera -->
+<section class="tela" id="espera">
+  <div class="topo"><span class="pill" id="lojaNome">—</span><span class="pill" id="rede">online</span></div>
+  <div class="centro" id="toqueEspera">
+    <img class="logoG" src="logo.png" alt="Beep Smart Mercadinhos" id="logoSecreto">
+    <div class="pulso" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg></div>
+    <h1>Toque para começar</h1>
+    <p class="mu">ou passe o código de barras no leitor</p>
+  </div>
+  <p class="mu" style="text-align:center;font-size:12px">Ambiente monitorado por câmeras · teste: pagamento simulado</p>
+</section>
+
+<!-- carrinho -->
+<section class="tela" id="carrinho">
+  <div class="topo"><img class="logo" src="logo.png" alt="Beep"><span class="pill on" id="contItens">0 itens</span></div>
+  <div class="vitrine" id="vitrine">
+    <div class="vit-vazio" id="vitVazio"><svg viewBox="0 0 64 40" width="76" height="48" aria-hidden="true"><g fill="currentColor"><rect x="2" y="2" width="3" height="36"/><rect x="8" y="2" width="1.5" height="36"/><rect x="12" y="2" width="4" height="36"/><rect x="19" y="2" width="1.5" height="36"/><rect x="23" y="2" width="3" height="36"/><rect x="29" y="2" width="1.5" height="36"/><rect x="33" y="2" width="5" height="36"/><rect x="41" y="2" width="1.5" height="36"/><rect x="45" y="2" width="3" height="36"/><rect x="51" y="2" width="1.5" height="36"/><rect x="55" y="2" width="4" height="36"/><rect x="61" y="2" width="1.5" height="36"/></g></svg><b>Passe o código de barras no leitor</b><span>O produto aparece aqui</span></div>
+    <div class="vit-prod" id="vitProd" style="display:none"><div class="vit-foto" id="vitFoto"></div><div class="vit-info"><span class="vit-nome" id="vitNome"></span><span class="vit-preco" id="vitPreco"></span></div></div>
+  </div>
+  <div class="lista" id="lista"></div>
+  <div class="total"><span class="mu">Total</span><span class="num" id="total">R$ 0,00</span></div>
+  <div class="acoes"><button class="btn g" id="btnBusca">Sem código</button><button class="btn y" id="btnPagar" disabled>Pagar</button></div>
+  <button class="btn" style="min-height:48px;color:var(--mu);font-size:15px" id="btnCancelar">Cancelar compra</button>
+</section>
+
+<!-- busca manual -->
+<section class="tela" id="buscaT">
+  <div class="topo"><h2>Buscar produto</h2><button class="pill" id="fecharBusca">Voltar</button></div>
+  <input class="campo" id="qBusca" placeholder="Digite o nome" style="letter-spacing:0;text-transform:none;font-size:18px">
+  <div class="busca" id="resBusca" style="margin-top:12px"></div>
+</section>
+
+<!-- pagamento -->
+<section class="tela" id="pagamento">
+  <div class="topo"><button class="pill" id="voltarCarrinho">‹ Carrinho</button><span class="selo-sim">PAGAMENTO SIMULADO</span></div>
+  <h1>Como quer pagar?</h1>
+  <div class="total"><span class="mu">Total</span><span class="num" id="totalPag">R$ 0,00</span></div>
+  <div class="formas" id="formas">
+    <button class="forma" data-f="pix"><b>Pix</b><small>QR na tela</small></button>
+    <button class="forma" data-f="debito"><b>Débito</b><small>Na maquininha</small></button>
+    <button class="forma" data-f="credito"><b>Crédito</b><small>Na maquininha</small></button>
+    <button class="forma" data-f="tapon"><b>Aproximação</b><small>Encoste o cartão</small></button>
+  </div>
+  <div class="cobranca" id="cobranca"></div>
+</section>
+
+<!-- resultados -->
+<section class="tela" id="ok"><div class="marca"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h1 class="big">Compra finalizada</h1><p style="font-size:20px" id="okTxt">Obrigado!</p><p style="opacity:.85">Pode levar seus produtos</p></section>
+<section class="tela" id="ruim"><div class="marca"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></div><h1 class="big">Compra não finalizada</h1><p style="font-size:20px" id="ruimTxt">Os produtos devem voltar à prateleira</p></section>
+
+<!-- trava: caixa não vende em aba do navegador -->
+<div id="instalar" style="display:none;position:fixed;inset:0;z-index:90;background:#0b0b0b;padding:28px 24px;flex-direction:column;gap:18px;overflow:auto">
+  <img src="logo.png" alt="Beep" id="logoInst" style="height:44px;width:auto;align-self:flex-start">
+  <h2 style="font:800 28px/1.15 Manrope,Inter,sans-serif;margin-top:18px">Instale o caixa para usar</h2>
+  <p style="color:var(--mu);font-size:16px;line-height:1.5">Aberto no navegador, a barra do Google fica liberada e qualquer pessoa pode navegar. Instalado, o caixa abre em tela cheia, sem barra.</p>
+  <button class="btn" id="btnInstalar" style="display:none">Instalar o Beep Caixa</button>
+  <div style="background:var(--k2);border-radius:18px;padding:18px;font-size:15px;line-height:1.6">
+    <b>Se o botão não aparecer:</b><br>1. Toque nos três pontinhos (⋮) do Chrome, no canto de cima.<br>2. Toque em <b>Instalar app</b> (ou <b>Adicionar à tela inicial › Instalar</b>).<br>3. Abra o <b>Beep Caixa</b> pelo ícone na tela inicial.<br>4. Depois fixe o app (Recentes ▢ › ícone › Fixar).
+  </div>
+</div>
+
+<!-- PIN do admin -->
+<section class="tela" id="pinT">
+  <div class="topo"><h2 id="pinTit">PIN do gerente</h2><button class="pill" id="pinVoltar">Voltar</button></div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:22px">
+    <div id="pinPontos" style="display:flex;gap:14px"></div>
+    <div class="msg" id="pinMsg" style="text-align:center"></div>
+    <div id="pinTec" style="display:grid;grid-template-columns:repeat(3,84px);gap:12px"></div>
+  </div>
+</section>
+
+<!-- admin (5 toques no logo) -->
+<section class="tela" id="admin">
+  <div class="topo"><h2>Administração</h2><button class="pill" id="fecharAdmin">Fechar</button></div>
+  <div class="cartao">
+    <div><b id="admLoja">—</b><br><span class="mu" id="admInfo"></span></div>
+    <button class="btn g" id="admSync">Atualizar produtos e preços</button>
+    <button class="btn g" id="admFila">Enviar vendas pendentes</button>
+    <button class="btn g" id="admVoz">Voz: ligada</button>
+    <button class="btn g" id="admPin">Trocar PIN do gerente</button>
+    <button class="btn g" id="admTela">Como travar o celular no caixa</button>
+    <button class="btn bad" id="admSair">Desativar este aparelho</button>
+  </div>
+  <p class="mu" style="margin-top:14px;font-size:13px">Teste: as vendas ficam marcadas como teste no sistema e não entram no faturamento. Para vender de verdade faltam a maquininha, o Pix real e a NFC-e.</p>
+</section>
+
+<div class="rosto" id="rosto"><video id="vRosto" playsinline muted></video><span>VOCÊ ESTÁ SENDO FILMADO</span></div>
+<input id="leitor" inputmode="none" autocomplete="off" aria-hidden="true" tabindex="-1">
+<div class="toast" id="toast"></div>
+
+<script>
+{
+const API='https://gdnvjpmpfgautrmtkjmx.supabase.co/functions/v1/pdv';
+const $=s=>document.querySelector(s);
+const brl=c=>'R$ '+(c/100).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
+let token=ls.get('bp-token',null),loja=ls.get('bp-loja',null),cat=ls.get('bp-cat',null),fila=ls.get('bp-fila',[]),voz=ls.get('bp-voz',true);
+let carrinho=[],forma=null,vendaId=null,iniciada=null,stream=null,frontStream=null,detector=null,lendo=false,ultimoCod='',ultimoT=0,inativo=null;
+
+const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2600)};
+const falar=t=>{if(!voz||!('speechSynthesis' in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';u.rate=1.05;speechSynthesis.speak(u)}catch(e){}};
+const valorFalado=c=>{const r=Math.floor(c/100),cc=c%100;return (r?r+(r===1?' real':' reais'):'')+(r&&cc?' e ':'')+(cc?cc+' centavos':'')||'zero'};
+async function api(acao,corpo={}){const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(r.status===401){desativar(true);throw new Error(j.erro)}if(!r.ok)throw new Error(j.erro||'Erro');return j}
+const uuid=()=>crypto.randomUUID?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
+
+function mostrar(id){document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on',t.id===id));const comRosto=['carrinho','pagamento','buscaT'].includes(id);$('#rosto').style.display=comRosto&&frontStream?'block':'none';desligarCamera();if(id==='carrinho'&&!carrinho.length)vitrine(null);if(['espera','carrinho','pagamento'].includes(id))setTimeout(()=>$('#leitor').focus({preventScroll:true}),60);armarInatividade(id)}
+function armarInatividade(id){clearTimeout(inativo);if(['carrinho','pagamento','buscaT'].includes(id))inativo=setTimeout(()=>{if(carrinho.length)cancelar('Tempo esgotado: compra não finalizada');else mostrar('espera')},120000)}
+document.addEventListener('pointerdown',()=>{const t=document.querySelector('.tela.on');if(t)armarInatividade(t.id)},{passive:true});
+
+// ---------- ativação ----------
+let codigoAtual='',lojaEscolhida=null;
+$('#codigo').addEventListener('input',e=>{let v=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);e.target.value=v.length>4?v.slice(0,4)+'-'+v.slice(4):v});
+$('#btnCodigo').onclick=async()=>{const b=$('#btnCodigo');codigoAtual=$('#codigo').value;$('#msg1').textContent='';b.disabled=true;try{const r=await api('lojas',{codigo:codigoAtual});$('#lojas').innerHTML=r.lojas.map(l=>`<button class="opcao" data-id="${l.id}">${l.nome.replace(/</g,'&lt;')}</button>`).join('');$('#passo1').style.display='none';$('#passo2').style.display='flex'}catch(e){$('#msg1').textContent=e.message}b.disabled=false};
+$('#lojas').onclick=e=>{const b=e.target.closest('.opcao');if(!b)return;lojaEscolhida=b.dataset.id;document.querySelectorAll('#lojas .opcao').forEach(x=>x.classList.toggle('on',x===b))};
+$('#btnAtivar').onclick=async()=>{if(!lojaEscolhida){$('#msg2').textContent='Escolha a loja';return}const pinN=$('#pinNovo').value.replace(/\D/g,'');if(pinN.length<4){$('#msg2').textContent='Crie um PIN de 4 a 6 números';return}const b=$('#btnAtivar');b.disabled=true;try{const r=await api('ativar',{codigo:codigoAtual,local_id:lojaEscolhida,nome:$('#nomeAp').value});token=r.token;loja=r.loja;ls.set('bp-token',token);ls.set('bp-loja',loja);ls.set('bp-pin',await hashPin(pinN));await sincronizar();iniciar();toast('Caixa ativado na '+loja.nome)}catch(e){$('#msg2').textContent=e.message}b.disabled=false};
+
+// ---------- catálogo e fila ----------
+async function sincronizar(silencioso){try{const r=await api('catalogo');cat={...r,mapa:null};ls.set('bp-cat',cat);$('#lojaNome').textContent=r.loja||loja?.nome||'—';if(!silencioso)toast(r.produtos.length+' produtos atualizados');return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
+const nz=c=>String(c).replace(/\D/g,'').replace(/^0+/,'');
+function porCodigo(c){if(!cat)return null;const k=nz(c);return cat.produtos.find(p=>p.codigos.some(x=>nz(x)===k))||null}
+async function enviarFila(){if(!fila.length)return;const resto=[];for(const v of fila){try{await api('venda',v)}catch(e){if(!/inválid|sem preço|vazio/i.test(e.message))resto.push(v)}}fila=resto;ls.set('bp-fila',fila);atualizarRede()}
+function atualizarRede(){const on=navigator.onLine;$('#rede').textContent=on?(fila.length?fila.length+' venda(s) na fila':'online'):'sem internet';$('#rede').classList.toggle('on',!on||fila.length>0)}
+addEventListener('online',()=>{atualizarRede();enviarFila()});addEventListener('offline',atualizarRede);
+
+// ---------- câmera e leitor ----------
+async function ligarCamera(){if(stream)return;try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});const v=$('#video');v.srcObject=stream;await v.play();if('BarcodeDetector' in window){detector=detector||new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});loopLeitura()}else $('#camAviso').textContent='Use o leitor ou "Sem código"'}catch(e){$('#camAviso').textContent='Câmera bloqueada: use o leitor ou "Sem código"'}}
+function desligarCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}lendo=false}
+async function loopLeitura(){if(lendo)return;lendo=true;const v=$('#video');while(lendo&&stream){try{const r=await detector.detect(v);if(r[0])lido(r[0].rawValue)}catch(e){}await new Promise(r=>setTimeout(r,180))}}
+async function ligarRosto(){try{frontStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:320}},audio:false});const v=$('#vRosto');v.srcObject=frontStream;await v.play()}catch(e){frontStream=null}}
+// leitor Bluetooth/USB funciona como teclado: digita o código e Enter
+const leitor=$('#leitor');let buf='';leitor.addEventListener('keydown',e=>{if(e.key==='Enter'){if(buf.length>=6)lido(buf);buf='';leitor.value='';e.preventDefault()}else if(/^\d$/.test(e.key))buf+=e.key});
+document.addEventListener('keydown',e=>{if(document.activeElement===leitor||/INPUT/.test(document.activeElement?.tagName||''))return;if(/^\d$/.test(e.key)){buf+=e.key}else if(e.key==='Enter'&&buf.length>=6){lido(buf);buf=''}});
+function lido(cod){cod=String(cod).replace(/\D/g,'');const t=Date.now();if(cod===ultimoCod&&t-ultimoT<1500)return;ultimoCod=cod;ultimoT=t;const p=porCodigo(cod);if(!p){navigator.vibrate?.(200);toast('Produto não encontrado: '+cod);falar('Produto não encontrado');return}adicionar(p)}
+
+// ---------- carrinho ----------
+function vitrine(p){if(!p){$('#vitVazio').style.display='flex';$('#vitProd').style.display='none';return}$('#vitVazio').style.display='none';const vp=$('#vitProd');vp.style.display='none';void vp.offsetWidth;vp.style.display='flex';const f=$('#vitFoto');f.className='vit-foto'+(p.foto?'':' sem');f.innerHTML='';if(p.foto){const im=new Image();im.alt='';im.onerror=()=>{f.className='vit-foto sem';f.innerHTML='<span class="ini"></span>';f.firstChild.textContent=p.nome.trim().charAt(0).toUpperCase()};im.src=p.foto;f.appendChild(im)}else{f.innerHTML='<span class="ini"></span>';f.firstChild.textContent=p.nome.trim().charAt(0).toUpperCase()}$('#vitNome').textContent=p.nome;$('#vitPreco').textContent=(p.preco/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+// voz das mudanças de quantidade: espera 2 s sem toques e fala o resultado final
+const curto=n=>n.split(' ').slice(0,3).join(' ');let vozPend=new Map(),vozT=null;
+function avisarQtd(id,nome,q){vozPend.set(id,{nome,q});clearTimeout(vozT);vozT=setTimeout(()=>{const fr=[...vozPend.values()].map(v=>v.q>0?curto(v.nome)+', quantidade '+v.q:curto(v.nome)+' removido');vozPend.clear();if(!fr.length)return;falar(fr.join('. ')+(totalC()?'. Total: '+valorFalado(totalC()):'. Carrinho vazio'))},2000)}
+// resumo falado no checkout: "Confira seus produtos: 2 Batons Garoto Especial e 1 Fini Bananas 15g."
+const plural=w=>/[aeiouáéíóúâêôãõ]$/i.test(w)?w+'s':/m$/i.test(w)?w.slice(0,-1)+'ns':/(r|z)$/i.test(w)?w+'es':/al$/i.test(w)?w.slice(0,-2)+'ais':/s$/i.test(w)?w:w+'s';
+const unidFalada=t=>t.replace(/(\d+(?:[.,]\d+)?)\s*kg\b/gi,'$1 quilos').replace(/(\d+(?:[.,]\d+)?)\s*g\b/gi,'$1 gramas').replace(/(\d+(?:[.,]\d+)?)\s*ml\b/gi,'$1 mililitros').replace(/(\d+(?:[.,]\d+)?)\s*l\b/gi,'$1 litros');
+function resumoFalado(){const it=carrinho.map(i=>{const ws=i.nome.trim().split(/\s+/).slice(0,4);if(i.q>1)ws[0]=plural(ws[0]);return i.q+' '+unidFalada(ws.join(' '))});if(!it.length)return '';const lista=it.length>1?it.slice(0,-1).join(', ')+' e '+it.at(-1):it[0];return 'Confira seus produtos: '+lista+'.'}
+function adicionar(p){vitrine(p);if(!vendaId){vendaId=uuid();iniciada=new Date().toISOString()}const x=carrinho.find(i=>i.id===p.id);navigator.vibrate?.(40);if(x){x.q++;avisarQtd(x.id,x.nome,x.q)}else{carrinho.push({id:p.id,nome:p.nome,preco:p.preco,q:1});vozPend.delete(p.id);falar(curto(p.nome)+', '+valorFalado(p.preco))}if(!document.querySelector('#carrinho.on'))mostrar('carrinho');desenhar()}
+function totalC(){return carrinho.reduce((s,i)=>s+i.preco*i.q,0)}
+function desenhar(){const n=carrinho.reduce((s,i)=>s+i.q,0);$('#contItens').textContent=n+(n===1?' item':' itens');$('#lista').innerHTML=carrinho.length?carrinho.map((i,k)=>`<div class="item"><div><b>${i.nome.replace(/</g,'&lt;')}</b><div class="mu">${brl(i.preco)} un.</div></div><b class="num" style="font-size:18px;align-self:center">${brl(i.preco*i.q)}</b><div class="qtd"><button data-k="${k}" data-d="-1" aria-label="Menos um">–</button><b>${i.q}</b><button data-k="${k}" data-d="1" aria-label="Mais um">+</button></div></div>`).join(''):'<div class="vazio">Leia o código de barras do produto.<br>Sem código? Toque em "Sem código".</div>';$('#total').textContent=brl(totalC());$('#btnPagar').disabled=!carrinho.length}
+$('#lista').onclick=e=>{const b=e.target.closest('button[data-k]');if(!b)return;const i=carrinho[+b.dataset.k];i.q+=+b.dataset.d;navigator.vibrate?.(25);avisarQtd(i.id,i.nome,Math.max(i.q,0));if(i.q<=0){carrinho.splice(+b.dataset.k,1);api('evento',{tipo:'item_removido',venda_id:vendaId,itens:[{id:i.id,nome:i.nome}]}).catch(()=>{})}desenhar()};
+$('#toqueEspera').onclick=e=>{if(e.target.closest('#logoSecreto'))return;mostrar('carrinho');desenhar();falar('Olá! Passe o código de barras dos seus produtos.')};
+$('#btnCancelar').onclick=()=>cancelar('Compra cancelada');
+$('#btnBusca').onclick=()=>{mostrar('buscaT');$('#qBusca').value='';buscar('');setTimeout(()=>$('#qBusca').focus(),80)};
+$('#fecharBusca').onclick=()=>mostrar('carrinho');
+$('#qBusca').oninput=e=>buscar(e.target.value);
+function buscar(q){q=q.toLowerCase();const r=(cat?.produtos||[]).filter(p=>p.nome.toLowerCase().includes(q)).slice(0,40);$('#resBusca').innerHTML=r.map(p=>`<button data-id="${p.id}"><span>${p.nome.replace(/</g,'&lt;')}</span><b>${brl(p.preco)}</b></button>`).join('')||'<div class="vazio">Nada encontrado</div>'}
+$('#resBusca').onclick=e=>{const b=e.target.closest('button[data-id]');if(!b)return;adicionar(cat.produtos.find(p=>p.id===b.dataset.id));mostrar('carrinho')};
+
+// ---------- pagamento (simulado) ----------
+$('#btnPagar').onclick=()=>{clearTimeout(vozT);vozPend.clear();forma=null;document.querySelectorAll('.forma').forEach(f=>f.classList.remove('on'));$('#cobranca').innerHTML='<p class="mu">Escolha a forma de pagamento</p>';$('#totalPag').textContent=brl(totalC());mostrar('pagamento');falar(resumoFalado()+' Total: '+valorFalado(totalC())+'. Escolha como quer pagar.')};
+$('#voltarCarrinho').onclick=()=>mostrar('carrinho');
+$('#formas').onclick=e=>{const b=e.target.closest('.forma');if(!b)return;forma=b.dataset.f;document.querySelectorAll('.forma').forEach(f=>f.classList.toggle('on',f===b));const txt={pix:'Abra o app do seu banco e leia o QR',debito:'Insira ou aproxime o cartão na maquininha',credito:'Insira ou aproxime o cartão na maquininha',tapon:'Encoste o cartão na parte de trás do aparelho'}[forma];
+ $('#cobranca').innerHTML=(forma==='pix'?`<div class="qr" aria-label="QR do Pix (simulado)">${qrFake()}</div>`:'')+`<p style="font-size:18px">${txt}</p><p class="mu" style="font-size:13px">Teste: nada será cobrado. Escolha o resultado:</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%"><button class="btn bad" id="simNeg">Recusado</button><button class="btn ok" id="simOk">Aprovado</button></div>`;falar(txt);
+ $('#simOk').onclick=aprovar;$('#simNeg').onclick=()=>{api('evento',{tipo:'pagamento_negado',venda_id:vendaId,itens:carrinho}).catch(()=>{});falar('Pagamento recusado. Tente outra forma.');toast('Pagamento recusado')}};
+function qrFake(){let s='<svg viewBox="0 0 29 29" width="172" height="172" shape-rendering="crispEdges">';const r=crypto.getRandomValues(new Uint8Array(841));for(let y=0;y<29;y++)for(let x=0;x<29;x++){const f=(x<8&&y<8)||(x>20&&y<8)||(x<8&&y>20);const on=f?((x%7===0||y%7===0||x%7===6||y%7===6||(x%7>1&&x%7<5&&y%7>1&&y%7<5))&&!(x===7||y===7||x===21||y===21)):r[y*29+x]>140;if(on)s+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}return s+'</svg>'}
+async function aprovar(){const v={id:vendaId,iniciada_em:iniciada,itens:carrinho.map(i=>({produto_id:i.id,quantidade:i.q})),forma:forma==='tapon'?'credito':forma,simulado:true};const tot=totalC();
+ try{await api('venda',v)}catch(e){if(/inválid|sem preço|vazio/i.test(e.message)){toast(e.message);return}fila.push(v);ls.set('bp-fila',fila);atualizarRede()}
+ $('#okTxt').textContent=brl(tot)+' · obrigado!';mostrar('ok');falar('Compra finalizada. Obrigado e volte sempre!');navigator.vibrate?.([60,40,60]);limpar();setTimeout(()=>mostrar('espera'),5000)}
+function cancelar(motivo){if(carrinho.length)api('evento',{tipo:'venda_cancelada',venda_id:vendaId,itens:carrinho.map(i=>({id:i.id,nome:i.nome,q:i.q}))}).catch(()=>{});const tinha=carrinho.length;limpar();if(!tinha){mostrar('espera');return}$('#ruimTxt').textContent=motivo+'. Devolva os produtos à prateleira.';mostrar('ruim');falar('Compra não finalizada. Devolva os produtos à prateleira.');navigator.vibrate?.([200,80,200]);setTimeout(()=>mostrar('espera'),6000)}
+function limpar(){clearTimeout(vozT);vozPend.clear();carrinho=[];vendaId=null;iniciada=null;forma=null;desenhar()}
+
+// ---------- admin escondido: 5 toques no logo + PIN ----------
+const hashPin=async p=>{const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('beep:'+p));return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')};
+let pinDig='',pinModo='entrar',pinPrimeiro='';
+function telaPin(modo){pinModo=modo;pinDig='';pinPrimeiro='';$('#pinTit').textContent=modo==='entrar'?'PIN do gerente':modo==='criar'?'Crie o PIN do gerente':'Confirme o PIN';$('#pinMsg').textContent=bloqueadoAte()>Date.now()?'Bloqueado por erro de PIN. Tente em '+Math.ceil((bloqueadoAte()-Date.now())/60000)+' min':'';desenhaPin();mostrar('pinT')}
+function desenhaPin(){$('#pinPontos').innerHTML=Array.from({length:6},(_,i)=>`<i class="ponto ${i<pinDig.length?'on':''}"></i>`).join('')}
+$('#pinTec').innerHTML=['1','2','3','4','5','6','7','8','9','⌫','0','OK'].map(k=>`<button class="pinb" data-k="${k}">${k}</button>`).join('');
+const bloqueadoAte=()=>ls.get('bp-pin-bloq',0);
+$('#pinTec').onclick=async e=>{const b=e.target.closest('.pinb');if(!b)return;const k=b.dataset.k;navigator.vibrate?.(15);
+ if(k==='⌫'){pinDig=pinDig.slice(0,-1);desenhaPin();return}
+ if(k!=='OK'){if(pinDig.length<6)pinDig+=k;desenhaPin();if(pinDig.length<6||pinModo==='criar')return}
+ if(pinDig.length<4){$('#pinMsg').textContent='Use de 4 a 6 números';return}
+ if(pinModo==='entrar'){if(bloqueadoAte()>Date.now()){$('#pinMsg').textContent='Bloqueado. Aguarde alguns minutos.';pinDig='';desenhaPin();return}
+  if(await hashPin(pinDig)===ls.get('bp-pin','')){ls.set('bp-pin-erros',0);if(liberarNav)liberadoNav=true;abrirAdmin();return}
+  const n=ls.get('bp-pin-erros',0)+1;ls.set('bp-pin-erros',n);if(n>=3){ls.set('bp-pin-bloq',Date.now()+5*60000);ls.set('bp-pin-erros',0)}
+  $('#pinMsg').textContent=n>=3?'3 erros: bloqueado por 5 minutos':'PIN incorreto';pinDig='';desenhaPin();return}
+ if(pinModo==='criar'){pinPrimeiro=pinDig;pinDig='';pinModo='confirmar';$('#pinTit').textContent='Confirme o PIN';desenhaPin();return}
+ if(pinModo==='confirmar'){if(pinDig!==pinPrimeiro){$('#pinMsg').textContent='Os PINs não conferem. Comece de novo.';pinModo='criar';$('#pinTit').textContent='Crie o PIN do gerente';pinDig='';desenhaPin();return}ls.set('bp-pin',await hashPin(pinDig));toast('PIN salvo');abrirAdmin()}};
+$('#pinVoltar').onclick=()=>{liberarNav=false;mostrar('espera');travaNav()};
+let toques=0,tq=null;$('#logoSecreto').onclick=()=>{toques++;clearTimeout(tq);tq=setTimeout(()=>toques=0,2500);if(toques>=5){toques=0;telaPin(ls.get('bp-pin','')?'entrar':'criar')}};
+function abrirAdmin(){$('#admLoja').textContent=(cat?.empresa?.nome_exibicao||'Beep')+' · '+(cat?.loja||loja?.nome||'');$('#admInfo').textContent=`${cat?.produtos?.length||0} produtos · ${fila.length} venda(s) na fila · atualizado ${cat?.atualizado?new Date(cat.atualizado).toLocaleString('pt-BR'):'—'}`;$('#admVoz').textContent='Voz: '+(voz?'ligada':'desligada');mostrar('admin')}
+$('#fecharAdmin').onclick=()=>mostrar('espera');
+$('#admSync').onclick=async()=>{await sincronizar();abrirAdmin()};
+$('#admFila').onclick=async()=>{await enviarFila();toast(fila.length?fila.length+' ainda na fila':'Fila enviada');abrirAdmin()};
+$('#admVoz').onclick=()=>{voz=!voz;ls.set('bp-voz',voz);abrirAdmin()};
+$('#admPin').onclick=()=>telaPin('criar');
+$('#admTela').onclick=()=>{$('#admInfo').innerHTML='<b>Para ninguém sair do caixa:</b> no Android, ative <b>Fixar app</b> (Samsung: Configurações › Segurança e privacidade › Mais configurações de segurança › Fixar janelas; outros: Configurações › Segurança › Fixação de app) e ligue "Pedir PIN para soltar". Depois abra o caixa, toque em Recentes (▢), no ícone do app e em Fixar. Para soltar: segure Voltar + Recentes e digite o PIN do celular.'};
+$('#admSair').onclick=()=>{if($('#admSair').dataset.c){desativar();return}$('#admSair').dataset.c=1;$('#admSair').textContent='Toque de novo para confirmar';setTimeout(()=>{delete $('#admSair').dataset.c;$('#admSair').textContent='Desativar este aparelho'},4000)};
+function desativar(expirado){['bp-token','bp-loja','bp-cat','bp-fila','bp-pin'].forEach(ls.del);token=null;loja=null;cat=null;fila=[];$('#passo1').style.display='flex';$('#passo2').style.display='none';mostrar('ativar');if(expirado)toast('Aparelho desativado. Ative de novo.')}
+
+// ---------- modo quiosque: dificulta sair do caixa ----------
+document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('gesturestart',e=>e.preventDefault());
+history.pushState({c:1},'');addEventListener('popstate',()=>{history.pushState({c:1},'');const t=document.querySelector('.tela.on');if(t&&['carrinho','pagamento','buscaT','pinT','admin'].includes(t.id))mostrar(t.id==='buscaT'?'carrinho':t.id==='admin'||t.id==='pinT'?'espera':t.id)});
+const telaCheia=()=>{if(token&&!document.fullscreenElement&&!matchMedia('(display-mode: fullscreen)').matches&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})};
+document.addEventListener('pointerdown',telaCheia,{passive:true});
+let wl=null;const manterTela=async()=>{try{if(token&&'wakeLock' in navigator&&!wl){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>wl=null)}}catch(e){}};
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')manterTela()});document.addEventListener('pointerdown',manterTela,{passive:true});
+
+// ---------- trava de navegador ----------
+const instalado=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+let liberadoNav=false,promptInst=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptInst=e;$('#btnInstalar').style.display='block'});
+addEventListener('appinstalled',()=>{$('#btnInstalar').style.display='none';$('#instalar').querySelector('h2').textContent='Instalado! Abra pelo ícone Beep Caixa'});
+$('#btnInstalar').onclick=async()=>{if(!promptInst)return;promptInst.prompt();await promptInst.userChoice.catch(()=>{});promptInst=null;$('#btnInstalar').style.display='none'};
+function travaNav(){$('#instalar').style.display=(token&&!instalado()&&!liberadoNav)?'flex':'none'}
+let tqi=0,tqiT=null;$('#logoInst').onclick=()=>{tqi++;clearTimeout(tqiT);tqiT=setTimeout(()=>tqi=0,2500);if(tqi>=5){tqi=0;if(!ls.get('bp-pin',''))return;liberarNav=true;$('#instalar').style.display='none';telaPin('entrar')}};
+let liberarNav=false;
+setInterval(travaNav,1500);
+
+// ---------- início ----------
+function iniciar(){$('#lojaNome').textContent=cat?.loja||loja?.nome||'—';atualizarRede();mostrar('espera');ligarRosto();enviarFila();setInterval(()=>{sincronizar(true);enviarFila()},10*60*1000)}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if(token){iniciar();sincronizar(true)}else mostrar('ativar');
+desenhar();
+}
+</script>
+</body>
+</html>
