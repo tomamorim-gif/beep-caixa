@@ -302,6 +302,16 @@ function telaCfg(){const M=$('#main'),g=S.emp.gravacao||'intercorrencias',d=S.em
   <div class="card" style="max-width:760px;margin-top:16px"><h2 style="font-size:18px">Regra de preço para produtos novos</h2><p class="mu sm" style="margin-top:4px">Custo ÷ ${String(regra().divisor).replace('.',',')}, arredondado para cima terminando em ,${String(regra().terminacaoCentavos).padStart(2,'0')}. Exemplo: custo ${brl(204)} → ${brl(precoSugerido(204))}.</p></div>`;
  if(dono)$('#salvarCfg').onclick=async()=>{const gv=M.querySelector('input[name=grav]:checked').value,dv=+$('#dias').value;const r=await sb.from('empresas').update({gravacao:gv,dias_video:dv}).eq('id',S.emp.id);if(r.error)return toast('Erro: '+r.error.message);S.emp.gravacao=gv;S.emp.dias_video=dv;toast('Configuração salva. Os caixas aplicam em até 10 minutos.')}}
 
+// ---------- ponte para o assistente (skill no Claude no Chrome): só funciona com o login aberto ----------
+window.beep={
+ async produtos(filtro='todos'){if(!S.emp)throw new Error('Faça login no painel');await carregar();const {data:f}=await sb.from('produto_fotos').select('produto_id').eq('empresa_id',S.emp.id);const com=new Set((f||[]).map(x=>x.produto_id));
+  const {data:nc}=await sb.from('produtos').select('id,ncm,ncm_sugerido').eq('empresa_id',S.emp.id);const ncm=new Map((nc||[]).map(x=>[x.id,x]));
+  return S.produtos.filter(p=>p.ativo).map(p=>({id:p.id,nome:p.nome,ean:p.ean,codigos:S.codigos.filter(c=>c.produto_id===p.id).map(c=>c.ean),temFoto:com.has(p.id),ncm:ncm.get(p.id)?.ncm||null,ncmSugerido:ncm.get(p.id)?.ncm_sugerido||null}))
+   .filter(p=>filtro==='semFoto'?!p.temFoto:filtro==='semNcm'?!p.ncm:true)},
+ async importarFoto(produtoId,url){const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Faça login no painel');
+  const r=await fetch(SB_URL+'/functions/v1/gestao',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+session.access_token},body:JSON.stringify({acao:'importar_foto',produto_id:produtoId,url})});const j=await r.json();if(!r.ok)throw new Error(j.erro||'Falhou');return j},
+ async sugerirNcm(produtoId,ncm,fonte){if(!S.emp)throw new Error('Faça login no painel');if(!/^\d{8}$/.test(String(ncm)))throw new Error('NCM precisa ter 8 dígitos');const r=await sb.from('produtos').update({ncm_sugerido:String(ncm),ncm_fonte:String(fonte||'assistente').slice(0,200)}).eq('id',produtoId).eq('empresa_id',S.emp.id).select('id');if(r.error)throw r.error;if(!r.data.length)throw new Error('Produto não encontrado');return {ok:true}}
+};
 sb.auth.onAuthStateChange((ev)=>{if(ev==='SIGNED_OUT')telaLogin()});
 iniciar();
 </script>
