@@ -332,6 +332,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 ['#nomeAp','#pinNovo','#codigo'].forEach(q=>{const el=$(q);if(!el)return;el.addEventListener('focus',()=>setTimeout(()=>el.scrollIntoView({block:'center',behavior:'smooth'}),300))});
 $('#pinNovo').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#btnAtivar').click()}});
 
+// QR de ativação: o código vem no #c=XXXX-XXXX (fica só no aparelho, não vai para o servidor)
+(()=>{const m=location.hash.match(/c=([A-Za-z0-9-]{8,9})/);if(!m)return;history.replaceState(null,'',location.pathname);if(token)return;$('#codigo').value=m[1].toUpperCase();setTimeout(()=>$('#btnCodigo').click(),300)})();
+
 // ---------- trava de navegador ----------
 const instalado=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 let liberadoNav=false,promptInst=null;
