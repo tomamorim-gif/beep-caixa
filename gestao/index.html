@@ -62,6 +62,16 @@ main{padding:28px 32px 80px;min-width:0}
 .modal.wide .card{width:min(980px,100%)}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--ink);color:#111;padding:12px 18px;border-radius:12px;font-weight:600;transition:.2s;z-index:60;pointer-events:none}.toast.on{opacity:1;transform:translateX(-50%)}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.adgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}.adcard{padding:12px}
+.adprev{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:var(--p2);border:1px solid var(--line)}.adprev img,.adprev video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.adprev .vel{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.82))}.adtx{position:absolute;left:12px;right:12px;bottom:10px;display:grid;gap:2px}
+.adtx b{font:800 16px/1.2 Manrope,Inter,sans-serif;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.adtx span{font-size:12.5px;color:rgba(255,255,255,.82);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adprev .selo{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:7px}.adprev .cta{position:absolute;right:10px;top:10px;background:var(--y);color:#111;font-weight:700;font-size:11.5px;padding:5px 9px;border-radius:999px}
+.adform{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:22px;align-items:start}.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fone{background:#0b0b0b;border:1px solid var(--line);border-radius:26px;padding:14px;display:grid;gap:10px;max-width:320px}.fgrade{display:grid;grid-template-columns:1fr 1fr;gap:8px}.fgrade i{aspect-ratio:1;border-radius:12px;background:#161616;border:1px solid #232323}
+.adprev .pill{background:rgba(10,10,10,.72);backdrop-filter:blur(6px)}.adprev .pill.ok{color:#4ade80}.adprev .pill.warn{color:#fbbf24}.adprev .pill.new{color:#7dd3fc}
+input[type=file]{font-size:13px;color:var(--mu)}input[type=file]::file-selector-button{font:600 13px Inter,sans-serif;color:var(--ink);background:var(--p3);border:1px solid var(--line);border-radius:10px;padding:9px 14px;margin-right:10px;cursor:pointer}
+@media(max-width:900px){.adform,.g2{grid-template-columns:1fr}.fone{max-width:none}.hm{display:none}.anacts{flex-direction:column;align-items:stretch}}
 .pcard{border-top:3px solid var(--c,#22c55e)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .sp{flex:1}
@@ -142,11 +152,12 @@ function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img
   <button class="nav" data-t="nf">${ICON.nf}Entrada de NF-e</button><button class="nav" data-t="pf">${ICON.pf}Portfólios</button>
   <button class="nav" data-t="cx"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>Caixas</button>
   <button class="nav" data-t="app"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>App do cliente</button>
+  <button class="nav" data-t="ads"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>Anúncios</button>
   <button class="nav" data-t="vid"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg>Vídeos</button>
   <button class="nav" data-t="cfg">${ICON.cfg}Configurações</button>
   <div class="quem"><b style="color:var(--ink)">${esc(S.emp.nome_exibicao||S.emp.razao_social)}</b><br>${esc(S.user.email)} · ${S.papel==='dono'?'Dono':'Gerente'}<br><button class="btn sm" id="sair" style="margin-top:10px">Sair</button></div></aside><main id="main"></main></div>`;
  document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{S.tela=b.dataset.t;render()});$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
-function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({vend:telaVend,est:telaEst,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,vid:telaVid,cfg:telaCfg})[S.tela]()}
+function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({vend:telaVend,est:telaEst,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
 
 // ---------- leitura do XML (NF-e modelo 55) ----------
 const tx=(el,sel)=>{if(!el)return '';const n=el.getElementsByTagName(sel)[0];return n?n.textContent.trim():''};
@@ -405,6 +416,85 @@ function novaTravada(cid){const c=S.clientes.find(x=>x.id===cid),itens=new Map()
   const i=$('#tq');i.focus();i.setSelectionRange(q.length,q.length);i.oninput=()=>{q=i.value;clearTimeout(i._t);i._t=setTimeout(desenha,200)};
   document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const n=Math.max(0,(itens.get(b.dataset.m)||0)+ +b.dataset.d);n?itens.set(b.dataset.m,n):itens.delete(b.dataset.m);desenha()});
   $('#okTrav').onclick=async()=>{const r=await sb.rpc('criar_venda_pendente',{p_cliente:cid,p_itens:[...itens].map(([produto_id,quantidade])=>({produto_id,quantidade}))});if(r.error)return toast('Erro: '+r.error.message);fechar();toast('Venda enviada para o app de '+c.nome);listaPend()}};desenha()}
+
+// ---------- tela: anúncios de parceiros (app do cliente) ----------
+const ADS={};
+const hojeD=()=>new Date(Date.now()-3*36e5).toISOString().slice(0,10);
+const somaDias=(d,n)=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+n);return x.toISOString().slice(0,10)};
+const dataBR=d=>d?new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}).replace('.',''):'—';
+function situacao(c){const h=hojeD();if(c.status==='encerrada')return ['Encerrada',''];if(c.status==='pausada')return ['Pausada','warn'];if(c.status==='rascunho')return ['Rascunho',''];if(c.fim<h)return ['Terminou','' ];if(c.inicio>h)return ['Agendada','new'];return ['No ar','ok']}
+async function telaAds(){const M=$('#main');
+ M.innerHTML=`<div class="head"><div><h1>Anúncios</h1><p>Espaço para parceiros divulgarem no app do cliente: banner no topo dos produtos, destaque no meio da lista e na tela de compra concluída.</p></div><button class="btn pri" id="novoAd">+ Nova campanha</button></div>
+  <div id="adsK" class="grid4" style="margin-bottom:18px"></div><div id="adsL"><p class="vazio">Carregando…</p></div>
+  <div class="head" style="margin:30px 0 12px"><div><h2 style="font-size:20px">Anunciantes</h2><p>Empresas que compram espaço. Desativar um anunciante tira todos os anúncios dele do ar.</p></div><button class="btn" id="novoAn">+ Anunciante</button></div><div id="anL" class="tblwrap"></div>`;
+ $('#novoAd').onclick=()=>formCampanha();$('#novoAn').onclick=()=>formAnunciante();await carregarAdsPainel()}
+async function carregarAdsPainel(){const e=S.emp.id,desde=new Date(Date.now()-30*864e5).toISOString();
+ const [an,ad,cp,ex]=await Promise.all([sb.from('anunciantes').select('*').eq('empresa_id',e).order('nome'),sb.from('anuncios').select('*').eq('empresa_id',e),sb.from('campanhas_midia').select('*').eq('empresa_id',e).order('inicio',{ascending:false}),
+  sb.from('midia_exibicoes').select('campanha_id,tipo').eq('empresa_id',e).eq('canal','app_cliente').gte('exibido_em',desde).limit(20000)]);
+ const err=an.error||ad.error||cp.error;if(err){$('#adsL').innerHTML=`<p class="vazio">${esc(err.message)}</p>`;return}
+ ADS.an=an.data;ADS.ad=ad.data;ADS.cp=cp.data;ADS.st={};for(const x of ex.data||[]){const s=ADS.st[x.campanha_id]||(ADS.st[x.campanha_id]={v:0,c:0});x.tipo==='clique'?s.c++:s.v++}
+ const paths=ADS.ad.map(a=>a.arquivo_path);ADS.url={};if(paths.length){const {data}=await sb.storage.from('midia').createSignedUrls(paths,3600);(data||[]).forEach(u=>{if(u.signedUrl)ADS.url[u.path]=u.signedUrl})}
+ desenhaAds()}
+function desenhaAds(){const K=$('#adsK'),L=$('#adsL'),A=$('#anL');if(!K)return;
+ const noAr=ADS.cp.filter(c=>situacao(c)[0]==='No ar'),tv=Object.values(ADS.st).reduce((s,x)=>s+x.v,0),tc=Object.values(ADS.st).reduce((s,x)=>s+x.c,0);
+ K.innerHTML=`<div class="kpi"><span>No ar agora</span><b class="num">${noAr.length}</b></div><div class="kpi"><span>Receita mensal</span><b class="num" style="color:var(--y)">${brl(noAr.reduce((s,c)=>s+c.valor_mensal,0))}</b></div><div class="kpi"><span>Visualizações 30 dias</span><b class="num">${tv.toLocaleString('pt-BR')}</b></div><div class="kpi"><span>Cliques 30 dias</span><b class="num">${tc.toLocaleString('pt-BR')}${tv?`<small class="mu" style="font:600 13px Inter;margin-left:8px">${(tc/tv*100).toFixed(1).replace('.',',')}%</small>`:''}</b></div>`;
+ const anN=id=>ADS.an.find(a=>a.id===id),lojaN=ids=>!ids?.length?'Todas as lojas':ids.map(i=>S.locais.find(l=>l.id===i)?.nome).filter(Boolean).join(', ');
+ L.innerHTML=ADS.cp.length?`<div class="adgrid">${ADS.cp.map(c=>{const a=ADS.ad.find(x=>x.id===c.anuncios?.[0]),u=a&&ADS.url[a.arquivo_path],[sit,cls]=situacao(c),st=ADS.st[c.id]||{v:0,c:0};
+  return `<div class="card adcard"><div class="adprev">${u?(a.formato==='imagem'?`<img src="${esc(u)}" alt="">`:`<video src="${esc(u)}" muted loop playsinline autoplay></video>`):''}<span class="vel"></span><span class="pill ${cls}" style="position:absolute;left:10px;top:10px">${sit}</span><div class="adtx"><b>${esc(a?.titulo||c.nome)}</b><span>${esc(a?.texto||'')}</span></div></div>
+   <div style="display:grid;gap:4px;margin-top:12px"><div class="row"><b>${esc(anN(c.anunciante_id)?.nome||'—')}</b><span class="sp"></span><b class="num" style="color:var(--y)">${brl(c.valor_mensal)}<small class="mu" style="font-weight:500">/mês</small></b></div>
+   <span class="mu sm">${dataBR(c.inicio)} a ${dataBR(c.fim)} · ${esc(lojaN(c.locais))}</span>
+   <span class="mu sm">${st.v.toLocaleString('pt-BR')} visualizações · ${st.c.toLocaleString('pt-BR')} cliques${a?.link_url?` · <a href="${esc(a.link_url)}" target="_blank" rel="noopener" style="color:var(--ink)">link</a>`:''}</span></div>
+   <div class="row" style="margin-top:12px">${c.status==='ativa'?`<button class="btn sm" data-st="${c.id}" data-v="pausada">Pausar</button>`:c.status!=='encerrada'?`<button class="btn sm pri" data-st="${c.id}" data-v="ativa">Colocar no ar</button>`:''}<button class="btn sm" data-ed="${c.id}">Editar</button><span class="sp"></span>${c.status!=='encerrada'?`<button class="btn sm dang" data-st="${c.id}" data-v="encerrada">Encerrar</button>`:''}</div></div>`}).join('')}</div>`
+  :`<div class="drop" style="padding:36px"><div class="ic">${ICON.up}</div><b style="font-size:18px">Nenhuma campanha ainda</b><span class="mu">Cadastre um parceiro (farmácia, pet shop, pizzaria do bairro…), suba a arte e escolha as lojas. O anúncio aparece no app dos moradores na hora.</span><button class="btn pri" id="primeiraCp">Criar a primeira campanha</button></div>`;
+ const pc=$('#primeiraCp');if(pc)pc.onclick=()=>formCampanha();
+ L.querySelectorAll('[data-st]').forEach(b=>b.onclick=async()=>{const v=b.dataset.v;if(v==='encerrada'&&!confirmar('Encerrar esta campanha? O anúncio sai do app e não volta mais. Os números ficam guardados.'))return;
+  const r=await sb.from('campanhas_midia').update({status:v}).eq('id',b.dataset.st).select('id');if(r.error||!r.data?.length)return toast('Não foi possível salvar'+(r.error?': '+r.error.message:''));toast(v==='ativa'?'Campanha no ar':v==='pausada'?'Campanha pausada':'Campanha encerrada');carregarAdsPainel()});
+ L.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>formCampanha(ADS.cp.find(c=>c.id===b.dataset.ed)));
+ A.innerHTML=`<table class="tbl"><thead><tr><th>Anunciante</th><th class="hm">Contato</th><th>No ar</th><th></th></tr></thead><tbody>${ADS.an.map(a=>`<tr style="${a.ativo?'':'opacity:.5'}"><td><b>${esc(a.nome)}</b><br><span class="mu sm">${esc(a.segmento||'')}${a.cnpj?' · '+esc(a.cnpj):''}</span></td><td class="sm hm">${esc(a.contato||'')}${a.telefone?'<br>'+esc(a.telefone):''}${a.email?'<br>'+esc(a.email):''}</td><td class="num">${ADS.cp.filter(c=>c.anunciante_id===a.id&&situacao(c)[0]==='No ar').length}</td><td class="n"><div class="row anacts" style="justify-content:flex-end"><button class="btn sm" data-ean="${a.id}">Editar</button><button class="btn sm" data-aat="${a.id}">${a.ativo?'Desativar':'Reativar'}</button></div></td></tr>`).join('')||'<tr><td colspan="4" class="vazio">Nenhum anunciante cadastrado.</td></tr>'}</tbody></table>`;
+ A.querySelectorAll('[data-ean]').forEach(b=>b.onclick=()=>formAnunciante(ADS.an.find(a=>a.id===b.dataset.ean)));
+ A.querySelectorAll('[data-aat]').forEach(b=>b.onclick=async()=>{const a=ADS.an.find(x=>x.id===b.dataset.aat);const r=await sb.from('anunciantes').update({ativo:!a.ativo}).eq('id',a.id);if(r.error)return toast(r.error.message);toast(a.ativo?'Anunciante desativado: os anúncios dele saíram do app':'Anunciante reativado');carregarAdsPainel()})}
+function formAnunciante(a={},depois){$('#modal').classList.remove('wide');
+ modal(`<h2>${a.id?'Editar anunciante':'Novo anunciante'}</h2><div class="g2"><label class="f">Nome da empresa<input id="fn" value="${esc(a.nome||'')}" maxlength="80" placeholder="Ex.: Farmácia do Bairro"></label><label class="f">Segmento<input id="fs" value="${esc(a.segmento||'')}" maxlength="40" placeholder="Farmácia, pet shop, delivery…"></label>
+  <label class="f">CNPJ ou CPF (opcional)<input id="fc" value="${esc(a.cnpj||'')}" inputmode="numeric"></label><label class="f">Pessoa de contato<input id="fp" value="${esc(a.contato||'')}" maxlength="60"></label>
+  <label class="f">WhatsApp / telefone<input id="ft" value="${esc(a.telefone||'')}" inputmode="tel"></label><label class="f">E-mail<input id="fe" type="email" value="${esc(a.email||'')}"></label></div>
+  <div class="row"><span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="okAn">Salvar</button></div>`);
+ $('#fn').focus();$('#okAn').onclick=async()=>{const doc=$('#fc').value.replace(/\D/g,'');const d={empresa_id:S.emp.id,nome:$('#fn').value.trim(),segmento:$('#fs').value.trim()||null,cnpj:doc||null,contato:$('#fp').value.trim()||null,telefone:$('#ft').value.trim()||null,email:$('#fe').value.trim()||null};
+  if(d.nome.length<2)return toast('Informe o nome do anunciante');if(doc&&doc.length!==11&&doc.length!==14)return toast('CNPJ deve ter 14 números (ou CPF 11)');
+  const r=a.id?await sb.from('anunciantes').update(d).eq('id',a.id).select().single():await sb.from('anunciantes').insert(d).select().single();if(r.error)return toast('Erro: '+r.error.message);
+  fechar();toast('Anunciante salvo');if(depois)depois(r.data);else carregarAdsPainel()}}
+function formCampanha(c=null){const ad=c?ADS.ad.find(x=>x.id===c.anuncios?.[0]):null,h=hojeD();
+ const F={an:c?.anunciante_id||ADS.an.find(a=>a.ativo)?.id||'',titulo:ad?.titulo||'',texto:ad?.texto||'',link:ad?.link_url||'',botao:ad?.botao||'',lojas:new Set(c?.locais||[]),todas:!c||!c.locais?.length,ini:c?.inicio||h,fim:c?.fim||somaDias(h,29),valor:c?.valor_mensal??0,arq:null,prev:ad?ADS.url[ad.arquivo_path]:null,video:ad?ad.formato!=='imagem':false};
+ $('#modal').classList.add('wide');
+ const sel=()=>`<select id="cAn">${ADS.an.filter(a=>a.ativo||a.id===F.an).map(a=>`<option value="${a.id}" ${a.id===F.an?'selected':''}>${esc(a.nome)}</option>`).join('')}<option value="+">+ Cadastrar novo anunciante</option></select>`;
+ modal(`<h2>${c?'Editar campanha':'Nova campanha'}</h2>
+  <div class="adform"><div style="display:grid;gap:12px">
+   <label class="f">Anunciante${sel()}</label>
+   <label class="f">Arte do anúncio <small class="mu">Imagem JPG/PNG/WebP em 1200×675 (16:9) ou vídeo MP4 até 50 MB, sem som</small><input type="file" id="cArq" accept="image/jpeg,image/png,image/webp,video/mp4"></label>
+   <label class="f">Título (aparece em destaque)<input id="cTi" maxlength="60" value="${esc(F.titulo)}" placeholder="Ex.: 20% off em toda a farmácia"></label>
+   <label class="f">Texto curto<input id="cTx" maxlength="90" value="${esc(F.texto)}" placeholder="Ex.: Entrega no condomínio em 30 min"></label>
+   <div class="g2"><label class="f">Link ao tocar (https)<input id="cLk" value="${esc(F.link)}" placeholder="https://wa.me/5585…"></label><label class="f">Texto do botão<input id="cBt" maxlength="20" value="${esc(F.botao)}" placeholder="Pedir agora"></label></div>
+   <div class="g2"><label class="f">Começa em<input type="date" id="cIni" value="${F.ini}"></label><label class="f">Termina em<input type="date" id="cFim" value="${F.fim}"></label></div>
+   <label class="f">Valor cobrado por mês (R$)<input id="cVal" inputmode="decimal" value="${(F.valor/100).toFixed(2).replace('.',',')}"></label>
+   <div class="f">Lojas onde aparece<div class="row"><label class="chk"><input type="checkbox" id="cTodas" ${F.todas?'checked':''}> Todas as lojas</label>${lojas().map(l=>`<label class="chk"><input type="checkbox" data-cl="${l.id}" ${F.lojas.has(l.id)?'checked':''} ${F.todas?'disabled':''}> ${esc(l.nome)}</label>`).join('')}</div></div>
+  </div><div><div class="mu sm" style="margin-bottom:8px">Prévia no app do cliente</div><div class="fone"><div class="adprev" id="cPrev"></div><div class="fgrade"><i></i><i></i><i></i><i></i></div></div></div></div>
+  <div class="row" style="margin-top:6px"><span class="mu sm">${c?'':'Fica no ar assim que você salvar (no período escolhido).'}</span><span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="okCp">${c?'Salvar':'Publicar no app'}</button></div>`);
+ const prev=()=>{const P=$('#cPrev');if(!P)return;P.innerHTML=`${F.prev?(F.video?`<video src="${esc(F.prev)}" muted loop playsinline autoplay></video>`:`<img src="${esc(F.prev)}" alt="">`):'<div class="mu sm" style="position:absolute;inset:0;display:grid;place-items:center">Escolha a arte</div>'}<span class="vel"></span><span class="selo">Patrocinado</span>${F.link?`<span class="cta">${esc(F.botao||'Saiba mais')}</span>`:''}<div class="adtx"><b>${esc(F.titulo||'Título do anúncio')}</b><span>${esc(F.texto||(ADS.an.find(a=>a.id===F.an)?.nome||''))}</span></div>`};prev();
+ const b=(id,k)=>$(id).oninput=e=>{F[k]=e.target.value;prev()};b('#cTi','titulo');b('#cTx','texto');b('#cLk','link');b('#cBt','botao');
+ $('#cAn').onchange=e=>{if(e.target.value==='+'){formAnunciante({},novo=>{ADS.an.push(novo);F.an=novo.id;formCampanha(c?{...c,anunciante_id:novo.id}:null)});return}F.an=e.target.value;prev()};
+ $('#cArq').onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>50*1024*1024){e.target.value='';return toast('Arquivo maior que 50 MB')}F.arq=f;F.video=f.type==='video/mp4';F.prev=URL.createObjectURL(f);prev()};
+ $('#cTodas').onchange=e=>{F.todas=e.target.checked;document.querySelectorAll('[data-cl]').forEach(x=>x.disabled=F.todas)};
+ $('#okCp').onclick=async()=>{const B=$('#okCp');F.ini=$('#cIni').value;F.fim=$('#cFim').value;F.valor=Math.round(parseFloat(($('#cVal').value||'0').replace(/\./g,'').replace(',','.'))*100)||0;
+  const locais=F.todas?null:[...document.querySelectorAll('[data-cl]:checked')].map(x=>x.dataset.cl);
+  if(!F.an||F.an==='+')return toast('Escolha o anunciante');if(!F.arq&&!ad)return toast('Escolha a arte do anúncio');if(F.titulo.trim().length<3)return toast('Escreva o título');
+  if(F.link&&!/^https:\/\/[^\s]+\.[^\s]+/.test(F.link.trim()))return toast('O link precisa começar com https://');if(!F.ini||!F.fim||F.fim<F.ini)return toast('Confira as datas');if(locais&&!locais.length)return toast('Escolha pelo menos uma loja');
+  B.disabled=true;B.textContent='Salvando…';
+  try{let path=ad?.arquivo_path;if(F.arq){const ext=F.video?'mp4':(F.arq.type.split('/')[1]||'jpg').replace('jpeg','jpg');path=`${S.emp.id}/anuncios/${crypto.randomUUID()}.${ext}`;const up=await sb.storage.from('midia').upload(path,F.arq,{contentType:F.arq.type});if(up.error)throw new Error('Não foi possível enviar a arte: '+up.error.message)}
+   const dAd={empresa_id:S.emp.id,anunciante_id:F.an,titulo:F.titulo.trim(),texto:F.texto.trim()||null,link_url:F.link.trim()||null,botao:F.botao.trim()||null,formato:F.video?'video_legenda':'imagem',legenda:F.video?F.titulo.trim():null,arquivo_path:path,aprovado:true};
+   const ra=ad?await sb.from('anuncios').update(dAd).eq('id',ad.id).select().single():await sb.from('anuncios').insert(dAd).select().single();if(ra.error)throw new Error(ra.error.message);
+   const nomeAn=ADS.an.find(a=>a.id===F.an)?.nome||'';const dCp={empresa_id:S.emp.id,anunciante_id:F.an,nome:`${nomeAn} · ${F.titulo.trim()}`.slice(0,100),anuncios:[ra.data.id],locais,inicio:F.ini,fim:F.fim,valor_mensal:F.valor,canais:['app_cliente']};
+   const rc=c?await sb.from('campanhas_midia').update(dCp).eq('id',c.id).select('id'):await sb.from('campanhas_midia').insert({...dCp,status:'ativa'}).select('id');if(rc.error)throw new Error(rc.error.message);
+   if(F.arq&&ad?.arquivo_path&&ad.arquivo_path!==path)sb.storage.from('midia').remove([ad.arquivo_path]);
+   fechar();toast(c?'Campanha atualizada':'Campanha publicada no app do cliente');carregarAdsPainel()}catch(e){toast(e.message);B.disabled=false;B.textContent=c?'Salvar':'Publicar no app'}}}
 
 // ---------- tela: configurações ----------
 function telaCfg(){const M=$('#main'),g=S.emp.gravacao||'intercorrencias',d=S.emp.dias_video||3,dono=S.papel==='dono';
