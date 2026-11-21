@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Beep · Gestão</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0c0e;--p1:#131418;--p2:#1a1c21;--p3:#23262d;--line:#2a2d35;--ink:#f3f4f6;--mu:#9aa0ab;--y:#ffd60a;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--blue:#38bdf8;--r:16px}
+*{box-sizing:border-box;margin:0}html,body{background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:0;background:none}
+h1,h2,h3{font-family:Manrope,Inter,sans-serif;letter-spacing:-.01em}
+.num{font-variant-numeric:tabular-nums}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 18px;border-radius:12px;font-weight:600;background:var(--p3);border:1px solid var(--line);transition:background .15s,border-color .15s}
+.btn:hover{border-color:#3a3e48}.btn.pri{background:var(--y);color:#111;border-color:var(--y)}.btn.pri:hover{filter:brightness(1.05)}
+.btn.sm{min-height:34px;padding:0 12px;font-size:13px;border-radius:10px}.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.dang{color:#fca5a5}
+input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]),select{min-height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--p2);outline:none;width:100%}
+input:focus,select:focus{border-color:var(--y);box-shadow:0 0 0 3px rgba(255,214,10,.15)}
+label.f{display:grid;gap:6px;font-size:13px;color:var(--mu);font-weight:500}
+.card{background:var(--p1);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--p3);color:var(--mu);white-space:nowrap}
+.pill.ok{background:rgba(34,197,94,.12);color:#4ade80}.pill.warn{background:rgba(245,158,11,.13);color:#fbbf24}.pill.bad{background:rgba(239,68,68,.13);color:#f87171}.pill.new{background:rgba(56,189,248,.13);color:#7dd3fc}
+.mu{color:var(--mu)}.sm{font-size:13px}
+/* login */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px}
+.login .card{width:min(420px,100%);padding:32px;display:grid;gap:16px}
+.login img{height:44px;width:auto}
+.tabs2{display:grid;grid-template-columns:1fr 1fr;background:var(--p2);border-radius:12px;padding:4px}
+.tabs2 button{min-height:38px;border-radius:9px;font-weight:600;color:var(--mu)}.tabs2 button.on{background:var(--p3);color:var(--ink)}
+.erro{color:#f87171;font-size:13px;min-height:18px}
+/* app */
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.side{border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+.side img{height:36px;width:auto;margin:0 8px 18px}
+.nav{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--mu);font-weight:600;text-align:left}
+.nav:hover{background:var(--p2);color:var(--ink)}.nav.on{background:var(--p2);color:var(--ink);box-shadow:inset 3px 0 0 var(--y)}
+.nav svg{flex:none}
+.side .quem{margin-top:auto;padding:12px;border-top:1px solid var(--line);font-size:13px;color:var(--mu)}
+main{padding:28px 32px 80px;min-width:0}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.head h1{font-size:30px}.head p{color:var(--mu);margin-top:4px}
+.drop{border:2px dashed #3a3e48;border-radius:20px;padding:48px 24px;text-align:center;display:grid;gap:10px;place-items:center;background:var(--p1);transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--y);background:rgba(255,214,10,.05)}
+.drop .ic{width:64px;height:64px;border-radius:18px;background:rgba(255,214,10,.1);color:var(--y);display:grid;place-items:center}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.kpi{background:var(--p1);border:1px solid var(--line);border-radius:14px;padding:14px 16px}.kpi span{font-size:12px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.04em}.kpi b{display:block;font:800 22px Manrope,Inter,sans-serif;margin-top:4px}
+.tbl{width:100%;border-collapse:collapse}.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mu);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:600;position:sticky;top:0;background:var(--p1)}
+.tbl td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}.tbl tr:last-child td{border-bottom:0}.tbl .n{text-align:right}
+.tblwrap{overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--p1)}
+.inp-s{min-height:34px!important;padding:0 8px!important;width:92px!important;text-align:right}
+.stack{display:grid;gap:4px}
+.aviso{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#fde68a;font-size:14px}
+.aviso.info{background:rgba(56,189,248,.07);border-color:rgba(56,189,248,.25);color:#bae6fd}
+.barra{position:sticky;bottom:0;margin-top:18px;background:rgba(11,12,14,.92);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.chk{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;background:var(--p2);border:1px solid var(--line);font-size:13px;cursor:pointer}.chk input{accent-color:var(--y)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;place-items:center;padding:20px;z-index:50}.modal.on{display:grid}
+.modal .card{width:min(560px,100%);max-height:90vh;overflow:auto;display:grid;gap:14px;padding:26px}
+.modal.wide .card{width:min(980px,100%)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--ink);color:#111;padding:12px 18px;border-radius:12px;font-weight:600;transition:.2s;z-index:60;pointer-events:none}.toast.on{opacity:1;transform:translateX(-50%)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.pcard{border-top:3px solid var(--c,#22c55e)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sp{flex:1}
+.opt{display:flex;gap:14px;align-items:flex-start;padding:16px;border-radius:14px;border:1px solid var(--line);background:var(--p2);cursor:pointer}
+.opt:has(input:checked){border-color:var(--y);background:rgba(255,214,10,.05)}.opt input{accent-color:var(--y);margin-top:4px}
+.opt b{display:block}.opt small{color:var(--mu)}
+.vazio{padding:28px;text-align:center;color:var(--mu)}
+@media(max-width:900px){.app{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;overflow:auto;padding:12px}.side img,.side .quem{display:none}main{padding:20px 16px 80px}.grid4{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="raiz"></div>
+<div class="modal" id="modal"><div class="card" id="mbox"></div></div>
+<div class="toast" id="toast"></div>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const SB_URL='https://gdnvjpmpfgautrmtkjmx.supabase.co', SB_KEY='sb_publishable_z-GGao9BiSTEUgMi1xAHCQ_5Vh5e3FY';
+const sb=createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+const $=s=>document.querySelector(s);
+const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const brl=c=>((c||0)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const pct=v=>(v>0?'+':'')+(v*100).toFixed(1).replace('.',',')+'%';
+const toast=t=>{const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),3200)};
+const modal=h=>{$('#mbox').innerHTML=h;$('#modal').classList.add('on')};
+const fechar=()=>{$('#modal').classList.remove('on','wide')};
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal'||e.target.closest('[data-close]'))fechar()});
+const bonito=n=>String(n||'').toLowerCase().replace(/(^|[\s\-(\/])([a-zà-ú])/g,(m,a,b)=>a+b.toUpperCase()).replace(/\b(\d+)\s?(ml|g|kg|l|un)\b/gi,(m,a,b)=>a+b.toLowerCase());
+const ICON={nf:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>',
+ pf:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+ cfg:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+ up:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>'};
+
+// ---------- estado ----------
+const S={user:null,emp:null,papel:null,locais:[],produtos:[],codigos:[],codForn:[],precos:[],portfolios:[],pitens:[],tela:'nf',nota:null,linhas:[],destino:null,pfNovos:new Set()};
+const lojas=()=>S.locais.filter(l=>l.tipo==='loja'&&l.ativo);
+const regra=()=>S.emp?.regra_preco||{divisor:.57,terminacaoCentavos:90};
+function precoSugerido(custo){const r=regra(),bruto=Math.ceil(custo/r.divisor),reais=Math.floor(bruto/100);let c=reais*100+r.terminacaoCentavos;if(c<bruto)c+=100;return c}
+const margem=(p,c)=>p>0?(p-c)/p:0;
+function precoRef(pid){const ps=S.precos.filter(p=>p.produto_id===pid);return ps.length?Math.max(...ps.map(p=>p.preco)):null}
+
+// ---------- login ----------
+function telaLogin(modo='entrar',msg=''){
+ $('#raiz').innerHTML=`<div class="login"><div class="card">
+  <img src="../logo.png" alt="Beep Smart Mercadinhos">
+  <div><h1 style="font-size:24px">Gestão da loja</h1><p class="mu sm">Entrada de notas, portfólios e configurações.</p></div>
+  <div class="tabs2"><button class="${modo==='entrar'?'on':''}" data-m="entrar">Entrar</button><button class="${modo==='convite'?'on':''}" data-m="convite">Tenho um convite</button></div>
+  <form id="fLogin" style="display:grid;gap:12px">
+   ${modo==='convite'?`<label class="f">Código do convite<input type="text" name="codigo" placeholder="XXXX-XXXX" autocomplete="off" required style="text-transform:uppercase;letter-spacing:.12em"></label>`:''}
+   <label class="f">E-mail<input type="email" name="email" autocomplete="username" required></label>
+   <label class="f">${modo==='convite'?'Crie uma senha (mínimo 8 caracteres)':'Senha'}<input type="password" name="senha" autocomplete="${modo==='convite'?'new-password':'current-password'}" minlength="${modo==='convite'?8:1}" required></label>
+   <p class="erro" id="lErro">${esc(msg)}</p>
+   <button class="btn pri" type="submit">${modo==='convite'?'Criar meu acesso':'Entrar'}</button>
+  </form></div></div>`;
+ document.querySelectorAll('.tabs2 button').forEach(b=>b.onclick=()=>telaLogin(b.dataset.m));
+ $('#fLogin').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),bt=e.target.querySelector('button');bt.disabled=true;$('#lErro').textContent='';
+  try{const email=String(f.get('email')).trim(),senha=String(f.get('senha'));
+   if(modo==='convite'){const r=await fetch(SB_URL+'/functions/v1/gestao',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({acao:'aceitar_convite',codigo:f.get('codigo'),email,senha})});const j=await r.json();if(!r.ok)throw new Error(j.erro||'Não foi possível criar o acesso')}
+   const {error}=await sb.auth.signInWithPassword({email,password:senha});if(error)throw new Error(error.message.includes('Invalid')?'E-mail ou senha incorretos':error.message);
+   await iniciar()}catch(err){$('#lErro').textContent=err.message;bt.disabled=false}};
+}
+
+// ---------- carga ----------
+async function carregar(){const e=S.emp.id;
+ const q=(t,sel='*')=>sb.from(t).select(sel).eq('empresa_id',e);
+ const [lc,pr,cd,cf,pc,pf,pi]=await Promise.all([q('locais','id,nome,tipo,ativo,portfolio_id'),q('produtos','id,ean,nome,ncm,cest,unidade,custo,ativo').order('nome'),q('produto_codigos','produto_id,ean'),q('produto_codigos_fornecedor','produto_id,fornecedor_cnpj,codigo,fator'),q('precos_local','produto_id,local_id,preco,ativo_no_mix,estoque_min,estoque_max'),q('portfolios','id,nome,descricao,cor').order('criado_em'),q('portfolio_itens','portfolio_id,produto_id,estoque_min,estoque_max')]);
+ for(const r of [lc,pr,cd,cf,pc,pf,pi])if(r.error)throw r.error;
+ S.locais=lc.data;S.produtos=pr.data;S.codigos=cd.data;S.codForn=cf.data;S.precos=pc.data;S.portfolios=pf.data;S.pitens=pi.data}
+async function iniciar(){const {data:{session}}=await sb.auth.getSession();if(!session){telaLogin();return}S.user=session.user;
+ const {data:m}=await sb.from('membros').select('empresa_id,papel').eq('user_id',S.user.id).eq('ativo',true).in('papel',['dono','gerente']).limit(1);
+ if(!m?.length){await sb.auth.signOut();telaLogin('entrar','Este login não tem acesso de dono ou gerente.');return}
+ S.papel=m[0].papel;const {data:emp}=await sb.from('empresas').select('id,nome_exibicao,razao_social,cnpj,regra_preco,gravacao,dias_video').eq('id',m[0].empresa_id).single();S.emp=emp;
+ try{await carregar()}catch(e){$('#raiz').innerHTML=`<div class="login"><div class="card"><h2>Não foi possível carregar</h2><p class="mu">${esc(e.message)}</p><button class="btn" onclick="location.reload()">Tentar de novo</button></div></div>`;return}
+ shell()}
+function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img src="../logo.png" alt="Beep">
+  <button class="nav" data-t="nf">${ICON.nf}Entrada de NF-e</button><button class="nav" data-t="pf">${ICON.pf}Portfólios</button><button class="nav" data-t="cfg">${ICON.cfg}Configurações</button>
+  <div class="quem"><b style="color:var(--ink)">${esc(S.emp.nome_exibicao||S.emp.razao_social)}</b><br>${esc(S.user.email)} · ${S.papel==='dono'?'Dono':'Gerente'}<br><button class="btn sm" id="sair" style="margin-top:10px">Sair</button></div></aside><main id="main"></main></div>`;
+ document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{S.tela=b.dataset.t;render()});$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
+function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({nf:telaNF,pf:telaPF,cfg:telaCfg})[S.tela]()}
+
+// ---------- leitura do XML (NF-e modelo 55) ----------
+const tx=(el,sel)=>{if(!el)return '';const n=el.getElementsByTagName(sel)[0];return n?n.textContent.trim():''};
+const nr=v=>{const n=parseFloat(String(v||'0'));return Number.isFinite(n)?n:0};
+const centavos=r=>Math.round(r*100);
+const eanOk=v=>/^\d{8,14}$/.test(v)?v:null;
+function lerNFe(xml){if(xml.length>5e6)throw new Error('Arquivo grande demais');
+ const doc=new DOMParser().parseFromString(xml,'application/xml');if(doc.getElementsByTagName('parsererror').length)throw new Error('O arquivo não é um XML válido');
+ const inf=doc.getElementsByTagName('infNFe')[0];if(!inf)throw new Error('Não encontrei a NF-e dentro do arquivo. Use o XML da nota (não o PDF/DANFE).');
+ const chave=(inf.getAttribute('Id')||'').replace(/^NFe/,'');if(!/^\d{44}$/.test(chave))throw new Error('Chave de acesso inválida no XML');
+ const mod=tx(inf.getElementsByTagName('ide')[0],'mod');if(mod&&mod!=='55')throw new Error('Esta é uma nota modelo '+mod+'. Para entrada de mercadoria use a NF-e modelo 55.');
+ const emit=inf.getElementsByTagName('emit')[0],dest=inf.getElementsByTagName('dest')[0],ide=inf.getElementsByTagName('ide')[0];
+ const itens=[...inf.getElementsByTagName('det')].map(det=>{const p=det.getElementsByTagName('prod')[0],imp=det.getElementsByTagName('imposto')[0];
+  const qCom=nr(tx(p,'qCom')),qTrib=nr(tx(p,'qTrib'))||qCom,fator=qCom>0?Math.max(1,Math.round(qTrib/qCom*1000)/1000):1;
+  let impostos=0;if(imp){const ipi=imp.getElementsByTagName('IPI')[0];if(ipi)impostos+=nr(tx(ipi,'vIPI'));for(const st of imp.getElementsByTagName('vICMSST'))impostos+=nr(st.textContent)}
+  const total=nr(tx(p,'vProd'))-nr(tx(p,'vDesc'))+nr(tx(p,'vFrete'))+nr(tx(p,'vSeg'))+nr(tx(p,'vOutro'))+impostos,ct=centavos(total),un=qCom*fator;
+  return {nItem:+det.getAttribute('nItem'),codigo:tx(p,'cProd'),ean:eanOk(tx(p,'cEAN')),eanUn:eanOk(tx(p,'cEANTrib')),desc:tx(p,'xProd'),ncm:tx(p,'NCM'),cest:tx(p,'CEST')||null,uCom:tx(p,'uCom'),qCom,fator,custoTotal:ct,custoUn:un>0?Math.round(ct/un):ct}});
+ return {chave,numero:tx(ide,'nNF'),serie:tx(ide,'serie'),emissao:tx(ide,'dhEmi')||tx(ide,'dEmi'),fornCnpj:tx(emit,'CNPJ')||tx(emit,'CPF'),fornNome:tx(emit,'xNome'),destCnpj:tx(dest,'CNPJ'),total:centavos(nr(tx(inf.getElementsByTagName('ICMSTot')[0],'vNF'))),itens,xml}}
+
+// casa cada item com o cadastro: primeiro pelo código do fornecedor, depois pelo código de barras
+function conferir(n){const porEan=new Map();S.produtos.forEach(p=>{if(p.ean)porEan.set(p.ean,p)});S.codigos.forEach(c=>{const p=S.produtos.find(x=>x.id===c.produto_id);if(p)porEan.set(c.ean,p)});
+ return n.itens.map(it=>{let p=null,por=null;const cf=S.codForn.find(c=>c.fornecedor_cnpj===n.fornCnpj&&c.codigo===it.codigo);
+  if(cf){p=S.produtos.find(x=>x.id===cf.produto_id);por='codigo';if(cf.fator&&+cf.fator!==1&&it.fator===1){it.fator=+cf.fator;it.custoUn=Math.round(it.custoTotal/(it.qCom*it.fator))}}
+  if(!p&&(it.eanUn||it.ean)){p=porEan.get(it.eanUn)||porEan.get(it.ean)||null;if(p)por='ean'}
+  return {it,prod:p,por,nome:bonito(it.desc),preco:p?null:precoSugerido(it.custoUn),novoPreco:''}})}
+
+// ---------- tela: entrada de NF-e ----------
+function telaNF(){const M=$('#main');
+ if(!S.nota){M.innerHTML=`<div class="head"><div><h1>Entrada de NF-e</h1><p>Suba o XML da nota do fornecedor. O sistema confere item a item, sugere o preço dos produtos novos e dá entrada no estoque.</p></div></div>
+  <label class="drop" id="drop"><span class="ic">${ICON.up}</span><b style="font-size:18px">Arraste o XML da nota aqui</b><span class="mu">ou clique para escolher o arquivo (.xml)</span><input type="file" accept=".xml,text/xml,application/xml" id="fXml" hidden></label>
+  <div class="aviso info" style="margin-top:16px"><span>ℹ️</span><span><b>Buscar pela chave de acesso</b> (sem ter o XML) precisa do certificado digital A1 da empresa ligado ao sistema para consultar a SEFAZ. Enquanto isso, peça o XML ao fornecedor ou baixe no portal da NF-e.</span></div>
+  <h2 style="font-size:18px;margin:28px 0 12px">Últimas notas</h2><div id="ultimas" class="tblwrap"><p class="vazio">Carregando…</p></div>`;
+  const d=$('#drop');['dragenter','dragover'].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.classList.add('over')}));['dragleave','drop'].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.classList.remove('over')}));
+  d.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)abrirXml(f)});$('#fXml').onchange=e=>{const f=e.target.files[0];if(f)abrirXml(f)};ultimas();return}
+ const n=S.nota,L=S.linhas,novos=L.filter(l=>!l.prod).length,mudou=L.filter(l=>l.prod&&l.prod.custo!==l.it.custoUn).length,locs=S.locais.filter(l=>l.ativo);
+ M.innerHTML=`<div class="head"><div><h1>Conferência da nota ${esc(n.numero)}</h1><p>${esc(bonito(n.fornNome))} · CNPJ ${esc(n.fornCnpj)} · emitida em ${n.emissao?new Date(n.emissao).toLocaleDateString('pt-BR'):'—'}</p></div><button class="btn" id="trocar">Trocar arquivo</button></div>
+  ${n.jaLancada?`<div class="aviso" style="margin-bottom:14px"><span>⚠️</span><span><b>Esta nota já foi lançada</b> em ${new Date(n.jaLancada).toLocaleString('pt-BR')}. Lançar de novo duplicaria o estoque.</span></div>`:''}
+  ${n.destCnpj&&S.emp.cnpj&&n.destCnpj!==S.emp.cnpj?`<div class="aviso" style="margin-bottom:14px"><span>⚠️</span><span>O destinatário desta nota (CNPJ ${esc(n.destCnpj)}) não é a ${esc(S.emp.nome_exibicao||'empresa')}. Confira se é a nota certa.</span></div>`:''}
+  <div class="grid4" style="margin-bottom:16px"><div class="kpi"><span>Valor da nota</span><b class="num">${brl(n.total)}</b></div><div class="kpi"><span>Itens</span><b class="num">${L.length}</b></div><div class="kpi"><span>Produtos novos</span><b class="num" style="color:#7dd3fc">${novos}</b></div><div class="kpi"><span>Custo mudou</span><b class="num" style="color:${mudou?'#fbbf24':'inherit'}">${mudou}</b></div></div>
+  <div class="tblwrap"><table class="tbl"><thead><tr><th>#</th><th>Produto</th><th>Situação</th><th class="n">Unidades</th><th class="n">Custo un.</th><th class="n">Preço de venda</th></tr></thead><tbody>
+  ${L.map((l,k)=>{const it=l.it,un=+(it.qCom*it.fator).toFixed(3);
+   let sit,precoCel;
+   if(!l.prod){sit=`<span class="pill new">Produto novo</span>`;
+    precoCel=`<div class="stack" style="justify-items:end"><input class="inp-s num" data-k="${k}" data-f="preco" value="${(l.preco/100).toFixed(2).replace('.',',')}" aria-label="Preço de venda"><span class="mu sm">sugerido ${brl(precoSugerido(it.custoUn))} · margem ${(margem(l.preco,it.custoUn)*100).toFixed(0)}%</span></div>`}
+   else{const ant=l.prod.custo,ref=precoRef(l.prod.id),v=ant>0?(it.custoUn-ant)/ant:0;
+    sit=`<div class="stack"><span class="pill ok">Vinculado${l.por==='codigo'?' pelo código do fornecedor':' pelo código de barras'}</span><span class="sm">${esc(bonito(l.prod.nome))}</span>${ant!==it.custoUn?`<span class="pill ${v>0?'warn':'ok'}">Custo ${v>0?'subiu':'caiu'} ${pct(v)} (era ${brl(ant)})</span>`:'<span class="mu sm">Custo igual</span>'}</div>`;
+    precoCel=`<div class="stack" style="justify-items:end"><span class="num">${ref!=null?brl(ref):'sem preço'}</span>${ref!=null?`<span class="mu sm">margem com custo novo ${(margem(ref,it.custoUn)*100).toFixed(0)}%</span>`:''}<input class="inp-s num" data-k="${k}" data-f="novoPreco" value="${esc(l.novoPreco)}" placeholder="manter" aria-label="Novo preço (opcional)"></div>`}
+   return `<tr><td class="mu num">${it.nItem}</td><td><div class="stack">${!l.prod?`<input type="text" data-k="${k}" data-f="nome" value="${esc(l.nome)}" aria-label="Nome do produto" style="min-height:36px">`:`<b>${esc(bonito(it.desc))}</b>`}<span class="mu sm">Cód. ${esc(it.codigo)}${it.eanUn||it.ean?' · EAN '+esc(it.eanUn||it.ean):' · sem código de barras'} · NCM ${esc(it.ncm||'—')}</span>
+    <span class="row"><button class="btn sm" data-vinc="${k}">${l.prod?'Vincular a outro':'Vincular a um produto existente'}</button>${l.prod?`<button class="btn sm" data-novo="${k}">Cadastrar como novo</button>`:''}</span></div></td>
+    <td>${sit}</td><td class="n"><div class="stack" style="justify-items:end"><b class="num">${un.toLocaleString('pt-BR')}</b><span class="mu sm">${it.qCom.toLocaleString('pt-BR')} ${esc(it.uCom)} × <input class="inp-s num" style="width:58px!important" data-k="${k}" data-f="fator" value="${it.fator}" aria-label="Unidades por embalagem"></span></div></td>
+    <td class="n num">${brl(it.custoUn)}</td><td class="n">${precoCel}</td></tr>`}).join('')}</tbody></table></div>
+  ${novos&&S.portfolios.length?`<div class="card" style="margin-top:16px"><b>Produtos novos entram nos portfólios:</b><div class="row" style="margin-top:10px">${S.portfolios.map(p=>`<label class="chk"><input type="checkbox" data-pf="${p.id}" ${S.pfNovos.has(p.id)?'checked':''}> ${esc(p.nome)}</label>`).join('')}</div><p class="mu sm" style="margin-top:8px">As lojas que usam esses portfólios passam a vender e repor os produtos novos.</p></div>`:''}
+  <div class="barra"><label class="f" style="min-width:240px">Destino do estoque<select id="destino"><option value="">Escolha o CD ou a loja</option>${locs.map(l=>`<option value="${l.id}" ${S.destino===l.id?'selected':''}>${esc(l.nome)}${l.tipo==='cd'?' (CD)':''}</option>`).join('')}</select></label>
+   <span class="sp"></span><span class="mu sm">Preço de produto já cadastrado só muda se você digitar um novo.</span><button class="btn pri" id="lancar" ${S.destino&&!n.jaLancada?'':'disabled'}>Lançar nota</button></div>`;
+ $('#trocar').onclick=()=>{S.nota=null;S.linhas=[];render()};
+ $('#destino').onchange=e=>{S.destino=e.target.value||null;$('#lancar').disabled=!S.destino||!!n.jaLancada};
+ M.querySelectorAll('input[data-f]').forEach(inp=>inp.onchange=()=>{const l=S.linhas[+inp.dataset.k],f=inp.dataset.f,v=inp.value.trim();
+  if(f==='nome')l.nome=v;
+  if(f==='preco'){const c=Math.round(parseFloat(v.replace(/\./g,'').replace(',','.'))*100);if(c>0)l.preco=c;render()}
+  if(f==='novoPreco'){if(!v){l.novoPreco='';return}const c=Math.round(parseFloat(v.replace(/\./g,'').replace(',','.'))*100);l.novoPreco=c>0?(c/100).toFixed(2).replace('.',','):'';render()}
+  if(f==='fator'){const x=parseFloat(v.replace(',','.'));if(x>0){l.it.fator=x;l.it.custoUn=Math.round(l.it.custoTotal/(l.it.qCom*x));if(!l.prod)l.preco=precoSugerido(l.it.custoUn)}render()}});
+ M.querySelectorAll('[data-pf]').forEach(c=>c.onchange=()=>{c.checked?S.pfNovos.add(c.dataset.pf):S.pfNovos.delete(c.dataset.pf)});
+ M.querySelectorAll('[data-vinc]').forEach(b=>b.onclick=()=>vincular(+b.dataset.vinc));
+ M.querySelectorAll('[data-novo]').forEach(b=>b.onclick=()=>{const l=S.linhas[+b.dataset.novo];l.prod=null;l.por=null;l.preco=precoSugerido(l.it.custoUn);render()});
+ $('#lancar').onclick=confirmarLancamento}
+async function ultimas(){const {data,error}=await sb.from('notas_entrada').select('numero,fornecedor_nome,valor_total,status,lancada_em,criado_em').eq('empresa_id',S.emp.id).order('criado_em',{ascending:false}).limit(8);const el=$('#ultimas');if(!el)return;
+ if(error||!data?.length){el.innerHTML='<p class="vazio">Nenhuma nota lançada ainda.</p>';return}
+ el.innerHTML=`<table class="tbl"><thead><tr><th>Nota</th><th>Fornecedor</th><th class="n">Valor</th><th>Situação</th><th>Data</th></tr></thead><tbody>${data.map(r=>`<tr><td class="num">${esc(r.numero)}</td><td>${esc(bonito(r.fornecedor_nome))}</td><td class="n num">${brl(r.valor_total)}</td><td><span class="pill ${r.status==='lancada'?'ok':'warn'}">${r.status==='lancada'?'Lançada':r.status==='conferencia'?'Em conferência':'Descartada'}</span></td><td class="mu">${new Date(r.lancada_em||r.criado_em).toLocaleDateString('pt-BR')}</td></tr>`).join('')}</tbody></table>`}
+async function abrirXml(f){try{if(!/\.xml$/i.test(f.name)&&!/xml/.test(f.type))throw new Error('Escolha o arquivo .xml da nota');const n=lerNFe(await f.text());
+  const {data:ja}=await sb.from('notas_entrada').select('id,status,lancada_em').eq('empresa_id',S.emp.id).eq('chave',n.chave).maybeSingle();
+  n.notaId=ja?.id||null;n.jaLancada=ja?.status==='lancada'?ja.lancada_em:null;S.nota=n;S.linhas=conferir(n);S.pfNovos=new Set(S.portfolios.map(p=>p.id));
+  const cd=S.locais.find(l=>l.tipo==='cd'&&l.ativo);S.destino=S.destino||cd?.id||null;render()}catch(e){toast(e.message)}}
+function vincular(k){const l=S.linhas[k];let q='';$('#modal').classList.add('wide');
+ const desenha=()=>{const t=q.trim().toLowerCase(),lista=S.produtos.filter(p=>p.ativo&&(!t||p.nome.toLowerCase().includes(t)||(p.ean||'').includes(t))).slice(0,40);
+  modal(`<h2>Vincular ao cadastro</h2><p class="mu">Item da nota: <b style="color:var(--ink)">${esc(bonito(l.it.desc))}</b> · cód. ${esc(l.it.codigo)}. Da próxima vez, esse código do fornecedor já vem vinculado.</p>
+   <input type="search" id="vq" placeholder="Buscar por nome ou código de barras" value="${esc(q)}">
+   <div class="tblwrap" style="max-height:52vh"><table class="tbl"><tbody>${lista.map(p=>`<tr><td>${esc(bonito(p.nome))}<br><span class="mu sm">${esc(p.ean||'sem código')} · custo ${brl(p.custo)}</span></td><td class="n"><button class="btn sm pri" data-esc="${p.id}">Escolher</button></td></tr>`).join('')||'<tr><td class="vazio">Nenhum produto encontrado</td></tr>'}</tbody></table></div>
+   <div class="row"><span class="sp"></span><button class="btn" data-close>Cancelar</button></div>`);
+  const i=$('#vq');i.focus();i.setSelectionRange(q.length,q.length);i.oninput=()=>{q=i.value;clearTimeout(i._t);i._t=setTimeout(desenha,200)};
+  document.querySelectorAll('[data-esc]').forEach(b=>b.onclick=()=>{l.prod=S.produtos.find(p=>p.id===b.dataset.esc);l.por='manual';fechar();render()})};desenha()}
+function confirmarLancamento(){const n=S.nota,L=S.linhas,dest=S.locais.find(l=>l.id===S.destino),novos=L.filter(l=>!l.prod),precos=L.filter(l=>l.prod&&l.novoPreco),sem=novos.filter(l=>!l.nome.trim());
+ if(sem.length){toast('Dê nome a todos os produtos novos');return}
+ modal(`<h2>Lançar a nota ${esc(n.numero)}?</h2><div class="stack mu">
+  <span>• ${L.length} itens entram no estoque de <b style="color:var(--ink)">${esc(dest.nome)}</b></span>
+  <span>• ${novos.length} produtos novos serão cadastrados com o preço sugerido em todas as lojas</span>
+  <span>• ${precos.length?precos.length+' preços alterados por você':'Nenhum preço de produto existente será alterado'}</span>
+  <span>• Custo atualizado em ${L.filter(l=>l.prod&&l.prod.custo!==l.it.custoUn).length} produtos</span></div>
+  <p class="mu sm">Não dá para desfazer pelo painel: confira as quantidades antes.</p>
+  <div class="row"><span class="sp"></span><button class="btn" data-close>Voltar</button><button class="btn pri" id="okLancar">Lançar nota</button></div>`);
+ $('#okLancar').onclick=lancar}
+async function lancar(){const bt=$('#okLancar');bt.disabled=true;bt.textContent='Lançando…';const n=S.nota,e=S.emp.id;
+ try{const path=`${e}/${n.chave}.xml`;const up=await sb.storage.from('notas').upload(path,new Blob([n.xml],{type:'text/xml'}),{upsert:true,contentType:'text/xml'});if(up.error)throw new Error('Não foi possível guardar o XML: '+up.error.message);
+  let notaId=n.notaId;const cab={empresa_id:e,chave:n.chave,numero:n.numero,serie:n.serie,emissao:n.emissao||null,fornecedor_cnpj:n.fornCnpj,fornecedor_nome:n.fornNome,valor_total:n.total,local_destino_id:S.destino,xml_path:path,status:'conferencia'};
+  if(notaId){const r=await sb.from('notas_entrada').update(cab).eq('id',notaId);if(r.error)throw r.error}else{const r=await sb.from('notas_entrada').insert(cab).select('id').single();if(r.error)throw r.error;notaId=r.data.id}
+  const itens=S.linhas.map(l=>{const it=l.it,o={produto_id:l.prod?.id||'',custo_unit:it.custoUn,quantidade:+(it.qCom*it.fator).toFixed(3),fornecedor_codigo:it.codigo,fator:it.fator};
+   if(!l.prod){o.novo={ean:it.eanUn||it.ean||'',nome:l.nome.trim().slice(0,120),ncm:it.ncm,cest:it.cest||'',unidade:'UN'};o.preco_aprovado=l.preco}
+   else if(l.novoPreco){o.preco_aprovado=Math.round(parseFloat(l.novoPreco.replace(',','.'))*100)}return o});
+  const r=await sb.rpc('lancar_nota_entrada',{p_nota:notaId,p_itens:itens});if(r.error)throw r.error;
+  // produtos novos: entram nos portfólios escolhidos e as lojas de cada portfólio são atualizadas
+  const novosCod=S.linhas.filter(l=>!l.prod).map(l=>l.it.codigo);let avisoPf='';
+  if(novosCod.length&&S.pfNovos.size){const {data:cf}=await sb.from('produto_codigos_fornecedor').select('produto_id,codigo').eq('empresa_id',e).eq('fornecedor_cnpj',n.fornCnpj).in('codigo',novosCod);
+   const linhasPf=[];for(const pf of S.pfNovos)for(const c of cf||[])linhasPf.push({portfolio_id:pf,produto_id:c.produto_id,empresa_id:e,estoque_min:2,estoque_max:8});
+   if(linhasPf.length){const ins=await sb.from('portfolio_itens').upsert(linhasPf,{onConflict:'portfolio_id,produto_id',ignoreDuplicates:true});if(ins.error)avisoPf=' (portfólios: '+ins.error.message+')'}}
+  await carregar();for(const l of lojas())if(l.portfolio_id)await sb.rpc('aplicar_portfolio',{p_local:l.id,p_portfolio:l.portfolio_id});await carregar();
+  const alertas=S.linhas.filter(l=>l.prod&&l.prod.custo!==l.it.custoUn&&!l.novoPreco);
+  modal(`<h2>Nota ${esc(n.numero)} lançada ✓</h2><p class="mu">${S.linhas.length} itens entraram no estoque${avisoPf}.</p>
+   ${alertas.length?`<div class="aviso"><span>⚠️</span><span><b>Custo mudou e o preço não foi alterado:</b><br>${alertas.map(l=>`${esc(bonito(l.prod.nome))}: custo ${brl(l.prod.custo)} → ${brl(l.it.custoUn)}, preço ${brl(precoRef(l.prod.id))}`).join('<br>')}</span></div>`:''}
+   <div class="row"><span class="sp"></span><button class="btn pri" data-close>Concluir</button></div>`);
+  S.nota=null;S.linhas=[];render()}catch(err){bt.disabled=false;bt.textContent='Lançar nota';toast('Erro: '+(err.message||err))}}
+
+// ---------- tela: portfólios ----------
+function itensDe(pid){return S.pitens.filter(i=>i.portfolio_id===pid)}
+function telaPF(){const M=$('#main');
+ M.innerHTML=`<div class="head"><div><h1>Portfólios</h1><p>Mixes de produtos prontos. Cada loja usa um: o caixa vende e a reposição repõe só o que está nele.</p></div><button class="btn pri" id="novoPf">+ Novo portfólio</button></div>
+  <div class="pgrid">${S.portfolios.map(p=>{const us=lojas().filter(l=>l.portfolio_id===p.id);return `<div class="card pcard" style="--c:${esc(p.cor)}"><div class="row"><h3 style="font-size:18px">${esc(p.nome)}</h3><span class="sp"></span><span class="pill">${itensDe(p.id).length} produtos</span></div><p class="mu sm" style="margin:6px 0 10px">${esc(p.descricao||'Sem descrição')}</p><p class="sm">${us.length?'Usado por <b>'+us.map(l=>esc(l.nome)).join(', ')+'</b>':'<span class="mu">Nenhuma loja usa</span>'}</p><div class="row" style="margin-top:12px"><button class="btn sm" data-ed="${p.id}">Editar</button><button class="btn sm" data-dup="${p.id}">Duplicar</button>${us.length?'':`<button class="btn sm dang" data-del="${p.id}">Excluir</button>`}</div></div>`}).join('')||'<p class="vazio">Nenhum portfólio ainda.</p>'}</div>
+  <h2 style="font-size:18px;margin:28px 0 12px">Portfólio de cada loja</h2>
+  <div class="tblwrap"><table class="tbl"><thead><tr><th>Loja</th><th>Portfólio</th><th class="n">Produtos à venda</th></tr></thead><tbody>${lojas().map(l=>`<tr><td><b>${esc(l.nome)}</b></td><td><select data-loja="${l.id}" style="max-width:320px"><option value="">Sem portfólio</option>${S.portfolios.map(p=>`<option value="${p.id}" ${l.portfolio_id===p.id?'selected':''}>${esc(p.nome)}</option>`).join('')}</select></td><td class="n num">${S.precos.filter(x=>x.local_id===l.id&&x.ativo_no_mix).length}</td></tr>`).join('')}</tbody></table></div>`;
+ $('#novoPf').onclick=()=>editorPf(null);M.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>editorPf(b.dataset.ed));M.querySelectorAll('[data-dup]').forEach(b=>b.onclick=()=>editorPf(b.dataset.dup,true));
+ M.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{const p=S.portfolios.find(x=>x.id===b.dataset.del);if(!confirmar('Excluir o portfólio '+p.nome+'?'))return;const r=await sb.from('portfolios').delete().eq('id',p.id);if(r.error)return toast(r.error.message);await carregar();render();toast('Portfólio excluído')});
+ M.querySelectorAll('[data-loja]').forEach(s=>s.onchange=()=>trocarPf(s.dataset.loja,s.value,s))}
+const confirmar=t=>window.confirm(t);
+function trocarPf(lid,pid,sel){const l=S.locais.find(x=>x.id===lid);if(!pid){sel.value=l.portfolio_id||'';toast('Escolha um portfólio');return}
+ const p=S.portfolios.find(x=>x.id===pid),dentro=new Set(itensDe(pid).map(i=>i.produto_id)),hoje=S.precos.filter(x=>x.local_id===lid&&x.ativo_no_mix),saem=hoje.filter(x=>!dentro.has(x.produto_id)).length,entram=[...dentro].filter(id=>!hoje.some(x=>x.produto_id===id)).length;
+ sel.value=l.portfolio_id||'';
+ modal(`<h2>Trocar o portfólio da ${esc(l.nome)}</h2><p class="mu">Para <b style="color:var(--ink)">${esc(p.nome)}</b>.</p><div class="grid4" style="grid-template-columns:1fr 1fr"><div class="kpi"><span>Entram à venda</span><b class="num">${entram}</b></div><div class="kpi"><span>Saem de venda</span><b class="num">${saem}</b></div></div><p class="mu sm">O caixa da loja atualiza o catálogo em até 10 minutos. Produtos que saem deixam de ser repostos.</p><div class="row"><span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="okPf">Trocar</button></div>`);
+ $('#okPf').onclick=async()=>{const r=await sb.rpc('aplicar_portfolio',{p_local:lid,p_portfolio:pid});if(r.error)return toast(r.error.message);fechar();await carregar();render();toast(`${l.nome}: ${r.data.no_mix} produtos à venda`+(r.data.sem_preco?` · ${r.data.sem_preco} sem preço ficaram de fora`:''))}}
+function editorPf(id,duplicar){const base=id?S.portfolios.find(p=>p.id===id):null;const E={id:duplicar?null:base?.id||null,nome:base?(duplicar?base.nome+' (cópia)':base.nome):'',descricao:base?.descricao||'',cor:base?.cor||'#38bdf8',itens:new Map((id?itensDe(id):[]).map(i=>[i.produto_id,{min:+i.estoque_min,max:+i.estoque_max}]))};let q='';$('#modal').classList.add('wide');
+ const desenha=()=>{const t=q.trim().toLowerCase(),lista=S.produtos.filter(p=>p.ativo&&(!t||p.nome.toLowerCase().includes(t)||(p.ean||'').includes(t)));
+  modal(`<h2>${E.id?'Editar portfólio':'Novo portfólio'}</h2>
+   <div class="row" style="align-items:flex-end"><label class="f" style="flex:2;min-width:200px">Nome<input type="text" id="eNome" value="${esc(E.nome)}" maxlength="60" placeholder="Ex.: Condomínio médio"></label><label class="f" style="flex:3;min-width:220px">Descrição<input type="text" id="eDesc" value="${esc(E.descricao)}" placeholder="Para que tipo de loja ele serve"></label><label class="f">Cor<input type="color" id="eCor" value="${esc(E.cor)}" style="width:56px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--p2)"></label></div>
+   <div class="row"><input type="search" id="eq" placeholder="Buscar produto" value="${esc(q)}" style="flex:1"><span class="mu sm"><b style="color:var(--ink)">${E.itens.size}</b> no portfólio</span><button class="btn sm" id="eTodos">Marcar ${lista.length}</button><button class="btn sm" id="eNenhum">Desmarcar</button></div>
+   <div class="tblwrap" style="max-height:46vh"><table class="tbl"><thead><tr><th style="width:40px"></th><th>Produto</th><th class="n">Mínimo</th><th class="n">Máximo</th></tr></thead><tbody>${lista.map(p=>{const it=E.itens.get(p.id);return `<tr style="${it?'':'opacity:.55'}"><td><input type="checkbox" data-t="${p.id}" ${it?'checked':''} aria-label="Incluir" style="width:18px;height:18px;accent-color:var(--y)"></td><td>${esc(bonito(p.nome))}<br><span class="mu sm">${esc(p.ean||'sem código')}</span></td><td class="n"><input class="inp-s num" data-mn="${p.id}" value="${it?it.min:''}" ${it?'':'disabled'} aria-label="Mínimo"></td><td class="n"><input class="inp-s num" data-mx="${p.id}" value="${it?it.max:''}" ${it?'':'disabled'} aria-label="Máximo"></td></tr>`}).join('')||'<tr><td colspan="4" class="vazio">Nenhum produto</td></tr>'}</tbody></table></div>
+   <p class="mu sm">Mínimo e máximo valem para cada loja: abaixo do mínimo, a reposição leva até o máximo.</p>
+   <div class="row"><span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="eSalvar">Salvar portfólio</button></div>`);
+  const sv=()=>{E.nome=$('#eNome').value;E.descricao=$('#eDesc').value;E.cor=$('#eCor').value};
+  const i=$('#eq');i.oninput=()=>{sv();q=i.value;clearTimeout(i._t);i._t=setTimeout(()=>{desenha();const n=$('#eq');n.focus();n.setSelectionRange(q.length,q.length)},220)};
+  document.querySelectorAll('[data-t]').forEach(c=>c.onchange=()=>{sv();c.checked?E.itens.set(c.dataset.t,{min:2,max:8}):E.itens.delete(c.dataset.t);desenha()});
+  document.querySelectorAll('[data-mn]').forEach(c=>c.onchange=()=>{const it=E.itens.get(c.dataset.mn);if(it){it.min=Math.max(0,parseFloat(c.value)||0);if(it.max<it.min)it.max=it.min}});
+  document.querySelectorAll('[data-mx]').forEach(c=>c.onchange=()=>{const it=E.itens.get(c.dataset.mx);if(it)it.max=Math.max(it.min,parseFloat(c.value)||0)});
+  $('#eTodos').onclick=()=>{sv();lista.forEach(p=>{if(!E.itens.has(p.id))E.itens.set(p.id,{min:2,max:8})});desenha()};$('#eNenhum').onclick=()=>{sv();lista.forEach(p=>E.itens.delete(p.id));desenha()};
+  $('#eSalvar').onclick=async()=>{sv();if(!E.nome.trim())return toast('Dê um nome ao portfólio');if(!E.itens.size)return toast('Marque pelo menos um produto');const b=$('#eSalvar');b.disabled=true;
+   try{let pid=E.id;const cab={empresa_id:S.emp.id,nome:E.nome.trim(),descricao:E.descricao.trim()||null,cor:E.cor};
+    if(pid){const r=await sb.from('portfolios').update(cab).eq('id',pid);if(r.error)throw r.error}else{const r=await sb.from('portfolios').insert(cab).select('id').single();if(r.error)throw r.error;pid=r.data.id}
+    const d=await sb.from('portfolio_itens').delete().eq('portfolio_id',pid);if(d.error)throw d.error;
+    const rows=[...E.itens].map(([produto_id,v])=>({portfolio_id:pid,produto_id,empresa_id:S.emp.id,estoque_min:v.min,estoque_max:Math.max(v.min,v.max)}));
+    const r2=await sb.from('portfolio_itens').insert(rows);if(r2.error)throw r2.error;
+    const usam=lojas().filter(l=>l.portfolio_id===pid);for(const l of usam){const r=await sb.rpc('aplicar_portfolio',{p_local:l.id,p_portfolio:pid});if(r.error)throw r.error}
+    fechar();await carregar();render();toast('Portfólio salvo'+(usam.length?' e aplicado em '+usam.length+' loja(s)':''))}catch(err){b.disabled=false;toast('Erro: '+err.message)}}};desenha()}
+
+// ---------- tela: configurações ----------
+function telaCfg(){const M=$('#main'),g=S.emp.gravacao||'intercorrencias',d=S.emp.dias_video||3,dono=S.papel==='dono';
+ M.innerHTML=`<div class="head"><div><h1>Configurações</h1><p>Valem para todos os caixas da ${esc(S.emp.nome_exibicao||'empresa')}.</p></div></div>
+  <div class="card" style="display:grid;gap:14px;max-width:760px"><div><h2 style="font-size:18px">Câmera de segurança do caixa</h2><p class="mu sm">O que a câmera frontal grava em cada compra.</p></div>
+   <label class="opt"><input type="radio" name="grav" value="intercorrencias" ${g==='intercorrencias'?'checked':''} ${dono?'':'disabled'}><span><b>Só intercorrências</b><small>Grava compras canceladas, abandonadas ou com pagamento recusado. Gasta pouco espaço.</small></span></label>
+   <label class="opt"><input type="radio" name="grav" value="tudo" ${g==='tudo'?'checked':''} ${dono?'':'disabled'}><span><b>Gravar tudo</b><small>Grava todas as compras, inclusive as pagas. Usa bem mais espaço.</small></span></label>
+   <label class="opt"><input type="radio" name="grav" value="desligado" ${g==='desligado'?'checked':''} ${dono?'':'disabled'}><span><b>Não gravar</b><small>A câmera aparece na tela, mas nada é gravado.</small></span></label>
+   <label class="f" style="max-width:260px">Guardar os vídeos por<select id="dias" ${dono?'':'disabled'}>${[1,3,7,15,30].map(n=>`<option value="${n}" ${n===d?'selected':''}>${n} ${n===1?'dia':'dias'}</option>`).join('')}</select></label>
+   ${dono?'<div class="row"><span class="sp"></span><button class="btn pri" id="salvarCfg">Salvar</button></div>':'<p class="mu sm">Só o dono pode mudar estas opções.</p>'}
+  </div>
+  <div class="card" style="max-width:760px;margin-top:16px"><h2 style="font-size:18px">Regra de preço para produtos novos</h2><p class="mu sm" style="margin-top:4px">Custo ÷ ${String(regra().divisor).replace('.',',')}, arredondado para cima terminando em ,${String(regra().terminacaoCentavos).padStart(2,'0')}. Exemplo: custo ${brl(204)} → ${brl(precoSugerido(204))}.</p></div>`;
+ if(dono)$('#salvarCfg').onclick=async()=>{const gv=M.querySelector('input[name=grav]:checked').value,dv=+$('#dias').value;const r=await sb.from('empresas').update({gravacao:gv,dias_video:dv}).eq('id',S.emp.id);if(r.error)return toast('Erro: '+r.error.message);S.emp.gravacao=gv;S.emp.dias_video=dv;toast('Configuração salva. Os caixas aplicam em até 10 minutos.')}}
+
+sb.auth.onAuthStateChange((ev)=>{if(ev==='SIGNED_OUT')telaLogin()});
+iniciar();
+</script>
+</body>
+</html>
