@@ -24,6 +24,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 input{font:inherit}
 .tela{position:fixed;inset:0;display:none;flex-direction:column;padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom))}
 .tela.on{display:flex}
+#pinNovo::placeholder{letter-spacing:0;text-transform:none;font-size:16px}#ativar{overflow-y:auto;-webkit-overflow-scrolling:touch}#ativar>*{flex-shrink:0}#ativar .cartao{margin-bottom:40vh}
 h1,h2,.num{font-family:Manrope,Inter,sans-serif;letter-spacing:-.02em}
 h1{font-size:34px;line-height:1.05;font-weight:800}
 h2{font-size:22px;font-weight:800}
@@ -112,9 +113,9 @@ h2{font-size:22px;font-weight:800}
     </div>
     <div class="cartao" id="passo2" style="display:none">
       <h2>Em qual loja ele fica?</h2>
-      <div id="lojas" style="display:flex;flex-direction:column;gap:8px;max-height:40vh;overflow:auto"></div>
+      <div id="lojas" style="display:flex;flex-direction:column;gap:8px;max-height:32vh;overflow:auto"></div>
       <input class="campo" id="nomeAp" placeholder="Nome do aparelho" value="Telefone teste" style="letter-spacing:0;text-transform:none;font-size:17px">
-      <input class="campo" id="pinNovo" placeholder="Crie um PIN do gerente (4 a 6 números)" inputmode="numeric" maxlength="6" type="password" autocomplete="off" style="letter-spacing:.3em;font-size:18px">
+      <input class="campo" id="pinNovo" placeholder="Crie o PIN do gerente (4 a 6 números)" inputmode="numeric" maxlength="6" type="password" autocomplete="off" style="letter-spacing:.3em;font-size:18px">
       <div class="msg" id="msg2"></div>
       <button class="btn y" id="btnAtivar">Ativar caixa</button>
     </div>
@@ -326,6 +327,10 @@ const telaCheia=()=>{if(token&&!document.fullscreenElement&&!matchMedia('(displa
 document.addEventListener('pointerdown',telaCheia,{passive:true});
 let wl=null;const manterTela=async()=>{try{if(token&&'wakeLock' in navigator&&!wl){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>wl=null)}}catch(e){}};
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')manterTela()});document.addEventListener('pointerdown',manterTela,{passive:true});
+
+// teclado do celular não pode esconder o campo: rola até ele e Enter ativa
+['#nomeAp','#pinNovo','#codigo'].forEach(q=>{const el=$(q);if(!el)return;el.addEventListener('focus',()=>setTimeout(()=>el.scrollIntoView({block:'center',behavior:'smooth'}),300))});
+$('#pinNovo').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#btnAtivar').click()}});
 
 // ---------- trava de navegador ----------
 const instalado=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;

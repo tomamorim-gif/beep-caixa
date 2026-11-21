@@ -1,5 +1,5 @@
 // Guarda o app no aparelho para abrir sem internet. Chamadas à API nunca são cacheadas.
-const V = 'beep-caixa-v7';
+const V = 'beep-caixa-v8';
 const ARQ = ['./', './index.html', './manifest.webmanifest', './logo.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(V).then((c) => c.addAll(ARQ))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== V).map((k) => caches.delete(k))))); self.clients.claim(); });
