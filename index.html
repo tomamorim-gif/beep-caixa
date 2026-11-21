@@ -345,7 +345,9 @@ setInterval(travaNav,1500);
 
 // ---------- início ----------
 function iniciar(){$('#lojaNome').textContent=cat?.loja||loja?.nome||'—';atualizarRede();mostrar('espera');ligarRosto();enviarFila();setInterval(()=>{sincronizar(true);enviarFila()},10*60*1000)}
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{setInterval(()=>r.update().catch(()=>{}),10*60000)}).catch(()=>{});
+ // versão nova chegou: recarrega sozinho, mas nunca no meio de uma compra
+ let recarregar=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(recarregar)return;recarregar=true;const tenta=()=>{if(typeof carrinho!=='undefined'&&carrinho.length){setTimeout(tenta,5000);return}location.reload()};tenta()})}
 if(token){iniciar();sincronizar(true)}else mostrar('ativar');
 desenhar();
 }
