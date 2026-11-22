@@ -351,6 +351,7 @@ let maior18Em=null,carrinho=[],forma=null,vendaId=null,iniciada=null,stream=null
 
 const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2600)};
 const NATIVO=window.BeepNativo&&BeepNativo.disponivel?BeepNativo:null;
+function calarVoz(){try{if(NATIVO)NATIVO.calar();else if('speechSynthesis' in window)speechSynthesis.cancel()}catch(e){}}
 const falar=t=>{if(!voz)return;if(NATIVO){try{NATIVO.falar(String(t))}catch(e){}return}if(!('speechSynthesis' in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';u.rate=1.05;speechSynthesis.speak(u)}catch(e){}};
 const valorFalado=c=>{const r=Math.floor(c/100),cc=c%100;return (r?r+(r===1?' real':' reais'):'')+(r&&cc?' e ':'')+(cc?cc+' centavos':'')||'zero'};
 async function api(acao,corpo={}){const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(r.status===401){desativar(true);throw new Error(j.erro)}if(!r.ok)throw new Error(j.erro||'Erro');return j}
@@ -556,7 +557,7 @@ function ouvir(){return new Promise(res=>{if(!SR){res(null);return}try{vozRec?.a
  r.onend=()=>{$('#vozMic').classList.remove('ouvindo');vozRec=null;if(!final&&$('#vozOuvido').textContent==='Pode falar…')$('#vozOuvido').textContent='';res(final?{txt:final,alt}:null)};
  $('#vozOuvido').textContent='Pode falar…';$('#vozMic').classList.add('ouvindo');armarVozInativo();try{r.start()}catch(e){res(null)}})}
 function armarVozInativo(){clearTimeout(vozTimer);vozTimer=setTimeout(()=>{if(document.querySelector('#vozT.on')&&!vozItens.length)sairVoz()},90000)}
-function sairVoz(){try{vozRec?.abort()}catch(e){}speechSynthesis?.cancel();vozModo=null;vozItens=[];clearTimeout(vozTimer);mostrar(carrinho.length?'carrinho':'espera')}
+function sairVoz(){try{vozRec?.abort()}catch(e){}calarVoz();vozModo=null;vozItens=[];clearTimeout(vozTimer);mostrar(carrinho.length?'carrinho':'espera')}
 function thumb(p){return p.foto?`<span class="voz-th"><img src="${p.foto}" crossorigin="anonymous" alt=""></span>`:`<span class="voz-th sem">${esc(p.nome.trim().charAt(0).toUpperCase())}</span>`}
 function desenharVoz(){$('#vozLista').innerHTML=vozItens.map((it,k)=>`<div class="voz-item">${thumb(it.p)}<span class="n">${esc(it.p.nome)}<small>${brl(it.p.preco*it.q)}</small></span><span class="voz-q"><button data-k="${k}" data-d="-1" aria-label="Menos">−</button><b>${it.q}</b><button data-k="${k}" data-d="1" aria-label="Mais">+</button></span></div>`).join('');
  $('#vozOpcoes').innerHTML=vozOpc.map((o,k)=>`<button data-o="${k}">${thumb(o.p)}<span><b>${k+1}.</b> ${esc(o.p.nome)} · ${brl(o.p.preco)}</span></button>`).join('');$('#vozConfirmar').disabled=!vozItens.length}
@@ -597,7 +598,7 @@ async function iniciarVoz(modo){vozModo=modo;vozOpc=[];$('#vozEscolha').style.di
  if(!navigator.onLine){$('#vozPergunta').textContent='Sem internet agora';$('#vozOuvido').textContent='O atendimento por áudio precisa de internet. Use o leitor de código de barras.';return}
  try{modo==='guiado'?await modoGuiado():await modoDireto()}catch(e){}}
 function abrirVoz(){vozItens=[];vozOpc=[];vozModo=null;$('#vozEscolha').style.display='flex';$('#vozFala').style.display='none';$('#vozOuvido').textContent='';mostrar('vozT');armarVozInativo();falarE('Atendimento por áudio. Você prefere que eu te guie, ou quer fazer o pedido direto?')}
-function confirmarVoz(){if(!vozItens.length)return;try{vozRec?.abort()}catch(e){}speechSynthesis?.cancel();const itens=vozItens.slice();vozItens=[];vozModo=null;clearTimeout(vozTimer);
+function confirmarVoz(){if(!vozItens.length)return;try{vozRec?.abort()}catch(e){}calarVoz();const itens=vozItens.slice();vozItens=[];vozModo=null;clearTimeout(vozTimer);
  let pulou=null;for(const it of itens){const p=it.p;if(p.maior18&&!maior18Em){pulou=p;continue}if(!vendaId){vendaId=uuid();iniciada=new Date().toISOString()}const x=carrinho.find(i=>i.id===p.id);if(x)x.q=Math.min(99,x.q+it.q);else carrinho.push({id:p.id,nome:p.nome,preco:p.preco,q:it.q});vitrine(p)}
  mostrar('carrinho');desenhar();iniciarGravacao();if(pulou){adicionar(pulou);return}falar('Pronto. '+resumoFalado()+' Total: '+valorFalado(totalC())+'. Toque em pagar quando quiser.')}
 function chamarAjuda(){api('evento',{tipo:'item_removido',itens:[{alerta:'Cliente pediu ajuda pelo atendimento por áudio'}]}).catch(()=>{});$('#vozPergunta').textContent='Pedido de ajuda registrado';falarE('Registrei seu pedido de ajuda. Enquanto isso, você pode usar o leitor de código de barras ou escolher os produtos na tela.')}
