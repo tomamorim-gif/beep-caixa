@@ -1,0 +1,54 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'br.com.beep.caixa'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'br.com.beep.caixa'
+        minSdk 24
+        targetSdk 33
+        versionCode (System.getenv('VERSAO_CODIGO') ?: '1').toInteger()
+        versionName System.getenv('VERSAO_NOME') ?: '0.1.0'
+    }
+
+    signingConfigs {
+        beep {
+            def ks = System.getenv('BEEP_KEYSTORE')
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv('BEEP_KS_SENHA')
+                keyAlias 'beep'
+                keyPassword System.getenv('BEEP_KS_SENHA')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig System.getenv('BEEP_KEYSTORE') ? signingConfigs.beep : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = '17' }
+    buildFeatures { buildConfig true }
+    packagingOptions {
+        jniLibs { useLegacyPackaging true }
+        resources { excludes += ['META-INF/*.kotlin_module'] }
+    }
+}
+
+dependencies {
+    implementation 'br.com.uol.pagseguro:plugpag:4.15.1'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.webkit:webkit:1.8.0'
+}

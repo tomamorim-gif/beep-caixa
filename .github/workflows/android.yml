@@ -1,0 +1,41 @@
+name: App Android (Beep Caixa)
+
+on:
+  push:
+    branches: [main]
+    paths: ['android/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Compilar APK
+        working-directory: android
+        env:
+          VERSAO_CODIGO: ${{ github.run_number }}
+          VERSAO_NOME: 0.1.${{ github.run_number }}
+        run: ./gradlew --no-daemon assembleRelease
+      - name: Preparar arquivo
+        run: cp android/app/build/outputs/apk/release/app-release.apk beep-caixa.apk
+      - name: Publicar para download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-teste
+          name: Beep Caixa (Android) — teste da maquininha
+          prerelease: true
+          make_latest: false
+          body: |
+            App Android do caixa Beep com a ponte para a maquininha PagBank (PlugPag 4.15.1).
+            Versão 0.1.${{ github.run_number }} — instale o arquivo beep-caixa.apk no telefone do caixa.
+          files: beep-caixa.apk
+          fail_on_unmatched_files: true

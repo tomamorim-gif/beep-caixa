@@ -1,0 +1,10 @@
+<resources>
+    <style name="Tema.Beep" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">#FFD60A</item>
+        <item name="colorPrimaryDark">#0B0B0B</item>
+        <item name="colorAccent">#FFD60A</item>
+        <item name="android:windowBackground">#0B0B0B</item>
+        <item name="android:statusBarColor">#0B0B0B</item>
+        <item name="android:navigationBarColor">#0B0B0B</item>
+    </style>
+</resources>
