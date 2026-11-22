@@ -331,10 +331,21 @@ h2{font-size:22px;font-weight:800}
     <button class="btn g" id="admPin">Trocar PIN do gerente</button>
     <button class="btn g" id="admTela">Como travar o celular no caixa</button>
     <button class="btn g" id="admMic">Liberar microfone (atendimento por áudio)</button>
-    <button class="btn g" id="admMaq" style="display:none">Maquininha (configurar e testar)</button>
+    <button class="btn g" id="admMaq">Maquininha de cartão (Mercado Pago)</button>
     <button class="btn bad" id="admSair">Desativar este aparelho</button>
   </div>
-  <p class="mu" style="margin-top:14px;font-size:13px">Teste: as vendas ficam marcadas como teste no sistema e não entram no faturamento. Para vender de verdade faltam a maquininha, o Pix real e a NFC-e.</p>
+  <p class="mu" style="margin-top:14px;font-size:13px">Vendas no cartão pela maquininha Mercado Pago são reais. Pix ainda simulado (vendas Pix ficam marcadas como teste). Falta a NFC-e.</p>
+</section>
+
+<!-- maquininha Mercado Pago (pelo admin) -->
+<section class="tela" id="maqT">
+  <div class="topo"><h2>Maquininha de cartão</h2><button class="pill" id="fecharMaq">Voltar</button></div>
+  <div class="cartao">
+    <div><b>Mercado Pago Point</b><br><span class="mu" id="maqStatus">Verificando…</span></div>
+    <div id="maqLista" style="display:flex;flex-direction:column;gap:10px"></div>
+    <button class="btn g" id="maqBuscar">Procurar maquininhas da conta</button>
+    <p class="mu" style="font-size:13px;line-height:1.45">A maquininha precisa estar ligada, com internet e logada na conta do Mercado Pago. Ao escolher, ela entra no modo caixa (PDV): reinicie a maquininha depois para valer.</p>
+  </div>
 </section>
 
 <div class="rosto" id="rosto"><video id="vRosto" playsinline muted autoplay></video><span>VOCÊ ESTÁ SENDO FILMADO</span></div>
@@ -376,7 +387,7 @@ function mostrarSlide(L,i){clearTimeout(dsRoda);if(!$('#descanso').classList.con
 function registrarDs(a,seg){if(seg<2)return;dsEv.push({anuncio_id:a.id,campanha_id:a.campanha_id,tipo:'exibicao',segundos:Math.round(seg),em:new Date().toISOString()});if(dsEv.length>2000)dsEv=dsEv.slice(-2000);ls.set('bp-midia-ev',dsEv)}
 function fecharDescanso(){const D=$('#descanso');if(!D.classList.contains('on'))return;const L=adsCaixa();if(dsDesde&&L[dsIdx])registrarDs(L[dsIdx],(Date.now()-dsDesde)/1000);dsDesde=0;clearTimeout(dsRoda);D.classList.remove('on');$('#dsSlides').innerHTML='';enviarDs()}
 async function enviarDs(){if(!dsEv.length||!navigator.onLine||!token)return;const lote=dsEv.slice(0,200);try{await api('midia_evento',{eventos:lote});dsEv=dsEv.slice(lote.length);ls.set('bp-midia-ev',dsEv)}catch(e){}}
-if(NATIVO){const b=$('#admMaq');if(b){b.style.display='';b.onclick=()=>NATIVO.configurar()}}
+$('#admMaq').onclick=()=>abrirMaq();$('#fecharMaq').onclick=()=>abrirAdmin();
 if(NATIVO){setTimeout(ajustarFormas,0);const vv=window.beepNativoVoltou;window.beepNativoVoltou=()=>{try{vv&&vv()}catch(e){}ajustarFormas()}}
 $('#descanso').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();fecharDescanso();armarDescanso('espera');setTimeout(()=>$('#leitor').focus({preventScroll:true}),60)});
 document.addEventListener('keydown',()=>{if($('#descanso').classList.contains('on'))fecharDescanso();const t=document.querySelector('.tela.on');if(t?.id==='espera')armarDescanso('espera')},true);
@@ -391,7 +402,7 @@ $('#lojas').onclick=e=>{const b=e.target.closest('.opcao');if(!b)return;lojaEsco
 $('#btnAtivar').onclick=async()=>{if(!lojaEscolhida){$('#msg2').textContent='Escolha a loja';return}const pinN=$('#pinNovo').value.replace(/\D/g,'');if(pinN.length<4){$('#msg2').textContent='Crie um PIN de 4 a 6 números';return}const b=$('#btnAtivar');b.disabled=true;try{const r=await api('ativar',{codigo:codigoAtual,local_id:lojaEscolhida,nome:$('#nomeAp').value});token=r.token;loja=r.loja;ls.set('bp-token',token);ls.set('bp-loja',loja);ls.set('bp-pin',await hashPin(pinN));pedirMic();await sincronizar();iniciar();toast('Caixa ativado na '+loja.nome)}catch(e){$('#msg2').textContent=e.message}b.disabled=false};
 
 // ---------- catálogo e fila ----------
-async function sincronizar(silencioso){try{const r=await api('catalogo');cat={...r,mapa:null};ls.set('bp-cat',cat);setTimeout(()=>(r.midia||[]).filter(a=>!a.video).forEach(a=>fetch(a.midia,{mode:'cors'}).catch(()=>{})),800);setTimeout(()=>r.produtos.filter(p=>p.foto).forEach((p,i)=>setTimeout(()=>fetch(p.foto,{mode:'cors'}).catch(()=>{}),i*150)),1500);$('#lojaNome').textContent=r.loja||loja?.nome||'—';if(!silencioso)toast(r.produtos.length+' produtos atualizados');return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
+async function sincronizar(silencioso){carregarMp();try{const r=await api('catalogo');cat={...r,mapa:null};ls.set('bp-cat',cat);setTimeout(()=>(r.midia||[]).filter(a=>!a.video).forEach(a=>fetch(a.midia,{mode:'cors'}).catch(()=>{})),800);setTimeout(()=>r.produtos.filter(p=>p.foto).forEach((p,i)=>setTimeout(()=>fetch(p.foto,{mode:'cors'}).catch(()=>{}),i*150)),1500);$('#lojaNome').textContent=r.loja||loja?.nome||'—';if(!silencioso)toast(r.produtos.length+' produtos atualizados');return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
 const nz=c=>String(c).replace(/\D/g,'').replace(/^0+/,'');
 function porCodigo(c){if(!cat)return null;const k=nz(c);return cat.produtos.find(p=>p.codigos.some(x=>nz(x)===k))||null}
 async function enviarFila(){if(!fila.length)return;const resto=[];for(const v of fila){try{await api('venda',v)}catch(e){if(!/inválid|sem preço|vazio/i.test(e.message))resto.push(v)}}fila=resto;ls.set('bp-fila',fila);atualizarRede()}
@@ -487,13 +498,53 @@ async function aprovar(){const v={id:vendaId,iniciada_em:iniciada,itens:carrinho
  try{await api('venda',v)}catch(e){if(/inválid|sem preço|vazio/i.test(e.message)){toast(e.message);return}fila.push(v);ls.set('bp-fila',fila);atualizarRede()}
  $('#okTxt').textContent=brl(tot)+' · obrigado!';mostrar('ok');falar('Compra finalizada. Obrigado e volte sempre!');navigator.vibrate?.([60,40,60]);pararGravacao('paga');limpar();setTimeout(()=>mostrar('espera'),5000)}
 
+// ---------- cartão na maquininha Mercado Pago Point (cobrança pelo servidor, sem Bluetooth) ----------
+const API_CARTAO=API.replace(/\/pdv$/,'/cartao');
+let mpCfg=null;
+async function apiCartao(acao,corpo={}){const r=await fetch(API_CARTAO,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(r.status===401){desativar(true);throw new Error(j.erro)}if(!r.ok){const e=new Error(j.erro||'Erro');e.status=r.status;throw e}return j}
+async function carregarMp(){if(!token)return;try{mpCfg=await apiCartao('config');ls.set('bp-mp',mpCfg)}catch(e){mpCfg=ls.get('bp-mp',null)}ajustarFormas()}
+async function abrirMaq(){mostrar('maqT');$('#maqLista').innerHTML='';$('#maqStatus').textContent='Verificando…';await carregarMp();
+ const c=mpCfg;$('#maqStatus').textContent=!c?'Sem conexão com o servidor':!c.credencial?'Falta cadastrar a credencial do Mercado Pago no servidor':c.terminal?('Ligada: '+c.terminal+(c.teste?' (modo teste)':'')):'Nenhuma maquininha ligada a este caixa'}
+$('#maqBuscar').onclick=async()=>{const b=$('#maqBuscar');b.disabled=true;b.textContent='Procurando…';try{const r=await apiCartao('terminais');
+ $('#maqLista').innerHTML=r.terminais.length?r.terminais.map(t=>`<button class="opcao" data-id="${t.id.replace(/[^A-Za-z0-9_]/g,'')}" style="justify-content:space-between"><span>${t.virtual?'Maquininha virtual (teste)':t.id.replace(/[^A-Za-z0-9_]/g,'')}</span><span class="mu" style="font-size:12px">${t.id===r.atual?'ligada':(t.modo||'')}</span></button>`).join(''):'<p class="mu">Nenhuma maquininha nesta conta. Confira se ela está logada na conta do Mercado Pago.</p>'}
+ catch(e){$('#maqLista').innerHTML=`<p class="mu">${String(e.message).replace(/</g,'&lt;')}</p>`}b.disabled=false;b.textContent='Procurar maquininhas da conta'};
+$('#maqLista').onclick=async e=>{const b=e.target.closest('.opcao[data-id]');if(!b)return;b.disabled=true;try{const r=await apiCartao('vincular',{terminal_id:b.dataset.id});toast(r.aviso||(r.reiniciar?'Pronto. Reinicie a maquininha.':'Maquininha ligada'));await abrirMaq()}catch(err){toast(err.message);b.disabled=false}};
+async function cobrarMP(f){if(pagReal)return;clearTimeout(inativo);
+ pagReal={mp:true,forma:f,cobranca:null,cancelando:false,inicio:Date.now()};
+ telaCobranca('Preparando o pagamento…','Aguarde um instante');
+ let r;try{r=await apiCartao('iniciar',{venda_id:vendaId,iniciada_em:iniciada,maior18_em:maior18Em,forma:f,itens:carrinho.map(i=>({produto_id:i.id,quantidade:i.q}))})}
+ catch(e){pagReal=null;telaCobranca('Não foi possível iniciar o pagamento',navigator.onLine?e.message:'Sem internet no caixa.',btnsFalha());ligarFalha(f);falar('Não foi possível iniciar o pagamento.');return}
+ pagReal.cobranca=r.cobranca;pagReal.total=r.total;$('#totalPag').textContent=brl(r.total);
+ telaCobranca('Pague na maquininha ao lado',(f==='debito'?'Débito':'Crédito à vista')+' · '+brl(r.total),`<button class="btn bad" id="pagCancelar" style="margin-top:12px">Cancelar</button>`);
+ falar('Pague na maquininha ao lado. Aproxime ou insira o cartão.');
+ $('#pagCancelar').onclick=async()=>{if(!pagReal||pagReal.cancelando)return;pagReal.cancelando=true;$('#pagMsg').textContent='Cancelando…';$('#pagCancelar').disabled=true;try{const c=await apiCartao('cancelar',{cobranca:pagReal.cobranca});mpTratar(c)}catch(e){}};
+ mpAcompanhar()}
+async function mpAcompanhar(){const p=pagReal;if(!p||!p.mp)return;let falhasRede=0;
+ while(pagReal===p){await new Promise(z=>setTimeout(z,2000));if(pagReal!==p)return;
+  try{const c=await apiCartao('status',{cobranca:p.cobranca});falhasRede=0;if(mpTratar(c))return}
+  catch(e){falhasRede++;const m=$('#pagSub');if(m&&falhasRede>2)m.textContent='Sem internet no caixa. Se o cartão for aprovado, a venda é registrada mesmo assim.'}
+  if(Date.now()-p.inicio>5*60*1000){pagReal=null;telaCobranca('Não deu para confirmar o pagamento','Confira a tela da maquininha. Se aprovou, a venda já foi registrada.',`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-top:12px"><button class="btn" id="pagOutra">Outra forma</button><button class="btn ok" id="pagDeNovo">Consultar de novo</button></div>`);
+   $('#pagOutra').onclick=()=>{$('#cobranca').innerHTML='<p class="mu">Escolha a forma de pagamento</p>'};$('#pagDeNovo').onclick=()=>{pagReal={...p,inicio:Date.now()};mpAcompanhar()};armarInatividade('pagamento');return}}}
+function mpTratar(c){const p=pagReal;if(!p)return true;const st=c.status;
+ if(st==='aprovado'&&c.venda_gravada){pagReal=null;const tot=c.total;$('#okTxt').textContent=brl(tot)+' · '+(c.bandeira?c.bandeira.toUpperCase()+' · ':'')+'obrigado!';mostrar('ok');falar('Pagamento aprovado. Compra finalizada. Obrigado e volte sempre!');navigator.vibrate?.([60,40,60]);pararGravacao('paga');limpar();setTimeout(()=>mostrar('espera'),5000);return true}
+ if(st==='aprovado'){const m=$('#pagMsg');if(m)m.textContent='Aprovado! Registrando a venda…';return false}
+ if(['recusado','cancelado','expirado','falhou','estornado'].includes(st)){pagReal=null;
+  if(st==='recusado')api('evento',{tipo:'pagamento_negado',venda_id:vendaId,itens:carrinho.map(i=>({id:i.id,nome:i.nome,q:i.q}))}).catch(()=>{});
+  const tit=st==='recusado'?'Pagamento não aprovado':st==='expirado'?'Tempo esgotado':'Pagamento cancelado';
+  telaCobranca(tit,c.mensagem||'Tente de novo ou escolha outra forma.',btnsFalha());ligarFalha(p.forma);
+  falar(tit+'. Tente de novo ou escolha outra forma.');navigator.vibrate?.([200,80,200]);return true}
+ const m=$('#pagMsg'),sb=$('#pagSub');
+ if(st==='verificar'){if(m)m.textContent='Confira a tela da maquininha'}
+ else if(st==='na_maquininha'){if(m&&!p.cancelando)m.textContent='Siga as instruções na maquininha';if(sb)sb.textContent=(p.forma==='debito'?'Débito':'Crédito à vista')+' · '+brl(p.total)}
+ return false}
+
 // ---------- cartão de verdade na maquininha (só no app Android com a maquininha configurada) ----------
 let pagReal=null;
 function statusNativo(){try{return NATIVO?JSON.parse(NATIVO.status()):null}catch(e){return null}}
-function cartaoReal(){const s=statusNativo();return !!(s&&s.cartao)}
+function cartaoReal(){if(mpCfg&&mpCfg.pronto)return true;const s=statusNativo();return !!(s&&s.cartao)}
 function ajustarFormas(){const real=cartaoReal();const av=$('#avisoSimulado');if(av)av.style.display=real?'none':'';const t=document.querySelector('.forma[data-f="tapon"]');if(t)t.style.display=real?'none':'';document.querySelectorAll('.forma[data-f="debito"] small,.forma[data-f="credito"] small').forEach(x=>x.textContent=real?'Na maquininha ao lado':'Na maquininha')}
 function telaCobranca(msg,sub,botoes){$('#cobranca').innerHTML=`<div class="pag-real"><div class="pag-anel" aria-hidden="true"></div><p style="font-size:20px;font-weight:600" id="pagMsg">${msg}</p><p class="mu" style="font-size:14px" id="pagSub">${sub||''}</p>${botoes||''}</div>`}
-async function cobrarCartao(f){if(pagReal)return;clearTimeout(inativo);const nome=f==='debito'?'débito':'crédito';
+async function cobrarCartao(f){if(mpCfg&&mpCfg.pronto)return cobrarMP(f);if(pagReal)return;clearTimeout(inativo);const nome=f==='debito'?'débito':'crédito';
  const itens=carrinho.map(i=>({produto_id:i.id,quantidade:i.q}));let total=totalC();
  telaCobranca('Preparando o pagamento…','Total '+brl(total));
  pagReal={id:'p'+Date.now().toString(36),forma:f,total,cancelado:false};
