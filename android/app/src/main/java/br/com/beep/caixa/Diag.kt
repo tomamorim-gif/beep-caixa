@@ -52,10 +52,27 @@ object Diag {
         }
     }
 
+    /** Copia o logcat do próprio app (inclui o que a biblioteca do PagBank escreve) para o diagnóstico. */
+    fun enviarLogcat(motivo: String) {
+        envio.execute {
+            try {
+                val pid = android.os.Process.myPid()
+                val p = Runtime.getRuntime().exec(arrayOf("logcat", "-d", "-t", "400", "--pid=$pid", "-v", "time"))
+                val linhas = p.inputStream.bufferedReader().readLines()
+                    .filter { l -> !l.contains("chromium") && !l.contains("cr_") }
+                    .takeLast(250)
+                    // nunca envia números longos (cartão, documento): mascara sequências de 8+ dígitos
+                    .map { it.replace(Regex("\\d[\\d ]{6,}\\d"), "########") }
+                log("LOGCAT ($motivo) — ${linhas.size} linhas")
+                linhas.chunked(40).forEach { log("logcat:\n" + it.joinToString("\n")) }
+            } catch (e: Throwable) { log("logcat falhou: $e") }
+        }
+    }
+
     fun log(m: String) {
         val h = SimpleDateFormat("HH:mm:ss", Locale("pt", "BR")).format(Date())
         fila.add("$h $m")
-        while (fila.size > 300) fila.poll()
+        while (fila.size > 600) fila.poll()
     }
 
     private fun enviar() {

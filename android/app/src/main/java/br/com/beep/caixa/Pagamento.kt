@@ -246,9 +246,9 @@ object Pagamento {
         val entregar = { r: JSONObject -> if (entregue.compareAndSet(false, true)) { cobrando = false; ui.post { fim(r) } } }
         // vigia: nenhuma cobrança fica presa mais de 3 minutos
         ui.postDelayed({
-            if (!entregue.get()) { try { Thread { try { plugpag?.abort() } catch (_: Throwable) {} }.start() } catch (_: Throwable) {}
+            if (!entregue.get()) { passo("a maquininha não respondeu em 2 min"); Diag.enviarLogcat("cobrança sem resposta"); try { Thread { try { plugpag?.abort() } catch (_: Throwable) {} }.start() } catch (_: Throwable) {}
                 entregar(erro("A maquininha não respondeu a tempo. Confira se ela está ligada e tente de novo.", "TEMPO")) }
-        }, 180_000)
+        }, 120_000)
         ui.post { evento("Conectando à maquininha…") }
         trabalho.execute {
             val r = try {
@@ -262,16 +262,21 @@ object Pagamento {
                     erro("Maquininha não respondeu: $falha", "CONEXAO")
                 } else {
                     comPlugPag(5) { p ->
-                        try { p.wakeupPinpad() } catch (_: Throwable) {}
+                        val aut = try { p.isAuthenticated } catch (e: Throwable) { false }
+                        passo("conta PagBank conectada: ${if (aut) "sim" else "não"}")
+                        try { p.wakeupPinpad(); passo("acordar enviado") } catch (e: Throwable) { passo("acordar falhou: $e") }
                         val tipo = if (forma == "debito") IPlugPag.TYPE_DEBITO else IPlugPag.TYPE_CREDITO
                         val ref = referencia.filter { it.isLetterOrDigit() }.take(9).ifEmpty { "BEEP" }
                         val dados = PlugPagPaymentData(tipo, valor, IPlugPag.INSTALLMENT_TYPE_A_VISTA, 1, ref)
                         p.setEventListener(PlugPagEventListener { ev ->
                             val msg = ev.customMessage
+                            passo("evento ${ev.eventCode}: ${msg ?: ""}")
                             if (!msg.isNullOrBlank()) ui.post { evento(msg) }
                             IPlugPag.RET_OK
                         })
+                        passo("enviando cobrança de $valor centavos (${if (tipo == IPlugPag.TYPE_DEBITO) "débito" else "crédito"}) para a maquininha…")
                         val res = p.doPayment(dados)
+                        passo("resposta do PagBank: resultado ${res.result} · código ${res.errorCode} · ${res.message}")
                         val ok = res.result == IPlugPag.RET_OK
                         JSONObject().apply {
                             put("ok", ok)
@@ -290,8 +295,11 @@ object Pagamento {
             } catch (e: Throwable) {
                 erro(e.message ?: e.javaClass.simpleName, "EXCECAO")
             }
+            if (!r.optBoolean("ok")) Diag.enviarLogcat("cobrança falhou")
             entregar(r)
         }
+        // depois de 40 s sem resposta, já manda o logcat para análise (sem cancelar a cobrança)
+        ui.postDelayed({ if (!entregue.get()) Diag.enviarLogcat("cobrança parada há 40 s") }, 40_000)
     }
 
     fun cancelar() {
