@@ -162,6 +162,8 @@ class MainActivity : AppCompatActivity() {
             o.put("app", BuildConfig.VERSION_NAME)
             o.put("maquininha", Pagamento.maquininhaNome ?: JSONObject.NULL)
             o.put("cobrando", Pagamento.cobrando)
+            o.put("bluetooth", Pagamento.bluetoothLigado())
+            o.put("cartao", Pagamento.maquininhaEndereco != null)
             return o.toString()
         }
 

@@ -41,6 +41,8 @@ class MaquininhaActivity : AppCompatActivity() {
     private lateinit var btnCred: Button
     private lateinit var btnDeb: Button
     private lateinit var btnPerm: Button
+    private lateinit var chkAcordada: android.widget.Switch
+    private lateinit var txtBt: TextView
     private var autenticado = false
 
     private fun dp(v: Int) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
@@ -60,6 +62,8 @@ class MaquininhaActivity : AppCompatActivity() {
         // 1. permissões
         btnPerm = botao("Permitir Bluetooth", true) { pedirPermissoes() }
         raiz.addView(btnPerm)
+        txtBt = texto("Bluetooth do telefone desligado. Ligue para usar a maquininha.", 14, vermelho).apply { setPadding(0, dp(10), 0, 0) }
+        raiz.addView(txtBt)
 
         // 2. aparelho
         val c1 = bloco("1. Escolha a maquininha")
@@ -67,14 +71,27 @@ class MaquininhaActivity : AppCompatActivity() {
         listaAparelhos = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         c1.addView(listaAparelhos)
         c1.addView(botao("Abrir Bluetooth do telefone", false) { startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) })
+        c1.addView(botao("Testar conexão", false) {
+            anotar("Testando conexão…")
+            Pagamento.testarConexao { e -> anotar(if (e == null) "✅ Maquininha conectada e acordada" else "❌ $e") }
+        })
+        chkAcordada = android.widget.Switch(this).apply {
+            text = "Manter maquininha acordada (reconecta a cada 3 min)"
+            setTextColor(Color.WHITE); setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            isChecked = Pagamento.manterAcordadaLigado
+            setPadding(0, dp(14), 0, dp(4))
+            setOnCheckedChangeListener { _, v -> Pagamento.manterAcordadaLigado = v; anotar(if (v) "Manter acordada: ligado" else "Manter acordada: desligado") }
+        }
+        c1.addView(chkAcordada)
+        c1.addView(texto("Isso evita o modo descanso enquanto ela estiver ligada. Se a Minizinha desligar de vez (bateria ou botão), só o botão dela religa — deixe-a no carregador.", 12, cinza))
 
         // 3. conta
-        val c2 = bloco("2. Conta PagBank")
+        val c2 = bloco("2. Conta PagBank (só se a cobrança pedir)")
         txtConta = texto("Verificando…", 15, cinza)
         c2.addView(txtConta)
         btnConta = botao("Entrar na conta PagBank", true) { alternarConta() }
         c2.addView(btnConta)
-        c2.addView(texto("O login é feito na tela do próprio PagBank. A senha não passa pelo sistema Beep.", 12, cinza).apply { setPadding(0, dp(8), 0, 0) })
+        c2.addView(texto("Teste primeiro a cobrança sem login. Só entre na conta se aparecer \"conta PagBank não conectada\". O login é na tela do próprio PagBank; a senha não passa pelo Beep. Se a tela dele travar no Entrar, toque em voltar.", 12, cinza).apply { setPadding(0, dp(8), 0, 0) })
 
         // 4. teste
         val c3 = bloco("3. Cobrança de teste — R$ 1,00")
@@ -92,6 +109,10 @@ class MaquininhaActivity : AppCompatActivity() {
             text = "Aguardando…"; setTextIsSelectable(true)
         }
         c3.addView(log, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
+        c3.addView(botao("Diagnóstico completo", false) {
+            anotar("Rodando diagnóstico…")
+            Pagamento.diagnostico { d -> anotar("\n$d") }
+        })
 
         raiz.addView(botao("Voltar ao caixa", false) { finish() }.apply { (layoutParams as? LinearLayout.LayoutParams)?.topMargin = dp(18) })
         raiz.addView(texto("App ${BuildConfig.VERSION_NAME} · PlugPag ${Pagamento.versaoBiblioteca()}", 12, cinza).apply { gravity = Gravity.CENTER; setPadding(0, dp(18), 0, 0) })
@@ -99,7 +120,14 @@ class MaquininhaActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        Pagamento.aoAnotar = { m -> anotar(m) }
+        Pagamento.loginFechadoSemResposta()
         atualizar()
+    }
+
+    override fun onPause() {
+        Pagamento.aoAnotar = null
+        super.onPause()
     }
 
     private fun permissoesFaltando(): List<String> {
@@ -124,6 +152,7 @@ class MaquininhaActivity : AppCompatActivity() {
     private fun atualizar() {
         val falta = permissoesFaltando()
         btnPerm.visibility = if (falta.isEmpty()) View.GONE else View.VISIBLE
+        txtBt.visibility = if (Pagamento.bluetoothLigado()) View.GONE else View.VISIBLE
         if (falta.isNotEmpty()) btnPerm.text = "Permitir Bluetooth e acesso à maquininha"
         // aparelhos
         listaAparelhos.removeAllViews()
@@ -169,10 +198,10 @@ class MaquininhaActivity : AppCompatActivity() {
             evento = { m -> anotar("» $m") },
             fim = { r ->
                 if (r.optBoolean("ok")) {
-                    anotar("✅ APROVADO  ${r.optString("bandeira")}  NSU ${r.optString("nsu")}  cód ${r.optString("transacao")}")
+                    anotar("✅ APROVADO  ${r.optString("bandeira")}  NSU ${r.optString("nsu")}  aut ${r.optString("autorizacao")}  cód ${r.optString("transacao")}")
                     log.setTextColor(verde)
                 } else {
-                    anotar("❌ ${r.optString("mensagem")} (código ${r.optString("codigo")}, conexão ${r.optInt("conexao", -999)})")
+                    anotar("❌ ${r.optString("mensagem")} (código ${r.optString("codigo")})")
                     log.setTextColor(vermelho)
                 }
                 atualizar()

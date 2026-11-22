@@ -52,6 +52,7 @@ h1,h2,.num{font-family:Manrope,Inter,sans-serif;letter-spacing:-.02em}
 h1{font-size:34px;line-height:1.05;font-weight:800}
 h2{font-size:22px;font-weight:800}
 .mu{color:var(--mu)}
+.pag-real{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;width:100%}.pag-anel{width:64px;height:64px;border-radius:50%;border:5px solid var(--k3);border-top-color:var(--y);animation:pagGira 1s linear infinite;margin-bottom:6px}@keyframes pagGira{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.pag-anel{animation-duration:3s}}
 .btn{min-height:64px;border-radius:18px;font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 20px;width:100%}
 .btn.y{background:var(--y);color:#111}.btn.g{background:var(--k3)}.btn.ok{background:var(--ok)}.btn.bad{background:var(--bad)}
 .btn:active{transform:scale(.98)}
@@ -225,7 +226,7 @@ h2{font-size:22px;font-weight:800}
   </div>
   <button class="espera-grade" id="esperaGrade"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>Escolher produtos pela tela</button>
   <button class="espera-grade espera-voz" id="esperaVoz"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Atendimento por áudio</button>
-  <p class="mu" style="text-align:center;font-size:12px">Ambiente monitorado por câmeras · teste: pagamento simulado</p>
+  <p class="mu" style="text-align:center;font-size:12px">Ambiente monitorado por câmeras<span id="avisoSimulado"> · teste: pagamento simulado</span></p>
 </section>
 
 <!-- carrinho -->
@@ -376,6 +377,7 @@ function registrarDs(a,seg){if(seg<2)return;dsEv.push({anuncio_id:a.id,campanha_
 function fecharDescanso(){const D=$('#descanso');if(!D.classList.contains('on'))return;const L=adsCaixa();if(dsDesde&&L[dsIdx])registrarDs(L[dsIdx],(Date.now()-dsDesde)/1000);dsDesde=0;clearTimeout(dsRoda);D.classList.remove('on');$('#dsSlides').innerHTML='';enviarDs()}
 async function enviarDs(){if(!dsEv.length||!navigator.onLine||!token)return;const lote=dsEv.slice(0,200);try{await api('midia_evento',{eventos:lote});dsEv=dsEv.slice(lote.length);ls.set('bp-midia-ev',dsEv)}catch(e){}}
 if(NATIVO){const b=$('#admMaq');if(b){b.style.display='';b.onclick=()=>NATIVO.configurar()}}
+if(NATIVO){setTimeout(ajustarFormas,0);const vv=window.beepNativoVoltou;window.beepNativoVoltou=()=>{try{vv&&vv()}catch(e){}ajustarFormas()}}
 $('#descanso').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();fecharDescanso();armarDescanso('espera');setTimeout(()=>$('#leitor').focus({preventScroll:true}),60)});
 document.addEventListener('keydown',()=>{if($('#descanso').classList.contains('on'))fecharDescanso();const t=document.querySelector('.tela.on');if(t?.id==='espera')armarDescanso('espera')},true);
 function armarInatividade(id){clearTimeout(inativo);if(['carrinho','pagamento','buscaT','vozT'].includes(id))inativo=setTimeout(()=>{if(carrinho.length)cancelar('Tempo esgotado: compra não finalizada');else mostrar('espera')},120000)}
@@ -475,16 +477,47 @@ function fecharIdade(ok){const pend=idadePend;idadePend=null;$('#idade').classLi
 $('#idadeSim').onclick=()=>fecharIdade(true);$('#idadeNao').onclick=()=>fecharIdade(false);
 
 // ---------- pagamento (simulado) ----------
-$('#btnPagar').onclick=()=>{clearTimeout(vozT);vozPend.clear();forma=null;document.querySelectorAll('.forma').forEach(f=>f.classList.remove('on'));$('#cobranca').innerHTML='<p class="mu">Escolha a forma de pagamento</p>';$('#totalPag').textContent=brl(totalC());mostrar('pagamento');falar(resumoFalado()+' Total: '+valorFalado(totalC())+'. Escolha como quer pagar.')};
-$('#voltarCarrinho').onclick=()=>mostrar('carrinho');
-$('#formas').onclick=e=>{const b=e.target.closest('.forma');if(!b)return;forma=b.dataset.f;document.querySelectorAll('.forma').forEach(f=>f.classList.toggle('on',f===b));const txt={pix:'Abra o app do seu banco e leia o QR',debito:'Insira ou aproxime o cartão na maquininha',credito:'Insira ou aproxime o cartão na maquininha',tapon:'Encoste o cartão na parte de trás do aparelho'}[forma];
+$('#btnPagar').onclick=()=>{clearTimeout(vozT);ajustarFormas();vozPend.clear();forma=null;document.querySelectorAll('.forma').forEach(f=>f.classList.remove('on'));$('#cobranca').innerHTML='<p class="mu">Escolha a forma de pagamento</p>';$('#totalPag').textContent=brl(totalC());mostrar('pagamento');falar(resumoFalado()+' Total: '+valorFalado(totalC())+'. Escolha como quer pagar.')};
+$('#voltarCarrinho').onclick=()=>{if(pagReal){toast('Aguarde: pagamento em andamento na maquininha');return}mostrar('carrinho')};
+$('#formas').onclick=e=>{const b=e.target.closest('.forma');if(!b||pagReal)return;forma=b.dataset.f;if(cartaoReal()&&(forma==='credito'||forma==='debito')){document.querySelectorAll('.forma').forEach(f=>f.classList.toggle('on',f===b));cobrarCartao(forma);return}document.querySelectorAll('.forma').forEach(f=>f.classList.toggle('on',f===b));const txt={pix:'Abra o app do seu banco e leia o QR',debito:'Insira ou aproxime o cartão na maquininha',credito:'Insira ou aproxime o cartão na maquininha',tapon:'Encoste o cartão na parte de trás do aparelho'}[forma];
  $('#cobranca').innerHTML=(forma==='pix'?`<div class="qr" aria-label="QR do Pix (simulado)">${qrFake()}</div>`:'')+`<p style="font-size:18px">${txt}</p><p class="mu" style="font-size:13px">Teste: nada será cobrado. Escolha o resultado:</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%"><button class="btn bad" id="simNeg">Recusado</button><button class="btn ok" id="simOk">Aprovado</button></div>`;falar(txt);
  $('#simOk').onclick=aprovar;requestAnimationFrame(()=>$('#simOk').scrollIntoView({block:'end',behavior:'smooth'}));$('#simNeg').onclick=()=>{api('evento',{tipo:'pagamento_negado',venda_id:vendaId,itens:carrinho}).catch(()=>{});falar('Pagamento recusado. Tente outra forma.');toast('Pagamento recusado')}};
 function qrFake(){let s='<svg viewBox="0 0 29 29" width="172" height="172" shape-rendering="crispEdges">';const r=crypto.getRandomValues(new Uint8Array(841));for(let y=0;y<29;y++)for(let x=0;x<29;x++){const f=(x<8&&y<8)||(x>20&&y<8)||(x<8&&y>20);const on=f?((x%7===0||y%7===0||x%7===6||y%7===6||(x%7>1&&x%7<5&&y%7>1&&y%7<5))&&!(x===7||y===7||x===21||y===21)):r[y*29+x]>140;if(on)s+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}return s+'</svg>'}
 async function aprovar(){const v={id:vendaId,iniciada_em:iniciada,itens:carrinho.map(i=>({produto_id:i.id,quantidade:i.q})),forma:forma==='tapon'?'credito':forma,simulado:true,maior18_confirmado_em:maior18Em};const tot=totalC();
  try{await api('venda',v)}catch(e){if(/inválid|sem preço|vazio/i.test(e.message)){toast(e.message);return}fila.push(v);ls.set('bp-fila',fila);atualizarRede()}
  $('#okTxt').textContent=brl(tot)+' · obrigado!';mostrar('ok');falar('Compra finalizada. Obrigado e volte sempre!');navigator.vibrate?.([60,40,60]);pararGravacao('paga');limpar();setTimeout(()=>mostrar('espera'),5000)}
-function cancelar(motivo){if(carrinho.length)pararGravacao(/Tempo/.test(motivo)?'abandonada':'cancelada');else pararGravacao(null);if(carrinho.length)api('evento',{tipo:'venda_cancelada',venda_id:vendaId,itens:carrinho.map(i=>({id:i.id,nome:i.nome,q:i.q}))}).catch(()=>{});const tinha=carrinho.length;limpar();if(!tinha){mostrar('espera');return}$('#ruimTxt').textContent=motivo+'. Devolva os produtos à prateleira.';mostrar('ruim');falar('Compra não finalizada. Devolva os produtos à prateleira.');navigator.vibrate?.([200,80,200]);setTimeout(()=>mostrar('espera'),6000)}
+
+// ---------- cartão de verdade na maquininha (só no app Android com a maquininha configurada) ----------
+let pagReal=null;
+function statusNativo(){try{return NATIVO?JSON.parse(NATIVO.status()):null}catch(e){return null}}
+function cartaoReal(){const s=statusNativo();return !!(s&&s.cartao)}
+function ajustarFormas(){const real=cartaoReal();const av=$('#avisoSimulado');if(av)av.style.display=real?'none':'';const t=document.querySelector('.forma[data-f="tapon"]');if(t)t.style.display=real?'none':'';document.querySelectorAll('.forma[data-f="debito"] small,.forma[data-f="credito"] small').forEach(x=>x.textContent=real?'Na maquininha ao lado':'Na maquininha')}
+function telaCobranca(msg,sub,botoes){$('#cobranca').innerHTML=`<div class="pag-real"><div class="pag-anel" aria-hidden="true"></div><p style="font-size:20px;font-weight:600" id="pagMsg">${msg}</p><p class="mu" style="font-size:14px" id="pagSub">${sub||''}</p>${botoes||''}</div>`}
+async function cobrarCartao(f){if(pagReal)return;clearTimeout(inativo);const nome=f==='debito'?'débito':'crédito';
+ const itens=carrinho.map(i=>({produto_id:i.id,quantidade:i.q}));let total=totalC();
+ telaCobranca('Preparando o pagamento…','Total '+brl(total));
+ pagReal={id:'p'+Date.now().toString(36),forma:f,total,cancelado:false};
+ try{const r=await api('total',{itens});if(Number.isInteger(r.total)&&r.total>0){if(r.total!==total){toast('Preço atualizado: '+brl(r.total));$('#totalPag').textContent=brl(r.total)}total=r.total;pagReal.total=total}}catch(e){if(!navigator.onLine){pagReal=null;telaCobranca('Sem internet','O cartão precisa de internet. Tente o Pix ou chame o responsável.',btnsFalha());ligarFalha();return}}
+ telaCobranca('Insira ou aproxime o cartão na maquininha',(f==='debito'?'Débito':'Crédito à vista')+' · '+brl(total),`<button class="btn bad" id="pagCancelar" style="margin-top:12px">Cancelar</button>`);
+ falar('Insira ou aproxime o cartão na maquininha.');
+ $('#pagCancelar').onclick=()=>{if(!pagReal)return;pagReal.cancelado=true;$('#pagMsg').textContent='Cancelando…';try{NATIVO.cancelarCobranca()}catch(e){}};
+ try{NATIVO.cobrar(pagReal.id,total,f)}catch(e){pagResultado(pagReal.id,{ok:false,mensagem:'Não foi possível falar com a maquininha',codigo:'PONTE'})}}
+window.beepPagEvento=(id,m)=>{if(!pagReal||id!==pagReal.id)return;const e=$('#pagMsg');if(e&&m)e.textContent=m;if(/senha/i.test(m||''))falar('Digite a senha na maquininha.')};
+window.beepPagResultado=(id,r)=>pagResultado(id,r);
+function btnsFalha(){return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-top:12px"><button class="btn" id="pagOutra">Outra forma</button><button class="btn ok" id="pagDeNovo">Tentar de novo</button></div>`}
+function ligarFalha(f){const a=$('#pagDeNovo'),b=$('#pagOutra');if(a)a.onclick=()=>cobrarCartao(f||forma);if(b)b.onclick=()=>{forma=null;document.querySelectorAll('.forma').forEach(x=>x.classList.remove('on'));$('#cobranca').innerHTML='<p class="mu">Escolha a forma de pagamento</p>'};armarInatividade('pagamento')}
+async function pagResultado(id,r){if(!pagReal||id!==pagReal.id)return;const p=pagReal;pagReal=null;
+ if(r&&r.ok){await registrarCartao(p,r);return}
+ const msg=p.cancelado?'Pagamento cancelado':(r&&r.mensagem)||'Pagamento não aprovado';
+ api('evento',{tipo:'pagamento_negado',venda_id:vendaId,itens:carrinho.map(i=>({id:i.id,nome:i.nome,q:i.q}))}).catch(()=>{});
+ telaCobranca(p.cancelado?'Pagamento cancelado':'Pagamento não aprovado',msg,btnsFalha());ligarFalha(p.forma);
+ falar(p.cancelado?'Pagamento cancelado.':'Pagamento não aprovado. Tente de novo ou escolha outra forma.');navigator.vibrate?.([200,80,200])}
+async function registrarCartao(p,r){const tot=p.total;
+ const v={id:vendaId,iniciada_em:iniciada,itens:carrinho.map(i=>({produto_id:i.id,quantidade:i.q})),forma:p.forma,simulado:false,maior18_confirmado_em:maior18Em,cartao:{valor:Number(r.valor)||tot,nsu:String(r.nsu||''),transacao:String(r.transacao||''),autorizacao:String(r.autorizacao||''),bandeira:String(r.bandeira||'')}};
+ // o cartão já foi cobrado: a venda nunca se perde (vai para a fila se a internet falhar)
+ try{await api('venda',v)}catch(e){fila.push(v);ls.set('bp-fila',fila);atualizarRede()}
+ $('#okTxt').textContent=brl(tot)+' · '+(r.bandeira?r.bandeira+' · ':'')+'obrigado!';mostrar('ok');falar('Pagamento aprovado. Compra finalizada. Obrigado e volte sempre!');navigator.vibrate?.([60,40,60]);pararGravacao('paga');limpar();setTimeout(()=>mostrar('espera'),5000)}
+function cancelar(motivo){if(pagReal){armarInatividade('pagamento');return}if(carrinho.length)pararGravacao(/Tempo/.test(motivo)?'abandonada':'cancelada');else pararGravacao(null);if(carrinho.length)api('evento',{tipo:'venda_cancelada',venda_id:vendaId,itens:carrinho.map(i=>({id:i.id,nome:i.nome,q:i.q}))}).catch(()=>{});const tinha=carrinho.length;limpar();if(!tinha){mostrar('espera');return}$('#ruimTxt').textContent=motivo+'. Devolva os produtos à prateleira.';mostrar('ruim');falar('Compra não finalizada. Devolva os produtos à prateleira.');navigator.vibrate?.([200,80,200]);setTimeout(()=>mostrar('espera'),6000)}
 function limpar(){clearTimeout(vozT);vozPend.clear();fecharIdade(false);maior18Em=null;carrinho=[];vendaId=null;iniciada=null;forma=null;desenhar()}
 
 // ---------- admin escondido: 5 toques no logo + PIN ----------
