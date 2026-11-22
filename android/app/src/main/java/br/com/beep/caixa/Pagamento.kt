@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class BeepApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        Diag.iniciar(this)
         Pagamento.iniciar(this)
     }
 }
@@ -59,7 +60,10 @@ object Pagamento {
 
     fun iniciar(ctx: Context) {
         app = ctx.applicationContext
-        trabalho.execute { try { pp() } catch (_: Throwable) {} }
+        trabalho.execute {
+            Diag.log("criando PlugPag ${versaoBiblioteca()}…")
+            try { pp(); Diag.log("PlugPag criado") } catch (e: Throwable) { Diag.log("PlugPag falhou ao criar: $e") }
+        }
         agenda.scheduleWithFixedDelay({ manterAcordada() }, INTERVALO_ACORDAR_MIN, INTERVALO_ACORDAR_MIN, TimeUnit.MINUTES)
     }
 
@@ -71,7 +75,7 @@ object Pagamento {
     }
 
     /** Passos com hora, para descobrir onde algo para. */
-    private fun passo(m: String) { android.util.Log.i("BeepPag", m); anotar("· $m") }
+    private fun passo(m: String) { android.util.Log.i("BeepPag", m); ui.post { aoAnotar?.invoke("· $m") }; Diag.log("[${Thread.currentThread().name}] $m") }
 
     /** Roda um bloco do PlugPag com a trava. Se a trava estiver presa por mais de [esperaSeg], devolve null. */
     private fun <T> comPlugPag(esperaSeg: Long, bloco: (PlugPag) -> T): T? {
@@ -101,7 +105,7 @@ object Pagamento {
 
     fun versaoBiblioteca(): String = try { br.com.uol.pagseguro.plugpag.PlugPagBase.getLibVersion() } catch (e: Throwable) { "?" }
 
-    private fun anotar(m: String) { ui.post { aoAnotar?.invoke(m) } }
+    private fun anotar(m: String) { Diag.log(m); ui.post { aoAnotar?.invoke(m) } }
 
     fun bluetoothLigado(): Boolean {
         val m = app.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager

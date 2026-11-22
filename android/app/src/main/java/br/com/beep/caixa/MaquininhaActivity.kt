@@ -225,6 +225,7 @@ class MaquininhaActivity : AppCompatActivity() {
     }
 
     private fun anotar(m: String) {
+        if (!m.startsWith("· ")) Diag.log("tela: $m")
         val h = SimpleDateFormat("HH:mm:ss", Locale("pt", "BR")).format(Date())
         log.setTextColor(Color.parseColor("#E4E4E7"))
         log.text = if (log.text.isNullOrBlank() || log.text == "Aguardando…") "$h  $m" else "${log.text}\n$h  $m"
