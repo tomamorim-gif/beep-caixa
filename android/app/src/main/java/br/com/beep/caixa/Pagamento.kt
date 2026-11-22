@@ -174,12 +174,14 @@ object Pagamento {
         if (!bluetoothLigado()) return "Bluetooth do telefone desligado"
         passo("conectando por Bluetooth (até $limiteSeg s)…")
         val r = comLimite<String?>(limiteSeg, "A maquininha não respondeu em $limiteSeg s (desligada, em descanso ou longe)") {
-            comPlugPag<String?>(2) { p ->
+            // "" = conectado; null = a trava estava presa por outra chamada
+            val x = comPlugPag<String>(2) { p ->
                 try {
                     val c = p.initBTConnection(PlugPagDevice(end))
-                    if (c == IPlugPag.RET_OK) null else explicarCodigo(c.toString())
+                    if (c == IPlugPag.RET_OK) "" else explicarCodigo(c.toString())
                 } catch (e: Throwable) { e.message ?: e.javaClass.simpleName }
-            } ?: TRAVADA
+            }
+            when (x) { null -> TRAVADA; "" -> null; else -> x }
         }
         if (r == null) { ultimoSinalOk = SystemClock.elapsedRealtime(); ultimoErroConexao = null; passo("conectado") } else { ultimoErroConexao = r; passo("falhou: $r") }
         return r
