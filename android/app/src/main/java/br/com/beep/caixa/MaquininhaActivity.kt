@@ -43,6 +43,7 @@ class MaquininhaActivity : AppCompatActivity() {
     private lateinit var btnPerm: Button
     private lateinit var chkAcordada: android.widget.Switch
     private lateinit var txtBt: TextView
+    private lateinit var txtPronto: TextView
     private var autenticado = false
 
     private fun dp(v: Int) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
@@ -76,7 +77,7 @@ class MaquininhaActivity : AppCompatActivity() {
             Pagamento.testarConexao { e -> anotar(if (e == null) "✅ Maquininha conectada e acordada" else "❌ $e") }
         })
         chkAcordada = android.widget.Switch(this).apply {
-            text = "Manter maquininha acordada (reconecta a cada 3 min)"
+            text = "Manter maquininha acordada (ligue só depois que a cobrança de teste funcionar)"
             setTextColor(Color.WHITE); setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             isChecked = Pagamento.manterAcordadaLigado
             setPadding(0, dp(14), 0, dp(4))
@@ -102,7 +103,9 @@ class MaquininhaActivity : AppCompatActivity() {
         fila.addView(btnCred, LinearLayout.LayoutParams(0, dp(54), 1f).apply { marginEnd = dp(6) })
         fila.addView(btnDeb, LinearLayout.LayoutParams(0, dp(54), 1f).apply { marginStart = dp(6) })
         c3.addView(fila)
-        c3.addView(botao("Cancelar cobrança", false) { Pagamento.cancelar(); anotar("Cancelamento pedido") })
+        txtPronto = texto("", 13, cinza).apply { setPadding(0, dp(8), 0, 0) }
+        c3.addView(txtPronto)
+        c3.addView(botao("Cancelar / destravar", false) { Pagamento.destravar(); anotar("Cancelado e destravado"); atualizar() })
         log = TextView(this).apply {
             setTextColor(Color.parseColor("#E4E4E7")); setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f); typeface = Typeface.MONOSPACE
             setPadding(dp(12), dp(12), dp(12), dp(12)); background = caixa(Color.parseColor("#0F0F0F"), linha, 12)
@@ -181,11 +184,18 @@ class MaquininhaActivity : AppCompatActivity() {
             btnConta.text = if (ok) "Sair da conta PagBank" else "Entrar na conta PagBank"
         }
         val pronto = Pagamento.maquininhaEndereco != null && !Pagamento.cobrando
+        txtPronto.text = when {
+            Pagamento.maquininhaEndereco == null -> "Toque na maquininha no passo 1 para liberar a cobrança."
+            Pagamento.cobrando -> "Cobrança em andamento. Se travou, toque em Cancelar / destravar."
+            else -> ""
+        }
+        txtPronto.visibility = if (txtPronto.text.isNullOrEmpty()) View.GONE else View.VISIBLE
         btnCred.isEnabled = pronto; btnDeb.isEnabled = pronto
         btnCred.alpha = if (pronto) 1f else .45f; btnDeb.alpha = if (pronto) 1f else .45f
     }
 
     private fun alternarConta() {
+        btnConta.isEnabled = true
         if (autenticado) Pagamento.sairDaConta { anotar("Conta desconectada"); atualizar() }
         else { anotar("Abrindo login do PagBank…"); Pagamento.entrarNaConta { ok -> anotar(if (ok) "Conta conectada" else "Login não concluído"); atualizar() } }
     }

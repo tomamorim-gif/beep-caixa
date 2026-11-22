@@ -35,8 +35,12 @@ class BeepApp : Application() {
 object Pagamento {
     private lateinit var app: Context
     private var plugpag: PlugPag? = null
-    private val fila = Executors.newSingleThreadScheduledExecutor()
     private val ui = Handler(Looper.getMainLooper())
+    /** Threads de trabalho (podem ser várias: uma chamada travada não segura as outras). */
+    private val trabalho = Executors.newCachedThreadPool()
+    private val agenda = Executors.newSingleThreadScheduledExecutor()
+    /** Só uma chamada ao PlugPag por vez (a biblioteca não aceita chamadas paralelas). */
+    private val trava = java.util.concurrent.locks.ReentrantLock()
     private val loginAberto = AtomicBoolean(false)
 
     @Volatile var cobrando = false
@@ -51,13 +55,26 @@ object Pagamento {
 
     private const val PREFS = "beep_maquininha"
     private const val INTERVALO_ACORDAR_MIN = 3L
+    private const val TRAVADA = "A maquininha não respondeu e a conexão ficou presa. Desligue e ligue a maquininha e feche e abra o app."
 
     fun iniciar(ctx: Context) {
         app = ctx.applicationContext
-        fila.scheduleWithFixedDelay({ manterAcordada() }, 1, INTERVALO_ACORDAR_MIN, TimeUnit.MINUTES)
+        agenda.scheduleWithFixedDelay({ manterAcordada() }, INTERVALO_ACORDAR_MIN, INTERVALO_ACORDAR_MIN, TimeUnit.MINUTES)
     }
 
     private fun pp(): PlugPag = plugpag ?: PlugPag(app).also { plugpag = it }
+
+    /** Roda um bloco do PlugPag com a trava. Se a trava estiver presa por mais de [esperaSeg], devolve null. */
+    private fun <T> comPlugPag(esperaSeg: Long, bloco: (PlugPag) -> T): T? {
+        if (!trava.tryLock(esperaSeg, TimeUnit.SECONDS)) return null
+        try { return bloco(pp()) } finally { trava.unlock() }
+    }
+
+    /** Executa [bloco] numa thread de trabalho e devolve o resultado em até [limiteSeg]; senão, [seEstourar]. */
+    private fun <T> comLimite(limiteSeg: Long, seEstourar: T, bloco: () -> T): T {
+        val f = trabalho.submit<T> { bloco() }
+        return try { f.get(limiteSeg, TimeUnit.SECONDS) } catch (e: java.util.concurrent.TimeoutException) { seEstourar } catch (e: Throwable) { seEstourar }
+    }
 
     private fun prefs() = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -70,8 +87,8 @@ object Pagamento {
         set(v) { prefs().edit().putString("nome", v).apply() }
 
     var manterAcordadaLigado: Boolean
-        get() = prefs().getBoolean("acordada", true)
-        set(v) { prefs().edit().putBoolean("acordada", v).apply() }
+        get() = prefs().getBoolean("acordada2", false)
+        set(v) { prefs().edit().putBoolean("acordada2", v).apply() }
 
     fun versaoBiblioteca(): String = try { br.com.uol.pagseguro.plugpag.PlugPagBase.getLibVersion() } catch (e: Throwable) { "?" }
 
@@ -95,80 +112,67 @@ object Pagamento {
     // ---------------- conta PagBank ----------------
 
     fun autenticado(fim: (Boolean) -> Unit) {
-        fila.execute {
-            val r = try { pp().isAuthenticated } catch (e: Throwable) { false }
+        trabalho.execute {
+            // não espera a trava: isAuthenticated é só leitura e não pode ficar preso atrás da conexão
+            val r = comLimite(6, false) { try { pp().isAuthenticated } catch (e: Throwable) { false } }
             ui.post { fim(r) }
         }
     }
 
-    /**
-     * Abre a tela de login do próprio PagBank (a senha vai direto ao PagBank, nunca passa pelo Beep).
-     * Se em 60 s o PagBank não responder, avisa — a tela do PagBank às vezes fica parada no "Entrar".
-     */
+    /** Abre a tela de login do próprio PagBank na hora (a senha vai direto ao PagBank, nunca passa pelo Beep). */
     fun entrarNaConta(fim: (Boolean) -> Unit) {
-        if (!loginAberto.compareAndSet(false, true)) { anotar("O login do PagBank já está aberto"); return }
+        loginAberto.set(true)
         val respondeu = AtomicBoolean(false)
-        val terminar = { _: String -> if (respondeu.compareAndSet(false, true)) { loginAberto.set(false); autenticado(fim) } }
-        fila.execute {
-            val req = try { pp().checkRequirements(PlugPagDevice.TYPE_PINPAD) } catch (e: Throwable) { -9999 }
-            if (req != IPlugPag.RET_OK) anotar("Requisitos do PagBank: ${explicarCodigo(req.toString())}")
-            ui.post {
-                try {
-                    val r = pp().requestAuthentication(object : PlugPagAuthenticationListener {
-                        override fun onSuccess() { terminar("ok") }
-                        override fun onError() { terminar("erro") }
-                    })
-                    if (r != IPlugPag.RET_OK) { anotar("O PagBank não abriu o login (${explicarCodigo(r.toString())})"); terminar("falhou") }
-                } catch (e: Throwable) { anotar("Erro ao abrir o login: ${e.message ?: e.javaClass.simpleName}"); terminar("excecao") }
-            }
-            ui.postDelayed({
-                if (!respondeu.get()) anotar("O login do PagBank não respondeu em 60 s. Feche a tela dele pelo botão voltar e teste a cobrança direto: nesta versão o login pode não ser necessário.")
-            }, 60_000)
-            ui.postDelayed({ if (!respondeu.get()) { loginAberto.set(false) } }, 180_000)
-        }
+        val terminar = { if (respondeu.compareAndSet(false, true)) { loginAberto.set(false); autenticado(fim) } }
+        try {
+            val r = pp().requestAuthentication(object : PlugPagAuthenticationListener {
+                override fun onSuccess() { terminar() }
+                override fun onError() { terminar() }
+            })
+            if (r != IPlugPag.RET_OK) { anotar("O PagBank não abriu o login (${explicarCodigo(r.toString())})"); terminar() }
+        } catch (e: Throwable) { anotar("Erro ao abrir o login: ${e.message ?: e.javaClass.simpleName}"); terminar() }
+        ui.postDelayed({ if (!respondeu.get()) anotar("O login do PagBank não respondeu em 60 s. Toque em voltar na tela dele e teste a cobrança direto.") }, 60_000)
     }
 
-    fun loginFechadoSemResposta() { if (loginAberto.get()) loginAberto.set(false) }
+    fun loginFechadoSemResposta() { loginAberto.set(false) }
 
     fun sairDaConta(fim: () -> Unit) {
-        fila.execute {
-            try { pp().invalidateAuthentication() } catch (_: Throwable) {}
+        trabalho.execute {
+            comLimite(8, Unit) { try { pp().invalidateAuthentication() } catch (_: Throwable) {}; Unit }
             ui.post(fim)
         }
     }
 
     // ---------------- conexão e "manter acordada" ----------------
 
-    /** Conecta por Bluetooth. Roda SEMPRE dentro da fila. Retorna null se ok, ou a mensagem do problema. */
-    private fun conectar(end: String): String? {
+    /** Conecta por Bluetooth com limite de tempo. Retorna null se ok, ou a mensagem do problema. */
+    private fun conectar(end: String, limiteSeg: Long = 25): String? {
         if (!bluetoothLigado()) return "Bluetooth do telefone desligado"
-        return try {
-            val r = pp().initBTConnectionWithResult(PlugPagDevice(end))
-            if (r.result == IPlugPag.RET_OK) { ultimoSinalOk = SystemClock.elapsedRealtime(); ultimoErroConexao = null; null }
-            else (r.message?.takeIf { it.isNotBlank() } ?: explicarCodigo(r.errorCode ?: r.result.toString())).also { ultimoErroConexao = it }
-        } catch (e: Throwable) {
-            // versões antigas da biblioteca não têm initBTConnectionWithResult
-            try {
-                val c = pp().initBTConnection(PlugPagDevice(end))
-                if (c == IPlugPag.RET_OK) { ultimoSinalOk = SystemClock.elapsedRealtime(); ultimoErroConexao = null; null }
-                else explicarCodigo(c.toString()).also { ultimoErroConexao = it }
-            } catch (e2: Throwable) { (e2.message ?: e2.javaClass.simpleName).also { ultimoErroConexao = it } }
+        val r = comLimite<String?>(limiteSeg, "A maquininha não respondeu em $limiteSeg s (desligada, em descanso ou longe)") {
+            comPlugPag<String?>(2) { p ->
+                try {
+                    val c = p.initBTConnection(PlugPagDevice(end))
+                    if (c == IPlugPag.RET_OK) null else explicarCodigo(c.toString())
+                } catch (e: Throwable) { e.message ?: e.javaClass.simpleName }
+            } ?: TRAVADA
         }
+        if (r == null) { ultimoSinalOk = SystemClock.elapsedRealtime(); ultimoErroConexao = null } else ultimoErroConexao = r
+        return r
     }
 
-    private fun acordar() { try { pp().wakeupPinpad() } catch (_: Throwable) {} }
+    private fun acordar() { trabalho.execute { comPlugPag(1) { try { it.wakeupPinpad() } catch (_: Throwable) {} } } }
 
     private fun manterAcordada() {
-        if (!::app.isInitialized || !manterAcordadaLigado || cobrando || loginAberto.get()) return
+        if (!::app.isInitialized || !manterAcordadaLigado || cobrando || loginAberto.get() || trava.isLocked) return
         val end = maquininhaEndereco ?: return
-        val erro = conectar(end)
+        val erro = conectar(end, 15)
         if (erro == null) acordar() else anotar("Manter acordada: $erro")
     }
 
     /** Testa a conexão agora (botão "Testar conexão"). */
     fun testarConexao(fim: (String?) -> Unit) {
         val end = maquininhaEndereco ?: run { ui.post { fim("Nenhuma maquininha escolhida") }; return }
-        fila.execute {
+        trabalho.execute {
             val e = conectar(end)
             if (e == null) acordar()
             ui.post { fim(e) }
@@ -176,33 +180,33 @@ object Pagamento {
     }
 
     fun diagnostico(fim: (String) -> Unit) {
-        fila.execute {
+        trabalho.execute {
             val s = StringBuilder()
             s.append("PlugPag ").append(versaoBiblioteca()).append('\n')
             s.append("Bluetooth: ").append(if (bluetoothLigado()) "ligado" else "DESLIGADO").append('\n')
             s.append("Maquininha: ").append(maquininhaNome ?: "nenhuma").append(" ").append(maquininhaEndereco ?: "").append('\n')
-            val req = try { pp().checkRequirements(PlugPagDevice.TYPE_PINPAD) } catch (e: Throwable) { -9999 }
+            s.append("Cobrança em andamento: ").append(if (cobrando) "sim" else "não").append(" · conexão presa: ").append(if (trava.isLocked) "sim" else "não").append('\n')
+            val req = comLimite(8, -9999) { try { pp().checkRequirements(PlugPagDevice.TYPE_PINPAD) } catch (e: Throwable) { -9999 } }
             s.append("Requisitos: ").append(if (req == IPlugPag.RET_OK) "ok" else explicarCodigo(req.toString())).append('\n')
-            val aut = try { pp().isAuthenticated } catch (e: Throwable) { false }
+            val aut = comLimite(6, false) { try { pp().isAuthenticated } catch (e: Throwable) { false } }
             s.append("Conta PagBank: ").append(if (aut) "conectada" else "não conectada").append('\n')
-            maquininhaEndereco?.let { end ->
-                val e = conectar(end)
-                s.append("Conexão: ").append(e ?: "ok").append('\n')
-                if (e == null) {
-                    acordar()
-                    try { pp().readerInfo?.let { ri -> s.append("Leitor: ").append(ri.sharedLibraryVersion ?: "-").append('\n') } } catch (_: Throwable) {}
-                }
-            }
+            maquininhaEndereco?.let { end -> s.append("Conexão: ").append(conectar(end) ?: "ok").append('\n') }
             ui.post { fim(s.toString().trim()) }
         }
+    }
+
+    /** Libera a tela se algo ficou preso (botão "Destravar"). */
+    fun destravar() {
+        Thread { try { plugpag?.abort() } catch (_: Throwable) {} }.start()
+        cobrando = false
+        loginAberto.set(false)
     }
 
     // ---------------- cobrança ----------------
 
     /**
      * Cobra na maquininha. valor em centavos; forma = "credito" | "debito".
-     * evento(msg) recebe as mensagens da maquininha ("Aproxime ou insira o cartão", "Digite a senha"...).
-     * fim(json) recebe o resultado: ok, mensagem, codigo, transacao, nsu, bandeira, autorizacao.
+     * evento(msg) recebe as mensagens da maquininha; fim(json) recebe o resultado uma única vez.
      */
     fun cobrar(valor: Int, forma: String, referencia: String, evento: (String) -> Unit, fim: (JSONObject) -> Unit) {
         val end = maquininhaEndereco
@@ -211,54 +215,59 @@ object Pagamento {
         if (valor < 100) { ui.post { fim(erro("Valor mínimo no cartão é R$ 1,00", "VALOR")) }; return }
         if (forma != "credito" && forma != "debito") { ui.post { fim(erro("Forma de pagamento inválida", "FORMA")) }; return }
         cobrando = true
+        val entregue = AtomicBoolean(false)
+        val entregar = { r: JSONObject -> if (entregue.compareAndSet(false, true)) { cobrando = false; ui.post { fim(r) } } }
+        // vigia: nenhuma cobrança fica presa mais de 3 minutos
+        ui.postDelayed({
+            if (!entregue.get()) { try { Thread { try { plugpag?.abort() } catch (_: Throwable) {} }.start() } catch (_: Throwable) {}
+                entregar(erro("A maquininha não respondeu a tempo. Confira se ela está ligada e tente de novo.", "TEMPO")) }
+        }, 180_000)
         ui.post { evento("Conectando à maquininha…") }
-        fila.execute {
+        trabalho.execute {
             val r = try {
-                val p = pp()
                 var falha = conectar(end)
-                if (falha != null) { // segunda tentativa: a maquininha pode estar acordando
+                if (falha != null && falha != TRAVADA) {
                     ui.post { evento("Acordando a maquininha…") }
                     Thread.sleep(1500)
                     falha = conectar(end)
                 }
                 if (falha != null) {
-                    erro("Maquininha não respondeu: $falha. Confira se ela está ligada e perto do caixa.", "CONEXAO")
+                    erro("Maquininha não respondeu: $falha", "CONEXAO")
                 } else {
-                    acordar()
-                    val tipo = if (forma == "debito") IPlugPag.TYPE_DEBITO else IPlugPag.TYPE_CREDITO
-                    val ref = referencia.filter { it.isLetterOrDigit() }.take(9).ifEmpty { "BEEP" }
-                    val dados = PlugPagPaymentData(tipo, valor, IPlugPag.INSTALLMENT_TYPE_A_VISTA, 1, ref)
-                    p.setEventListener(PlugPagEventListener { ev ->
-                        val msg = ev.customMessage
-                        if (!msg.isNullOrBlank()) ui.post { evento(msg) }
-                        IPlugPag.RET_OK
-                    })
-                    val res = p.doPayment(dados)
-                    val ok = res.result == IPlugPag.RET_OK
-                    JSONObject().apply {
-                        put("ok", ok)
-                        put("mensagem", if (ok) (res.message ?: "Aprovado") else traduzir(res.errorCode, res.message))
-                        put("codigo", res.errorCode ?: res.result.toString())
-                        put("transacao", res.transactionCode ?: "")
-                        put("transacao_id", res.transactionId ?: "")
-                        put("nsu", res.hostNsu ?: res.nsu ?: "")
-                        put("autorizacao", res.autoCode ?: "")
-                        put("bandeira", res.cardBrand ?: "")
-                        put("forma", forma)
-                        put("valor", valor)
-                    }
+                    comPlugPag(5) { p ->
+                        try { p.wakeupPinpad() } catch (_: Throwable) {}
+                        val tipo = if (forma == "debito") IPlugPag.TYPE_DEBITO else IPlugPag.TYPE_CREDITO
+                        val ref = referencia.filter { it.isLetterOrDigit() }.take(9).ifEmpty { "BEEP" }
+                        val dados = PlugPagPaymentData(tipo, valor, IPlugPag.INSTALLMENT_TYPE_A_VISTA, 1, ref)
+                        p.setEventListener(PlugPagEventListener { ev ->
+                            val msg = ev.customMessage
+                            if (!msg.isNullOrBlank()) ui.post { evento(msg) }
+                            IPlugPag.RET_OK
+                        })
+                        val res = p.doPayment(dados)
+                        val ok = res.result == IPlugPag.RET_OK
+                        JSONObject().apply {
+                            put("ok", ok)
+                            put("mensagem", if (ok) (res.message ?: "Aprovado") else traduzir(res.errorCode, res.message))
+                            put("codigo", res.errorCode ?: res.result.toString())
+                            put("transacao", res.transactionCode ?: "")
+                            put("transacao_id", res.transactionId ?: "")
+                            put("nsu", res.hostNsu ?: res.nsu ?: "")
+                            put("autorizacao", res.autoCode ?: "")
+                            put("bandeira", res.cardBrand ?: "")
+                            put("forma", forma)
+                            put("valor", valor)
+                        }
+                    } ?: erro(TRAVADA, "TRAVADA")
                 }
             } catch (e: Throwable) {
                 erro(e.message ?: e.javaClass.simpleName, "EXCECAO")
-            } finally {
-                cobrando = false
             }
-            ui.post { fim(r) }
+            entregar(r)
         }
     }
 
     fun cancelar() {
-        // abort precisa rodar fora da fila (a fila está presa no doPayment)
         Thread { try { plugpag?.abort() } catch (_: Throwable) {} }.start()
     }
 
