@@ -330,6 +330,7 @@ h2{font-size:22px;font-weight:800}
     <button class="btn g" id="admPin">Trocar PIN do gerente</button>
     <button class="btn g" id="admTela">Como travar o celular no caixa</button>
     <button class="btn g" id="admMic">Liberar microfone (atendimento por áudio)</button>
+    <button class="btn g" id="admMaq" style="display:none">Maquininha (configurar e testar)</button>
     <button class="btn bad" id="admSair">Desativar este aparelho</button>
   </div>
   <p class="mu" style="margin-top:14px;font-size:13px">Teste: as vendas ficam marcadas como teste no sistema e não entram no faturamento. Para vender de verdade faltam a maquininha, o Pix real e a NFC-e.</p>
@@ -349,7 +350,8 @@ let token=ls.get('bp-token',null),loja=ls.get('bp-loja',null),cat=ls.get('bp-cat
 let maior18Em=null,carrinho=[],forma=null,vendaId=null,iniciada=null,stream=null,frontStream=null,detector=null,lendo=false,ultimoCod='',ultimoT=0,inativo=null;
 
 const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2600)};
-const falar=t=>{if(!voz||!('speechSynthesis' in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';u.rate=1.05;speechSynthesis.speak(u)}catch(e){}};
+const NATIVO=window.BeepNativo&&BeepNativo.disponivel?BeepNativo:null;
+const falar=t=>{if(!voz)return;if(NATIVO){try{NATIVO.falar(String(t))}catch(e){}return}if(!('speechSynthesis' in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';u.rate=1.05;speechSynthesis.speak(u)}catch(e){}};
 const valorFalado=c=>{const r=Math.floor(c/100),cc=c%100;return (r?r+(r===1?' real':' reais'):'')+(r&&cc?' e ':'')+(cc?cc+' centavos':'')||'zero'};
 async function api(acao,corpo={}){const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(r.status===401){desativar(true);throw new Error(j.erro)}if(!r.ok)throw new Error(j.erro||'Erro');return j}
 const uuid=()=>crypto.randomUUID?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
@@ -372,6 +374,7 @@ function mostrarSlide(L,i){clearTimeout(dsRoda);if(!$('#descanso').classList.con
 function registrarDs(a,seg){if(seg<2)return;dsEv.push({anuncio_id:a.id,campanha_id:a.campanha_id,tipo:'exibicao',segundos:Math.round(seg),em:new Date().toISOString()});if(dsEv.length>2000)dsEv=dsEv.slice(-2000);ls.set('bp-midia-ev',dsEv)}
 function fecharDescanso(){const D=$('#descanso');if(!D.classList.contains('on'))return;const L=adsCaixa();if(dsDesde&&L[dsIdx])registrarDs(L[dsIdx],(Date.now()-dsDesde)/1000);dsDesde=0;clearTimeout(dsRoda);D.classList.remove('on');$('#dsSlides').innerHTML='';enviarDs()}
 async function enviarDs(){if(!dsEv.length||!navigator.onLine||!token)return;const lote=dsEv.slice(0,200);try{await api('midia_evento',{eventos:lote});dsEv=dsEv.slice(lote.length);ls.set('bp-midia-ev',dsEv)}catch(e){}}
+if(NATIVO){const b=$('#admMaq');if(b){b.style.display='';b.onclick=()=>NATIVO.configurar()}}
 $('#descanso').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();fecharDescanso();armarDescanso('espera');setTimeout(()=>$('#leitor').focus({preventScroll:true}),60)});
 document.addEventListener('keydown',()=>{if($('#descanso').classList.contains('on'))fecharDescanso();const t=document.querySelector('.tela.on');if(t?.id==='espera')armarDescanso('espera')},true);
 function armarInatividade(id){clearTimeout(inativo);if(['carrinho','pagamento','buscaT','vozT'].includes(id))inativo=setTimeout(()=>{if(carrinho.length)cancelar('Tempo esgotado: compra não finalizada');else mostrar('espera')},120000)}
@@ -546,7 +549,7 @@ function partes(frase){const t=semAc(frase).replace(/[.,;!?]/g,' , ');const peda
 const sim=f=>/\b(sim|isso|confirm|pode|claro|ok|beleza|certo|exato)/.test(semAc(f));
 const nao=f=>/\b(nao|so isso|mais nada|nada|terminei|acabou|pagar|finalizar|fechar|pronto)\b/.test(semAc(f));
 const ajuda=f=>/\b(ajuda|atendente|socorro|pessoa|humano)\b/.test(semAc(f));
-function falarE(t){return new Promise(res=>{if(!('speechSynthesis' in window)){res();return}try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';u.rate=1.05;let ok=false;const fim=()=>{if(!ok){ok=true;res()}};u.onend=fim;u.onerror=fim;setTimeout(fim,Math.min(15000,1200+t.length*85));$('#vozMic').classList.add('falando');speechSynthesis.speak(u)}catch(e){res()}}).then(()=>$('#vozMic').classList.remove('falando'))}
+function falarE(t){return new Promise(res=>{if(NATIVO){try{NATIVO.falar(String(t))}catch(e){}setTimeout(res,Math.min(6000,600+String(t).length*65));return}if(!('speechSynthesis' in window)){res();return}try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';u.rate=1.05;let ok=false;const fim=()=>{if(!ok){ok=true;res()}};u.onend=fim;u.onerror=fim;setTimeout(fim,Math.min(15000,1200+t.length*85));$('#vozMic').classList.add('falando');speechSynthesis.speak(u)}catch(e){res()}}).then(()=>$('#vozMic').classList.remove('falando'))}
 function ouvir(){return new Promise(res=>{if(!SR){res(null);return}try{vozRec?.abort()}catch(e){}const r=new SR();vozRec=r;r.lang='pt-BR';r.interimResults=true;r.maxAlternatives=3;r.continuous=false;let final='',alt=[];
  r.onresult=e=>{let txt='';for(const x of e.results){txt+=x[0].transcript;if(x.isFinal){final=txt;alt=[...x].map(a=>a.transcript)}}$('#vozOuvido').textContent='“'+txt+'”'};
  r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed')$('#vozOuvido').textContent='Microfone bloqueado. Peça ajuda ao responsável pela loja.'};
@@ -607,7 +610,7 @@ $('#vozMic').onclick=()=>{if(vozRec||$('#vozMic').classList.contains('falando'))
 const pedirMic=async()=>{try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());return true}catch(e){return false}};
 
 // ---------- trava de navegador ----------
-const instalado=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const instalado=()=>!!NATIVO||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 let liberadoNav=false,promptInst=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptInst=e;$('#btnInstalar').style.display='block'});
 addEventListener('appinstalled',()=>{$('#btnInstalar').style.display='none';$('#instalar').querySelector('h2').textContent='Instalado! Abra pelo ícone Beep Caixa'});
