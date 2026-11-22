@@ -11,7 +11,7 @@ android {
         applicationId 'br.com.beep.caixa'
         minSdk 24
         targetSdk 33
-        versionCode (System.getenv('VERSAO_CODIGO') ?: '1').toInteger()
+        versionCode Integer.parseInt(System.getenv('VERSAO_CODIGO') ?: '1')
         versionName System.getenv('VERSAO_NOME') ?: '0.1.0'
     }
 
