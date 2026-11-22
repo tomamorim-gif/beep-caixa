@@ -59,10 +59,19 @@ object Pagamento {
 
     fun iniciar(ctx: Context) {
         app = ctx.applicationContext
+        trabalho.execute { try { pp() } catch (_: Throwable) {} }
         agenda.scheduleWithFixedDelay({ manterAcordada() }, INTERVALO_ACORDAR_MIN, INTERVALO_ACORDAR_MIN, TimeUnit.MINUTES)
     }
 
-    private fun pp(): PlugPag = plugpag ?: PlugPag(app).also { plugpag = it }
+    private val criando = Object()
+    /** Uma única instância, criada fora da thread da tela (o construtor do PlugPag é pesado). */
+    private fun pp(): PlugPag {
+        plugpag?.let { return it }
+        synchronized(criando) { return plugpag ?: PlugPag(app).also { plugpag = it } }
+    }
+
+    /** Passos com hora, para descobrir onde algo para. */
+    private fun passo(m: String) { android.util.Log.i("BeepPag", m); anotar("· $m") }
 
     /** Roda um bloco do PlugPag com a trava. Se a trava estiver presa por mais de [esperaSeg], devolve null. */
     private fun <T> comPlugPag(esperaSeg: Long, bloco: (PlugPag) -> T): T? {
@@ -119,18 +128,29 @@ object Pagamento {
         }
     }
 
-    /** Abre a tela de login do próprio PagBank na hora (a senha vai direto ao PagBank, nunca passa pelo Beep). */
+    /** Abre a tela de login do próprio PagBank (a senha vai direto ao PagBank, nunca passa pelo Beep). Nunca roda na thread da tela. */
     fun entrarNaConta(fim: (Boolean) -> Unit) {
         loginAberto.set(true)
         val respondeu = AtomicBoolean(false)
         val terminar = { if (respondeu.compareAndSet(false, true)) { loginAberto.set(false); autenticado(fim) } }
-        try {
-            val r = pp().requestAuthentication(object : PlugPagAuthenticationListener {
-                override fun onSuccess() { terminar() }
-                override fun onError() { terminar() }
-            })
-            if (r != IPlugPag.RET_OK) { anotar("O PagBank não abriu o login (${explicarCodigo(r.toString())})"); terminar() }
-        } catch (e: Throwable) { anotar("Erro ao abrir o login: ${e.message ?: e.javaClass.simpleName}"); terminar() }
+        trabalho.execute {
+            passo("preparando o PagBank…")
+            val r = comLimite(15, -7777) {
+                try {
+                    val p = pp()
+                    passo("abrindo a tela de login do PagBank…")
+                    p.requestAuthentication(object : PlugPagAuthenticationListener {
+                        override fun onSuccess() { passo("PagBank respondeu: login ok"); terminar() }
+                        override fun onError() { passo("PagBank respondeu: login não concluído"); terminar() }
+                    })
+                } catch (e: Throwable) { passo("erro: ${e.message ?: e.javaClass.simpleName}"); -8888 }
+            }
+            when (r) {
+                IPlugPag.RET_OK -> passo("tela do PagBank aberta")
+                -7777 -> { passo("o PagBank não abriu a tela em 15 s"); terminar() }
+                else -> { passo("o PagBank recusou abrir o login (${explicarCodigo(r.toString())})"); terminar() }
+            }
+        }
         ui.postDelayed({ if (!respondeu.get()) anotar("O login do PagBank não respondeu em 60 s. Toque em voltar na tela dele e teste a cobrança direto.") }, 60_000)
     }
 
@@ -148,6 +168,7 @@ object Pagamento {
     /** Conecta por Bluetooth com limite de tempo. Retorna null se ok, ou a mensagem do problema. */
     private fun conectar(end: String, limiteSeg: Long = 25): String? {
         if (!bluetoothLigado()) return "Bluetooth do telefone desligado"
+        passo("conectando por Bluetooth (até $limiteSeg s)…")
         val r = comLimite<String?>(limiteSeg, "A maquininha não respondeu em $limiteSeg s (desligada, em descanso ou longe)") {
             comPlugPag<String?>(2) { p ->
                 try {
@@ -156,7 +177,7 @@ object Pagamento {
                 } catch (e: Throwable) { e.message ?: e.javaClass.simpleName }
             } ?: TRAVADA
         }
-        if (r == null) { ultimoSinalOk = SystemClock.elapsedRealtime(); ultimoErroConexao = null } else ultimoErroConexao = r
+        if (r == null) { ultimoSinalOk = SystemClock.elapsedRealtime(); ultimoErroConexao = null; passo("conectado") } else { ultimoErroConexao = r; passo("falhou: $r") }
         return r
     }
 

@@ -44,6 +44,7 @@ class MaquininhaActivity : AppCompatActivity() {
     private lateinit var chkAcordada: android.widget.Switch
     private lateinit var txtBt: TextView
     private lateinit var txtPronto: TextView
+    private lateinit var btnTestar: Button
     private var autenticado = false
 
     private fun dp(v: Int) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
@@ -72,10 +73,15 @@ class MaquininhaActivity : AppCompatActivity() {
         listaAparelhos = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         c1.addView(listaAparelhos)
         c1.addView(botao("Abrir Bluetooth do telefone", false) { startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) })
-        c1.addView(botao("Testar conexão", false) {
+        btnTestar = botao("Testar conexão", false) {
+            btnTestar.isEnabled = false; btnTestar.alpha = .45f; btnTestar.text = "Testando…"
             anotar("Testando conexão…")
-            Pagamento.testarConexao { e -> anotar(if (e == null) "✅ Maquininha conectada e acordada" else "❌ $e") }
-        })
+            Pagamento.testarConexao { e ->
+                anotar(if (e == null) "✅ Maquininha conectada e acordada" else "❌ $e")
+                btnTestar.isEnabled = true; btnTestar.alpha = 1f; btnTestar.text = "Testar conexão"
+            }
+        }
+        c1.addView(btnTestar)
         chkAcordada = android.widget.Switch(this).apply {
             text = "Manter maquininha acordada (ligue só depois que a cobrança de teste funcionar)"
             setTextColor(Color.WHITE); setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
