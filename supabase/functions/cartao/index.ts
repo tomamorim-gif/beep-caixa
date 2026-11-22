@@ -1,12 +1,21 @@
 // Cobrança no cartão pela maquininha Mercado Pago Point (API Orders).
-// - O token do Mercado Pago fica só aqui (segredo MP_ACCESS_TOKEN); o tablet nunca o vê.
+// - O token do Mercado Pago de cada empresa fica só no servidor (cadastrado pelo dono no Painel); o tablet nunca o vê.
 // - O valor cobrado é sempre o total calculado aqui, com os preços da loja.
 // - A venda só é gravada quando o Mercado Pago confirma o pagamento (pelo status ou pelo aviso/webhook).
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const MP = "https://api.mercadopago.com";
-const TOKEN = () => (Deno.env.get("MP_ACCESS_TOKEN") ?? "").trim();
+// credencial de cada empresa (cadastrada pelo dono no Painel); o segredo do servidor fica só como reserva
+const credCache = new Map<string, { token: string; segredo: string; t: number }>();
+async function credencial(empresaId: string) {
+  const c = credCache.get(empresaId);
+  if (c && Date.now() - c.t < 60_000) return c;
+  const { data } = await db.from("integracoes_pagamento").select("access_token, webhook_secret").eq("empresa_id", empresaId).eq("provedor", "mercadopago").maybeSingle();
+  const r = { token: (data?.access_token ?? Deno.env.get("MP_ACCESS_TOKEN") ?? "").trim(), segredo: (data?.webhook_secret ?? Deno.env.get("MP_WEBHOOK_SECRET") ?? "").trim(), t: Date.now() };
+  credCache.set(empresaId, r);
+  return r;
+}
 const TESTE = () => Deno.env.get("MP_POINT_TEST_MODE") === "true";
 const TERMINAL_VIRTUAL = "NEWLAND_N950__SBX0000001";
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
@@ -27,8 +36,8 @@ async function aparelho(req: Request) {
   return data && data.ativo ? data : null;
 }
 
-async function mp(path: string, init: RequestInit = {}, idem = false) {
-  const headers: Record<string, string> = { Authorization: `Bearer ${TOKEN()}`, "Content-Type": "application/json", ...(init.headers as Record<string, string> ?? {}) };
+async function mp(tk: string, path: string, init: RequestInit = {}, idem = false) {
+  const headers: Record<string, string> = { Authorization: `Bearer ${tk}`, "Content-Type": "application/json", ...(init.headers as Record<string, string> ?? {}) };
   if (idem) headers["X-Idempotency-Key"] = crypto.randomUUID();
   const r = await fetch(MP + path, { ...init, headers });
   const corpo = await r.json().catch(() => ({}));
@@ -110,9 +119,9 @@ async function gravarVenda(c: any) {
 }
 
 // consulta o Mercado Pago (se ainda não terminou), atualiza e grava a venda quando aprovada
-async function atualizar(c: any) {
+async function atualizar(c: any, tk: string) {
   if (!FINAIS.has(c.status) && c.mp_order_id) {
-    const r = await mp(`/v1/orders/${encodeURIComponent(c.mp_order_id)}`);
+    const r = await mp(tk, `/v1/orders/${encodeURIComponent(c.mp_order_id)}`);
     if (r.ok) {
       const o = lerOrdem(r.corpo);
       const { data } = await db.from("cobrancas_cartao").update({ status: o.status, status_detail: o.status_detail, mp_payment_id: o.mp_payment_id, bandeira: o.bandeira, autorizacao: o.autorizacao, nsu: o.nsu, atualizado_em: new Date().toISOString() }).eq("id", c.id).select("*").single();
@@ -127,7 +136,6 @@ const resposta = (c: any) => ({ cobranca: c.id, status: c.status, detalhe: c.sta
 
 // ---------- aviso do Mercado Pago (webhook, tópico "orders") ----------
 async function webhook(req: Request) {
-  const segredo = (Deno.env.get("MP_WEBHOOK_SECRET") ?? "").trim();
   const url = new URL(req.url);
   let b: any = {};
   try { b = await req.json(); } catch { /* corpo vazio */ }
@@ -135,6 +143,10 @@ async function webhook(req: Request) {
   const tipo = String(b?.type ?? url.searchParams.get("type") ?? "");
   const sig = req.headers.get("x-signature") ?? "", reqId = req.headers.get("x-request-id") ?? "";
   const partes = Object.fromEntries(sig.split(",").map((p) => p.split("=").map((s) => s.trim())));
+  // descobre de qual empresa é o pedido para usar a assinatura certa
+  const { data: cob } = dataId ? await db.from("cobrancas_cartao").select("*").eq("mp_order_id", dataId).maybeSingle() : { data: null };
+  const cred = cob ? await credencial(cob.empresa_id) : { token: "", segredo: (Deno.env.get("MP_WEBHOOK_SECRET") ?? "").trim() };
+  const segredo = cred.segredo;
   let valido = false;
   if (segredo && partes.ts && partes.v1 && dataId && reqId) {
     const chave = await crypto.subtle.importKey("raw", new TextEncoder().encode(segredo), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
@@ -145,8 +157,7 @@ async function webhook(req: Request) {
   await db.from("mp_webhooks").insert({ tipo, data_id: dataId || null, valido, corpo: b });
   if (!valido) return new Response("assinatura inválida", { status: 401 });
   // a fonte da verdade é sempre a consulta ao Mercado Pago, nunca o corpo do aviso
-  const { data: c } = await db.from("cobrancas_cartao").select("*").eq("mp_order_id", dataId).maybeSingle();
-  if (c) await atualizar(c);
+  if (cob) { const tk = cred.token; await db.from("cobrancas_cartao").update({ webhook_ok: true }).eq("id", cob.id); await atualizar(cob, tk); }
   return new Response("ok", { status: 200 });
 }
 
@@ -160,17 +171,18 @@ Deno.serve(async (req) => {
   const d = await aparelho(req);
   if (!d) return erro("Aparelho não autorizado. Ative de novo.", 401);
   const acao = b.acao;
-  const temToken = TOKEN().length > 20;
+  const tk = (await credencial(d.empresa_id)).token; // token desta empresa, só nesta requisição
+  const temToken = tk.length > 20;
   const terminal = d.mp_terminal_id || (TESTE() ? TERMINAL_VIRTUAL : null);
 
   // o caixa pergunta se já pode cobrar no cartão
   if (acao === "config") return json({ provedor: "mercadopago", pronto: temToken && !!terminal, credencial: temToken, terminal, teste: TESTE() });
 
-  if (!temToken) return erro("Credencial do Mercado Pago ainda não cadastrada no servidor", 503);
+  if (!temToken) return erro("Credencial do Mercado Pago ainda não cadastrada. O dono cadastra no Painel, em Configurações.", 503);
 
   // configuração: maquininhas da conta
   if (acao === "terminais") {
-    const r = await mp("/terminals/v1/list?limit=50&offset=0");
+    const r = await mp(tk, "/terminals/v1/list?limit=50&offset=0");
     if (!r.ok) return erro("Mercado Pago recusou a consulta das maquininhas", 502, { detalhe: r.corpo?.message ?? r.status });
     const lista = (r.corpo?.data?.terminals ?? r.corpo?.terminals ?? r.corpo?.results ?? []).map((t: any) => ({ id: t.id, modo: t.operating_mode ?? null, loja: t.store_id ?? null, caixa: t.pos_id ?? null }));
     if (TESTE() && !lista.some((t: any) => t.id === TERMINAL_VIRTUAL)) lista.push({ id: TERMINAL_VIRTUAL, modo: "PDV", virtual: true });
@@ -183,7 +195,7 @@ Deno.serve(async (req) => {
     if (!/^[A-Z0-9_]{6,80}$/i.test(id)) return erro("Maquininha inválida");
     let aviso: string | null = null;
     if (id !== TERMINAL_VIRTUAL) {
-      const r = await mp("/terminals/v1/setup", { method: "PATCH", body: JSON.stringify({ terminals: [{ id, operating_mode: "PDV" }] }) });
+      const r = await mp(tk, "/terminals/v1/setup", { method: "PATCH", body: JSON.stringify({ terminals: [{ id, operating_mode: "PDV" }] }) });
       if (!r.ok) aviso = `Não consegui ativar o modo PDV (${r.corpo?.message ?? r.status}). Reinicie a maquininha e tente de novo.`;
     }
     await db.from("dispositivos").update({ mp_terminal_id: id }).eq("id", d.id);
@@ -201,9 +213,9 @@ Deno.serve(async (req) => {
     // uma cobrança aberta por caixa: cancela a anterior que tenha ficado pendurada
     const { data: abertas } = await db.from("cobrancas_cartao").select("*").eq("dispositivo_id", d.id).in("status", ["criando", "aguardando", "na_maquininha", "verificar"]);
     for (const a of abertas ?? []) {
-      const at = await atualizar(a);
+      const at = await atualizar(a, tk);
       if (at.status === "aprovado") return erro("Há um pagamento aprovado pendente neste caixa", 409, { cobranca: at.id });
-      if (!FINAIS.has(at.status) && at.mp_order_id) await mp(`/v1/orders/${encodeURIComponent(at.mp_order_id)}/cancel`, { method: "POST", headers: { "x-allow-cancelable-status": "at_terminal" } }, true);
+      if (!FINAIS.has(at.status) && at.mp_order_id) await mp(tk, `/v1/orders/${encodeURIComponent(at.mp_order_id)}/cancel`, { method: "POST", headers: { "x-allow-cancelable-status": "at_terminal" } }, true);
     }
     const c0: any = await calcular(d, b.itens);
     if (c0.erro) return erro(c0.erro);
@@ -213,7 +225,7 @@ Deno.serve(async (req) => {
     }).select("*").single();
     if (error || !cob) return erro("Não foi possível registrar a cobrança", 500);
     const ref = "beep" + cob.id.replace(/-/g, "");
-    const r = await mp("/v1/orders", {
+    const r = await mp(tk, "/v1/orders", {
       method: "POST",
       body: JSON.stringify({
         type: "point",
@@ -239,7 +251,7 @@ Deno.serve(async (req) => {
     if (!uuidOk(b.cobranca)) return erro("cobrança inválida");
     const { data: c } = await db.from("cobrancas_cartao").select("*").eq("id", b.cobranca).eq("dispositivo_id", d.id).maybeSingle();
     if (!c) return erro("Cobrança não encontrada", 404);
-    return json(resposta(await atualizar(c)));
+    return json(resposta(await atualizar(c, tk)));
   }
 
   // 3) cancelar (o cliente desistiu ou o caixa expirou)
@@ -247,9 +259,9 @@ Deno.serve(async (req) => {
     if (!uuidOk(b.cobranca)) return erro("cobrança inválida");
     const { data: c0 } = await db.from("cobrancas_cartao").select("*").eq("id", b.cobranca).eq("dispositivo_id", d.id).maybeSingle();
     if (!c0) return erro("Cobrança não encontrada", 404);
-    let c = await atualizar(c0);
+    let c = await atualizar(c0, tk);
     if (FINAIS.has(c.status)) return json(resposta(c));
-    const r = await mp(`/v1/orders/${encodeURIComponent(c.mp_order_id)}/cancel`, { method: "POST", headers: { "x-allow-cancelable-status": "at_terminal" } }, true);
+    const r = await mp(tk, `/v1/orders/${encodeURIComponent(c.mp_order_id)}/cancel`, { method: "POST", headers: { "x-allow-cancelable-status": "at_terminal" } }, true);
     // 200 = cancelado na hora; 202 = pedido aceito (a maquininha confirma em seguida)
     if (r.status === 200) {
       const { data } = await db.from("cobrancas_cartao").update({ status: "cancelado", status_detail: "canceled_by_api", atualizado_em: new Date().toISOString() }).eq("id", c.id).select("*").single();
