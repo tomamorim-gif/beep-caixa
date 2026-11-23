@@ -556,9 +556,18 @@ function telaCfg(){const M=$('#main'),g=S.emp.gravacao||'intercorrencias',d=S.em
 // ---------- ponte para o assistente (skill no Claude no Chrome): só funciona com o login aberto ----------
 window.beep={
  async produtos(filtro='todos'){if(!S.emp)throw new Error('Faça login no painel');await carregar();const {data:f}=await sb.from('produto_fotos').select('produto_id').eq('empresa_id',S.emp.id);const com=new Set((f||[]).map(x=>x.produto_id));
-  const {data:nc}=await sb.from('produtos').select('id,ncm,ncm_sugerido').eq('empresa_id',S.emp.id);const ncm=new Map((nc||[]).map(x=>[x.id,x]));
-  return S.produtos.filter(p=>p.ativo).map(p=>({id:p.id,nome:p.nome,ean:p.ean,codigos:S.codigos.filter(c=>c.produto_id===p.id).map(c=>c.ean),temFoto:com.has(p.id),ncm:ncm.get(p.id)?.ncm||null,ncmSugerido:ncm.get(p.id)?.ncm_sugerido||null}))
-   .filter(p=>filtro==='semFoto'?!p.temFoto:filtro==='semNcm'?!p.ncm:true)},
+  const {data:nc}=await sb.from('produtos').select('id,ncm,ncm_sugerido,cest,cfop_saida,origem,cclass_trib').eq('empresa_id',S.emp.id);const ncm=new Map((nc||[]).map(x=>[x.id,x]));
+  return S.produtos.filter(p=>p.ativo).map(p=>{const f=ncm.get(p.id)||{};return {id:p.id,nome:p.nome,ean:p.ean,codigos:S.codigos.filter(c=>c.produto_id===p.id).map(c=>c.ean),temFoto:com.has(p.id),ncm:f.ncm||null,ncmSugerido:f.ncm_sugerido||null,cest:f.cest||null,cfop:f.cfop_saida||null,origem:f.origem??0,cclassTrib:f.cclass_trib||null}})
+   .filter(p=>filtro==='semFoto'?!p.temFoto:filtro==='semNcm'?!p.ncm:filtro==='semFiscal'?(!p.ncm||!p.cfop):true)},
+ // grava os dados fiscais OFICIAIS no cadastro (decisão do dono: grava direto e o contador revisa pela lista depois)
+ async gravarFiscal(produtoId,dados={},fonte){if(!S.emp)throw new Error('Faça login no painel');const d=dados||{},u={},so=v=>String(v??'').replace(/\D/g,'');
+  if(d.ncm!=null){const v=so(d.ncm);if(!/^\d{8}$/.test(v))throw new Error('NCM precisa ter 8 dígitos');u.ncm=v;u.ncm_sugerido=v}
+  if(d.cest!=null){const v=so(d.cest);if(v&&!/^\d{7}$/.test(v))throw new Error('CEST precisa ter 7 dígitos');u.cest=v||null}
+  if(d.cfop!=null){const v=so(d.cfop);if(!/^5\d{3}$/.test(v))throw new Error('CFOP de saída da NFC-e precisa ter 4 dígitos começando com 5 (ex.: 5102, 5405)');u.cfop_saida=v}
+  if(d.origem!=null){const v=+d.origem;if(!Number.isInteger(v)||v<0||v>8)throw new Error('Origem precisa ser de 0 a 8');u.origem=v}
+  if(d.cclassTrib!=null){const v=so(d.cclassTrib);if(v&&!/^\d{6}$/.test(v))throw new Error('cClassTrib precisa ter 6 dígitos');u.cclass_trib=v||null}
+  if(!Object.keys(u).length)throw new Error('Nada para gravar');u.ncm_fonte=String(fonte||'assistente').slice(0,200);u.atualizado_em=new Date().toISOString();
+  const r=await sb.from('produtos').update(u).eq('id',produtoId).eq('empresa_id',S.emp.id).select('id,nome,ncm,cest,cfop_saida,origem,cclass_trib');if(r.error)throw r.error;if(!r.data.length)throw new Error('Produto não encontrado ou sem permissão (só dono ou gerente)');return {ok:true,produto:r.data[0]}},
  async importarFoto(produtoId,url){const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Faça login no painel');
   const r=await fetch(SB_URL+'/functions/v1/gestao',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+session.access_token},body:JSON.stringify({acao:'importar_foto',produto_id:produtoId,url})});const j=await r.json();if(!r.ok)throw new Error(j.erro||'Falhou');return j},
  async sugerirNcm(produtoId,ncm,fonte){if(!S.emp)throw new Error('Faça login no painel');if(!/^\d{8}$/.test(String(ncm)))throw new Error('NCM precisa ter 8 dígitos');const r=await sb.from('produtos').update({ncm_sugerido:String(ncm),ncm_fonte:String(fonte||'assistente').slice(0,200)}).eq('id',produtoId).eq('empresa_id',S.emp.id).select('id');if(r.error)throw r.error;if(!r.data.length)throw new Error('Produto não encontrado');return {ok:true}}
