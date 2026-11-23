@@ -442,13 +442,26 @@ function pararGravacao(motivo){const segs=recSeg;recSeg=[];if(motivo)segs.forEac
 async function enviarVideo(blob,motivo,ini,fim,venda,tent){try{const v=await api('video_inicio',{motivo,tipo:blob.type,inicio:ini.toISOString(),fim:fim.toISOString(),venda_id:venda});if(v.ignorado||!v.url)return;const up=await fetch(v.url,{method:'PUT',headers:{'content-type':blob.type,'x-upsert':'false'},body:blob});if(!up.ok)throw new Error('envio '+up.status);await api('video_fim',{id:v.id,bytes:blob.size})}catch(e){if(tent<2)setTimeout(()=>enviarVideo(blob,motivo,ini,fim,venda,tent+1),30000)}}
 function vitrine(p){if(!p){$('#vitVazio').style.display='flex';$('#vitProd').style.display='none';return}$('#vitVazio').style.display='none';const vp=$('#vitProd');vp.style.display='none';void vp.offsetWidth;vp.style.display='flex';const f=$('#vitFoto');f.className='vit-foto'+(p.foto?'':' sem');f.innerHTML='';if(p.foto){const im=new Image();im.crossOrigin='anonymous';im.alt='';im.onerror=()=>{f.className='vit-foto sem';f.innerHTML='<span class="ini"></span>';f.firstChild.textContent=p.nome.trim().charAt(0).toUpperCase()};im.src=p.foto;f.appendChild(im)}else{f.innerHTML='<span class="ini"></span>';f.firstChild.textContent=p.nome.trim().charAt(0).toUpperCase()}$('#vitNome').textContent=p.nome;$('#vitPreco').textContent=(p.preco/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
 // voz das mudanças de quantidade: espera 2 s sem toques e fala o resultado final
-const curto=n=>n.split(' ').slice(0,3).join(' ');let vozPend=new Map(),vozT=null;
-function avisarQtd(id,nome,q){vozPend.set(id,{nome,q});clearTimeout(vozT);vozT=setTimeout(()=>{const fr=[...vozPend.values()].map(v=>v.q>0?curto(v.nome)+', quantidade '+v.q:curto(v.nome)+' removido');vozPend.clear();if(!fr.length)return;falar(fr.join('. ')+(totalC()?'. Total: '+valorFalado(totalC()):'. Carrinho vazio'))},2000)}
+// nome curto para a voz: até 4 palavras, mas sempre mantém a medida (1,5 L, 350ml, 400g)
+const ehMedida=w=>/^\d+([.,]\d+)?(ml|mls|l|lt|lts|g|gr|grs|kg|kgs)?$/i.test(w)||/^(ml|l|lt|lts|g|gr|kg|litros?|gramas?|quilos?)$/i.test(w)||/^\d+x\d+/i.test(w);
+const curto=n=>{const ws=String(n||'').trim().split(/\s+/);return [...ws.slice(0,4),...ws.slice(4).filter(ehMedida)].join(' ')};let vozPend=new Map(),vozT=null;
+function avisarQtd(id,nome,q){vozPend.set(id,{nome,q});clearTimeout(vozT);vozT=setTimeout(()=>{const fr=[...vozPend.values()].map(v=>v.q>0?unidFalada(curto(v.nome))+', quantidade '+v.q:unidFalada(curto(v.nome))+' removido');vozPend.clear();if(!fr.length)return;falar(fr.join('. ')+(totalC()?'. Total: '+valorFalado(totalC()):'. Carrinho vazio'))},2000)}
 // resumo falado no checkout: "Confira seus produtos: 2 Batons Garoto Especial e 1 Fini Bananas 15g."
 const plural=w=>/[aeiouáéíóúâêôãõ]$/i.test(w)?w+'s':/m$/i.test(w)?w.slice(0,-1)+'ns':/(r|z)$/i.test(w)?w+'es':/al$/i.test(w)?w.slice(0,-2)+'ais':/s$/i.test(w)?w:w+'s';
-const unidFalada=t=>t.replace(/(\d+(?:[.,]\d+)?)\s*kg\b/gi,'$1 quilos').replace(/(\d+(?:[.,]\d+)?)\s*g\b/gi,'$1 gramas').replace(/(\d+(?:[.,]\d+)?)\s*ml\b/gi,'$1 mililitros').replace(/(\d+(?:[.,]\d+)?)\s*l\b/gi,'$1 litros');
+// medidas faladas por extenso: 1,5 L -> "um litro e meio", 0,5 L -> "meio litro", 2 L -> "dois litros", 1kg -> "um quilo", 12X15G -> "12 de 15 gramas"
+function qtdMedida(v,sing,pl){const int=Math.floor(v+1e-9),fr=+(v-int).toFixed(3),ext=k=>k===1?'um':k===2?'dois':String(k);
+ if(!fr)return ext(int)+' '+(int===1?sing:pl);if(fr===.5)return int?ext(int)+' '+(int===1?sing:pl)+' e meio':'meio '+sing;return String(v).replace('.',' vírgula ')+' '+pl}
+const numBR=n=>+String(n).replace(',','.');
+const unidFalada=t=>String(t||'')
+ .replace(/(\d+)\s*x\s*(?=\d)/gi,'$1 de ')
+ .replace(/(\d+(?:[.,]\d+)?)\s*(?:kgs?|quilos?|kilos?)\b/gi,(m,n)=>{const v=numBR(n);return v>0&&v<1&&v!==.5?Math.round(v*1000)+' gramas':qtdMedida(v,'quilo','quilos')})
+ .replace(/(\d+(?:[.,]\d+)?)\s*(?:mls?|mililitros?)\b/gi,(m,n)=>Math.round(numBR(n))+' mililitros')
+ .replace(/(\d+(?:[.,]\d+)?)\s*(?:lts?|litros?|l)\b/gi,(m,n)=>{const v=numBR(n);return v>0&&v<1&&v!==.5?Math.round(v*1000)+' mililitros':qtdMedida(v,'litro','litros')})
+ .replace(/(\d+(?:[.,]\d+)?)\s*(?:grs?|gramas?|g)\b/gi,(m,n)=>String(n).replace(',',' vírgula ')+' gramas')
+ .replace(/(\d+)\s*(?:unds?|unid|unidades?|un)\b/gi,(m,n)=>n+(n==='1'?' unidade':' unidades'))
+ .replace(/\bLN\b/gi,'long neck').replace(/\bLT\b/gi,'lata').replace(/\bS\//gi,'sem ').replace(/\bC\//gi,'com ');
 function resumoFalado(){const it=carrinho.map(i=>{const ws=i.nome.trim().split(/\s+/).slice(0,4);if(i.q>1)ws[0]=plural(ws[0]);return i.q+' '+unidFalada(ws.join(' '))});if(!it.length)return '';const lista=it.length>1?it.slice(0,-1).join(', ')+' e '+it.at(-1):it[0];return 'Confira seus produtos: '+lista+'.'}
-function adicionar(p,ficar){if(!p)return;if(p.maior18&&!maior18Em){pedirIdade(p,ficar);return}vitrine(p);iniciarGravacao();if(!vendaId){vendaId=uuid();iniciada=new Date().toISOString()}const x=carrinho.find(i=>i.id===p.id);navigator.vibrate?.(40);if(x){x.q++;avisarQtd(x.id,x.nome,x.q)}else{carrinho.push({id:p.id,nome:p.nome,preco:p.preco,q:1});vozPend.delete(p.id);falar(curto(p.nome)+', '+valorFalado(p.preco))}if(!ficar&&!document.querySelector('#carrinho.on'))mostrar('carrinho');desenhar()}
+function adicionar(p,ficar){if(!p)return;if(p.maior18&&!maior18Em){pedirIdade(p,ficar);return}vitrine(p);iniciarGravacao();if(!vendaId){vendaId=uuid();iniciada=new Date().toISOString()}const x=carrinho.find(i=>i.id===p.id);navigator.vibrate?.(40);if(x){x.q++;avisarQtd(x.id,x.nome,x.q)}else{carrinho.push({id:p.id,nome:p.nome,preco:p.preco,q:1});vozPend.delete(p.id);falar(unidFalada(curto(p.nome))+', '+valorFalado(p.preco))}if(!ficar&&!document.querySelector('#carrinho.on'))mostrar('carrinho');desenhar()}
 function totalC(){return carrinho.reduce((s,i)=>s+i.preco*i.q,0)}
 function desenhar(){const n=carrinho.reduce((s,i)=>s+i.q,0);$('#contItens').textContent=n+(n===1?' item':' itens');$('#lista').innerHTML=carrinho.length?carrinho.map((i,k)=>`<div class="item"><div><b>${i.nome.replace(/</g,'&lt;')}</b><div class="mu">${brl(i.preco)} un.</div></div><b class="num" style="font-size:18px;align-self:center">${brl(i.preco*i.q)}</b><div class="qtd"><button data-k="${k}" data-d="-1" aria-label="Menos um">–</button><b>${i.q}</b><button data-k="${k}" data-d="1" aria-label="Mais um">+</button></div></div>`).join(''):'<div class="vazio">Leia o código de barras do produto.<br>Sem código? Toque em "Sem código".</div>';$('#total').textContent=brl(totalC());$('#btnPagar').disabled=!carrinho.length}
 $('#lista').onclick=e=>{const b=e.target.closest('button[data-k]');if(!b)return;const i=carrinho[+b.dataset.k];i.q+=+b.dataset.d;navigator.vibrate?.(25);avisarQtd(i.id,i.nome,Math.max(i.q,0));if(i.q<=0){carrinho.splice(+b.dataset.k,1);api('evento',{tipo:'item_removido',venda_id:vendaId,itens:[{id:i.id,nome:i.nome}]}).catch(()=>{})}desenhar()};
@@ -622,14 +635,21 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const NUM={um:1,uma:1,hum:1,dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,meia:6,sete:7,oito:8,nove:9,dez:10,onze:11,doze:12,duzia:12,quinze:15,vinte:20};
 const PARADA=new Set(['quero','queria','vou','levar','comprar','me','ve','ver','da','de','do','das','dos','o','a','os','as','eu','por','favor','pra','para','mim','tambem','unidade','unidades','pacote','pacotes','um','uma','e','mais','com','gostaria','pode','colocar','botar','bota','coloca','adiciona','adicionar','ai','tá','ta','entao','também']);
 let vozModo=null,vozItens=[],vozRec=null,vozEtapa='',vozOpc=[],vozTimer=null;
-const tok=t=>semAc(t).replace(/(\d),(\d)/g,'$1.$2').split(/[^a-z0-9.]+/).filter(Boolean);
+// pedido falado e cadastro viram o mesmo formato: "um litro e meio", "1,5 litros", "1.5L" -> 1500ml; "meio quilo", "500 gramas" -> 500g
+const MNUM={um:1,uma:1,dois:2,duas:2,tres:3,quatro:4,cinco:5};
+function canonMed(s){s=String(s).replace(/(\d),(\d)/g,'$1.$2');const N='(\\d+(?:\\.\\d+)?|um|uma|dois|duas|tres|quatro|cinco)',v=x=>x in MNUM?MNUM[x]:+x,ml=q=>Math.round(q*1000)+'ml',gr=q=>Math.round(q*1000)+'g';
+ return s.replace(new RegExp('\\b'+N+'\\s*(?:litros?|lts?|l)\\s+e\\s+meio\\b','g'),(m,a)=>ml(v(a)+.5)).replace(/\b(?:um\s+)?litro\s+e\s+meio\b/g,'1500ml').replace(/\bmeio\s+litro\b/g,'500ml')
+  .replace(new RegExp('\\b'+N+'\\s*(?:quilos?|kilos?|kgs?)\\s+e\\s+meio\\b','g'),(m,a)=>gr(v(a)+.5)).replace(/\b(?:um\s+)?(?:quilo|kilo)\s+e\s+meio\b/g,'1500g').replace(/\bmeio\s+(?:quilo|kilo)\b/g,'500g')
+  .replace(new RegExp('\\b'+N+'\\s*(?:litros?|lts?|l)\\b','g'),(m,a)=>ml(v(a))).replace(new RegExp('\\b'+N+'\\s*(?:quilos?|kilos?|kgs?)\\b','g'),(m,a)=>gr(v(a)))
+  .replace(/\b(\d+(?:\.\d+)?)\s*(?:mls?|mililitros?)\b/g,(m,a)=>Math.round(+a)+'ml').replace(/\b(\d+(?:\.\d+)?)\s*(?:grs?|gramas?|g)\b/g,(m,a)=>Math.round(+a)+'g')}
+const tok=t=>canonMed(semAc(t)).split(/[^a-z0-9.]+/).filter(Boolean);
 function lev(a,b){if(Math.abs(a.length-b.length)>1)return 9;const d=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return d[b.length]}
-function parecido(q,w){if(q===w)return 1;if(q.length>=3&&w.length>=3&&(w.startsWith(q)||q.startsWith(w)))return .85;if(q.length>=4&&lev(q,w)<=1)return .8;if(q==='lata'&&/^\d+ml$/.test(w))return .6;return 0}
+const ehMed=w=>/^\d+(ml|g)$/.test(w);function parecido(q,w){if(q===w)return 1;if(ehMed(q)&&ehMed(w))return 0;if(q.length>=3&&w.length>=3&&(w.startsWith(q)||q.startsWith(w)))return .85;if(q.length>=4&&lev(q,w)<=1)return .8;if(q==='lata'&&/^\d+ml$/.test(w))return .6;return 0}
 function procurar(frase){const qt=tok(frase).filter(t=>!PARADA.has(t)&&!(t in NUM));if(!qt.length)return [];
  return (cat?.produtos||[]).map(p=>{const pt=tok(p.nome);const s=qt.reduce((a,q)=>a+Math.max(0,...pt.map(w=>parecido(q,w))),0)/qt.length;return {p,s:s-pt.length*.002}}).filter(x=>x.s>=.4).sort((a,b)=>b.s-a.s)}
 function qtdDe(frase){const t=tok(frase);for(const w of t){if(/^\d+$/.test(w)&&+w>0&&+w<100)return +w;if(w in NUM)return NUM[w]}return null}
 // "duas coca zero lata e um fini" -> [{q:2,txt:'coca zero lata'},{q:1,txt:'fini'}]
-function partes(frase){const t=semAc(frase).replace(/[.,;!?]/g,' , ');const pedacos=t.split(/\s+(?:e|mais|,)\s+|\s*,\s*/).map(x=>x.trim()).filter(Boolean);const out=[];
+function partes(frase){const t=canonMed(semAc(frase)).replace(/[.,;!?]/g,' , ');const pedacos=t.split(/\s+(?:e|mais|,)\s+|\s*,\s*/).map(x=>x.trim()).filter(Boolean);const out=[];
  pedacos.forEach(pc=>{let ws=pc.split(/\s+/);while(ws.length>1&&PARADA.has(ws[0])&&!(ws[0] in NUM))ws=ws.slice(1);let q=null,i=0;if(/^\d+$/.test(ws[0])){q=+ws[0];i=1}else if(ws[0] in NUM&&!(ws[0]==='meia'&&ws[1]!=='duzia')){q=NUM[ws[0]];i=1;if(ws[1]==='duzia')i=2}const txt=ws.slice(i).join(' ');if(txt)out.push({q,txt})});return out}
 const sim=f=>/\b(sim|isso|confirm|pode|claro|ok|beleza|certo|exato)/.test(semAc(f));
 const nao=f=>/\b(nao|so isso|mais nada|nada|terminei|acabou|pagar|finalizar|fechar|pronto)\b/.test(semAc(f));
