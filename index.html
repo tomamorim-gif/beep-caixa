@@ -528,16 +528,24 @@ async function cobrarMP(f){if(pagReal)return;clearTimeout(inativo);
  let r;try{r=await apiCartao('iniciar',{venda_id:vendaId,iniciada_em:iniciada,maior18_em:maior18Em,forma:f,itens:carrinho.map(i=>({produto_id:i.id,quantidade:i.q}))})}
  catch(e){pagReal=null;telaCobranca('Não foi possível iniciar o pagamento',navigator.onLine?e.message:'Sem internet no caixa.',btnsFalha());ligarFalha(f);falar('Não foi possível iniciar o pagamento.');return}
  pagReal.cobranca=r.cobranca;pagReal.total=r.total;$('#totalPag').textContent=brl(r.total);
+ if(mpTratar(r))return;
  telaCobranca('Pague na maquininha ao lado',(f==='debito'?'Débito':'Crédito à vista')+' · '+brl(r.total),`<button class="btn bad" id="pagCancelar" style="margin-top:12px">Cancelar</button>`);
  falar('Pague na maquininha ao lado. Aproxime ou insira o cartão.');
- $('#pagCancelar').onclick=async()=>{if(!pagReal||pagReal.cancelando)return;pagReal.cancelando=true;$('#pagMsg').textContent='Cancelando…';$('#pagCancelar').disabled=true;try{const c=await apiCartao('cancelar',{cobranca:pagReal.cobranca});mpTratar(c)}catch(e){}};
+ $('#pagCancelar').onclick=async()=>{if(!pagReal||pagReal.cancelando)return;pagReal.cancelando=true;$('#pagMsg').textContent='Cancelando…';$('#pagCancelar').disabled=true;try{const c=await apiCartao('cancelar',{cobranca:pagReal.cobranca});if(!mpTratar(c)&&c.pedido==='nao_cancelou')cancelVolta('Não consegui cancelar. Cancele na maquininha.')}catch(e){cancelVolta(navigator.onLine?'Não consegui cancelar agora. Tente de novo.':'Sem internet. Cancele na maquininha.')}};
  mpAcompanhar()}
 async function mpAcompanhar(){const p=pagReal;if(!p||!p.mp)return;let falhasRede=0;
  while(pagReal===p){await new Promise(z=>setTimeout(z,2000));if(pagReal!==p)return;
   try{const c=await apiCartao('status',{cobranca:p.cobranca});falhasRede=0;if(mpTratar(c))return}
   catch(e){falhasRede++;const m=$('#pagSub');if(m&&falhasRede>2)m.textContent='Sem internet no caixa. Se o cartão for aprovado, a venda é registrada mesmo assim.'}
-  if(Date.now()-p.inicio>5*60*1000){pagReal=null;telaCobranca('Não deu para confirmar o pagamento','Confira a tela da maquininha. Se aprovou, a venda já foi registrada.',`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-top:12px"><button class="btn" id="pagOutra">Outra forma</button><button class="btn ok" id="pagDeNovo">Consultar de novo</button></div>`);
-   $('#pagOutra').onclick=()=>{$('#cobranca').innerHTML='<p class="mu">Escolha a forma de pagamento</p>'};$('#pagDeNovo').onclick=()=>{pagReal={...p,inicio:Date.now()};mpAcompanhar()};armarInatividade('pagamento');return}}}
+  if(Date.now()-p.inicio>4*60*1000){await mpDesistir(p);return}}}
+// passou do tempo (a maquininha desiste em 3 min): cancela no servidor antes de liberar outra forma,
+// para o cliente nunca pagar duas vezes a mesma compra
+async function mpDesistir(p){let c=null;try{c=await apiCartao('cancelar',{cobranca:p.cobranca})}catch(e){}
+ if(pagReal!==p)return;if(c&&mpTratar(c))return;
+ pagReal={...p,parado:true};
+ telaCobranca('Não deu para confirmar o pagamento','Confira a tela da maquininha. Se aprovou, a venda é registrada sozinha. Chame o responsável se precisar.',`<button class="btn ok" id="pagDeNovo" style="margin-top:12px">Consultar de novo</button>`);
+ $('#pagDeNovo').onclick=()=>{pagReal={...p,inicio:Date.now()};$('#pagMsg').textContent='Consultando…';mpAcompanhar()};armarInatividade('pagamento')}
+function cancelVolta(msg){const p=pagReal;if(!p)return;p.cancelando=false;const m=$('#pagMsg'),b=$('#pagCancelar');if(m)m.textContent=msg;if(b)b.disabled=false}
 function mpTratar(c){const p=pagReal;if(!p)return true;const st=c.status;
  if(st==='aprovado'&&c.venda_gravada){pagReal=null;const tot=c.total;$('#okTxt').textContent=brl(tot)+' · '+(c.bandeira?c.bandeira.toUpperCase()+' · ':'')+'obrigado!';mostrar('ok');falar('Pagamento aprovado. Compra finalizada. Obrigado e volte sempre!');navigator.vibrate?.([60,40,60]);pararGravacao('paga');limpar();setTimeout(()=>mostrar('espera'),5000);return true}
  if(st==='aprovado'){const m=$('#pagMsg');if(m)m.textContent='Aprovado! Registrando a venda…';return false}

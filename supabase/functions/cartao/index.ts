@@ -1,28 +1,42 @@
 // Cobrança no cartão pela maquininha Mercado Pago Point (API Orders).
 // - O token do Mercado Pago de cada empresa fica só no servidor (cadastrado pelo dono no Painel); o tablet nunca o vê.
 // - O valor cobrado é sempre o total calculado aqui, com os preços da loja.
-// - A venda só é gravada quando o Mercado Pago confirma o pagamento (pelo status ou pelo aviso/webhook).
+// - A venda só é gravada quando o Mercado Pago confirma o pagamento (pela consulta ou pelo aviso/webhook),
+//   numa única transação no banco (gravar_venda_cartao), uma vez só.
+// - Toda chamada que cria ou muda algo no Mercado Pago leva uma chave de idempotência fixa por cobrança:
+//   repetir a chamada (rede caiu, toque duplo) nunca cria uma segunda cobrança na maquininha.
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { ABERTOS, FINAIS, assinaturaValida, cobrancaDaReferencia, dataOk, lerOrdem, motivo, reais, referencia } from "../_shared/mp.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const MP = "https://api.mercadopago.com";
-// credencial de cada empresa (cadastrada pelo dono no Painel); o segredo do servidor fica só como reserva
+const TESTE = () => Deno.env.get("MP_POINT_TEST_MODE") === "true";
+// Credencial global (segredos MP_ACCESS_TOKEN / MP_WEBHOOK_SECRET) só vale se ligada de propósito.
+// Desligada, uma empresa sem credencial própria nunca cobra na conta de outra.
+const GLOBAL = () => Deno.env.get("MP_PERMITIR_CREDENCIAL_GLOBAL") === "true";
+const TERMINAL_VIRTUAL = "NEWLAND_N950__SBX0000001";
+const EXPIRA = "PT3M"; // a maquininha desiste sozinha depois de 3 minutos
+const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
+const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
+const erro = (m: string, s = 400, extra: Record<string, unknown> = {}) => json({ erro: m, ...extra }, s);
+const uuidOk = (s: unknown) => typeof s === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+const agora = () => new Date().toISOString();
+
+// ---------- credencial de cada empresa ----------
 const credCache = new Map<string, { token: string; segredo: string; t: number }>();
 async function credencial(empresaId: string) {
   const c = credCache.get(empresaId);
   if (c && Date.now() - c.t < 60_000) return c;
   const { data } = await db.from("integracoes_pagamento").select("access_token, webhook_secret").eq("empresa_id", empresaId).eq("provedor", "mercadopago").maybeSingle();
-  const r = { token: (data?.access_token ?? Deno.env.get("MP_ACCESS_TOKEN") ?? "").trim(), segredo: (data?.webhook_secret ?? Deno.env.get("MP_WEBHOOK_SECRET") ?? "").trim(), t: Date.now() };
+  const g = GLOBAL();
+  const r = {
+    token: (data?.access_token ?? (g ? Deno.env.get("MP_ACCESS_TOKEN") : "") ?? "").trim(),
+    segredo: (data?.webhook_secret ?? (g ? Deno.env.get("MP_WEBHOOK_SECRET") : "") ?? "").trim(),
+    t: Date.now(),
+  };
   credCache.set(empresaId, r);
   return r;
 }
-const TESTE = () => Deno.env.get("MP_POINT_TEST_MODE") === "true";
-const TERMINAL_VIRTUAL = "NEWLAND_N950__SBX0000001";
-const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
-const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
-const erro = (m: string, s = 400, extra: Record<string, unknown> = {}) => json({ erro: m, ...extra }, s);
-const uuidOk = (s: unknown) => typeof s === "string" && /^[0-9a-f-]{36}$/i.test(s);
-const reais = (c: number) => (c / 100).toFixed(2);
 
 async function sha256(t: string) {
   const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
@@ -36,13 +50,19 @@ async function aparelho(req: Request) {
   return data && data.ativo ? data : null;
 }
 
-async function mp(tk: string, path: string, init: RequestInit = {}, idem = false) {
+// chamada ao Mercado Pago com tempo limite; status 0 = sem resposta (não sabemos se chegou)
+async function mp(tk: string, path: string, init: RequestInit = {}, idem?: string) {
   const headers: Record<string, string> = { Authorization: `Bearer ${tk}`, "Content-Type": "application/json", ...(init.headers as Record<string, string> ?? {}) };
-  if (idem) headers["X-Idempotency-Key"] = crypto.randomUUID();
-  const r = await fetch(MP + path, { ...init, headers });
-  const corpo = await r.json().catch(() => ({}));
-  return { ok: r.ok, status: r.status, corpo };
+  if (idem) headers["X-Idempotency-Key"] = idem;
+  try {
+    const r = await fetch(MP + path, { ...init, headers, signal: AbortSignal.timeout(12_000) });
+    const corpo = await r.json().catch(() => ({}));
+    return { ok: r.ok, status: r.status, corpo };
+  } catch (e) {
+    return { ok: false, status: 0, corpo: { message: "sem resposta do Mercado Pago: " + String((e as Error)?.message ?? e).slice(0, 120) } };
+  }
 }
+const msgMp = (r: { status: number; corpo: any }) => String(r.corpo?.errors?.[0]?.message ?? r.corpo?.message ?? `erro ${r.status}`).slice(0, 300);
 
 // preços sempre do servidor
 async function calcular(d: any, itensIn: any[]) {
@@ -61,104 +81,142 @@ async function calcular(d: any, itensIn: any[]) {
     total += p.preco * q;
     linhas.push({ seq: k + 1, produto_id: i.produto_id, quantidade: q, preco_unit: p.preco, custo_unit: p.produtos.custo });
   }
+  if (total < 100) return { erro: "Valor mínimo no cartão: R$ 1,00" };
   return { total, linhas };
 }
 
-// traduz o pedido do Mercado Pago para o nosso status
-function lerOrdem(o: any) {
-  const p = o?.transactions?.payments?.[0] ?? {};
-  const st = String(o?.status ?? "");
-  const det = String(p.status_detail ?? o?.status_detail ?? "");
-  const nosso =
-    st === "processed" ? "aprovado" :
-    st === "failed" ? "recusado" :
-    st === "canceled" ? "cancelado" :
-    st === "expired" ? "expirado" :
-    st === "refunded" ? "estornado" :
-    st === "action_required" ? "verificar" :
-    st === "at_terminal" ? "na_maquininha" : "aguardando";
-  return {
-    status: nosso, mp_status: st, status_detail: det || null,
-    mp_payment_id: p.id ? String(p.id) : null,
-    bandeira: p.payment_method?.id ? String(p.payment_method.id) : null,
-    autorizacao: p.authorization_code ?? p.reference?.authorization_code ?? null,
-    nsu: p.reference_id ?? p.reference?.id ?? (p.id ? String(p.id) : null),
-  };
-}
+const ehTeste = (c: any) => TESTE() || c.terminal_id === TERMINAL_VIRTUAL;
 
-const FINAIS = new Set(["aprovado", "recusado", "cancelado", "expirado", "estornado", "falhou"]);
-
-const MOTIVOS: Record<string, string> = {
-  insufficient_amount: "Saldo ou limite insuficiente",
-  rejected_by_issuer: "Recusado pelo banco do cartão",
-  rejected_by_bank: "Recusado pelo banco do cartão",
-  invalid_card: "Cartão inválido",
-  card_expired: "Cartão vencido",
-  invalid_pin: "Senha incorreta",
-  canceled_by_api: "Cancelado",
-  canceled_on_terminal: "Cancelado na maquininha",
-  expired: "Tempo esgotado",
-};
-const motivo = (det: string | null, st: string) => (det && MOTIVOS[det]) || ({ recusado: "Pagamento recusado", cancelado: "Pagamento cancelado", expirado: "Tempo esgotado na maquininha", verificar: "Confira a maquininha" } as Record<string, string>)[st] || "";
-
-// grava a venda uma única vez, quando o pagamento foi aprovado
+// grava a venda (transação única no banco; repetir é seguro)
 async function gravarVenda(c: any) {
-  const { data: pegou } = await db.from("cobrancas_cartao").update({ venda_gravada: true, atualizado_em: new Date().toISOString() }).eq("id", c.id).eq("venda_gravada", false).select("id");
-  if (!pegou?.length) return;
-  const { data: ja } = await db.from("vendas").select("id").eq("id", c.venda_id).maybeSingle();
-  if (ja) return;
-  const { data: custos } = await db.from("produtos").select("id, custo").in("id", c.itens.map((i: any) => i.produto_id));
-  const custo = new Map((custos ?? []).map((p: any) => [p.id, p.custo]));
-  const linhas = c.itens.map((l: any) => ({ venda_id: c.venda_id, empresa_id: c.empresa_id, seq: l.seq, produto_id: l.produto_id, quantidade: l.quantidade, preco_unit: l.preco_unit, custo_unit: custo.get(l.produto_id) ?? l.custo_unit ?? null }));
-  const agora = new Date().toISOString();
-  const { error } = await db.from("vendas").insert({ id: c.venda_id, empresa_id: c.empresa_id, local_id: c.local_id, dispositivo_id: c.dispositivo_id, iniciada_em: c.iniciada_em ?? agora, finalizada_em: agora, status: "paga", total: c.valor, origem: "telefone", teste: TESTE() });
-  if (error) { await db.from("cobrancas_cartao").update({ venda_gravada: false, erro: "falha ao gravar venda: " + error.message }).eq("id", c.id); return; }
-  await db.from("venda_itens").insert(linhas);
-  await db.from("pagamentos").insert({ venda_id: c.venda_id, empresa_id: c.empresa_id, forma: c.forma, valor: c.valor, status: "aprovado", nsu: c.nsu ?? c.mp_payment_id, autorizacao: c.autorizacao, bandeira: c.bandeira });
-  await db.from("estoque_mov").insert(linhas.map((l: any) => ({ empresa_id: c.empresa_id, local_id: c.local_id, produto_id: l.produto_id, tipo: "venda", quantidade: -l.quantidade, custo_unit: l.custo_unit, referencia: c.venda_id, usuario_id: null })));
+  const { data, error } = await db.rpc("gravar_venda_cartao", { p_cobranca: c.id, p_teste: ehTeste(c) });
+  if (error) {
+    await db.from("cobrancas_cartao").update({ erro: ("falha ao gravar venda: " + error.message).slice(0, 300), atualizado_em: agora() }).eq("id", c.id);
+    return c;
+  }
+  if (data === "nao_encontrada" || data === "nao_aprovada") return c;
+  const { data: c2 } = await db.from("cobrancas_cartao").select("*").eq("id", c.id).single();
+  return c2 ?? c;
 }
 
-// consulta o Mercado Pago (se ainda não terminou), atualiza e grava a venda quando aprovada
-async function atualizar(c: any, tk: string) {
-  if (!FINAIS.has(c.status) && c.mp_order_id) {
-    const r = await mp(tk, `/v1/orders/${encodeURIComponent(c.mp_order_id)}`);
-    if (r.ok) {
-      const o = lerOrdem(r.corpo);
-      const { data } = await db.from("cobrancas_cartao").update({ status: o.status, status_detail: o.status_detail, mp_payment_id: o.mp_payment_id, bandeira: o.bandeira, autorizacao: o.autorizacao, nsu: o.nsu, atualizado_em: new Date().toISOString() }).eq("id", c.id).select("*").single();
-      if (data) c = data;
-    }
+// aplica o que o Mercado Pago disse sobre o pedido
+async function aplicarOrdem(c: any, ordem: any) {
+  const o = lerOrdem(ordem);
+  // estorno (pelo Painel ou direto no Mercado Pago) vale sempre
+  if (o.status === "estornado") {
+    if (c.status === "estornado") return c;
+    await db.rpc("estornar_venda_cartao", { p_cobranca: c.id, p_usuario: null });
+    const { data } = await db.from("cobrancas_cartao").select("*").eq("id", c.id).single();
+    return data ?? c;
   }
-  if (c.status === "aprovado" && !c.venda_gravada) { await gravarVenda(c); c.venda_gravada = true; }
+  // separada para conferência manual: não muda mais sozinha
+  if (c.status_detail === "valor_divergente" || c.status_detail === "pagamento_em_dobro") return c;
+  // um pedido aprovado com valor diferente do que cobramos nunca vira venda
+  if (o.status === "aprovado" && o.valor_centavos != null && o.valor_centavos !== c.valor) {
+    const { data } = await db.from("cobrancas_cartao").update({ status: "falhou", status_detail: "valor_divergente", mp_payment_id: o.mp_payment_id, erro: `Conferir e estornar no Mercado Pago: pago ${o.valor_centavos}, cobrado ${c.valor} (centavos)`, atualizado_em: agora() }).eq("id", c.id).select("*").single();
+    return data ?? c;
+  }
+  if (c.status === o.status && c.status_detail === o.status_detail && c.mp_payment_id === o.mp_payment_id) return c;
+  // uma cobrança terminada não muda, com uma exceção: o Mercado Pago aprovou (o dinheiro entrou de verdade),
+  // mesmo que aqui ela tenha sido dada como cancelada ou sem resposta
+  if (FINAIS.has(c.status) && !(o.status === "aprovado" && c.status !== "aprovado")) return c;
+  const { data, error } = await db.from("cobrancas_cartao").update({
+    status: o.status, status_detail: o.status_detail, mp_payment_id: o.mp_payment_id ?? c.mp_payment_id, bandeira: o.bandeira ?? c.bandeira,
+    autorizacao: o.autorizacao ?? c.autorizacao, nsu: o.nsu ?? c.nsu, atualizado_em: agora(),
+  }).eq("id", c.id).select("*").single();
+  if (error?.code === "23505") {
+    // outra cobrança desta mesma venda já foi aprovada: o cliente pagou duas vezes
+    const { data: d2 } = await db.from("cobrancas_cartao").update({ status: "falhou", status_detail: "pagamento_em_dobro", mp_payment_id: o.mp_payment_id, erro: "Segundo pagamento aprovado para a mesma compra: estornar no Mercado Pago", atualizado_em: agora() }).eq("id", c.id).select("*").single();
+    return d2 ?? c;
+  }
+  return data ?? c;
+}
+
+// consulta o Mercado Pago (se ainda não terminou, ou sempre quando "forcar"), atualiza e grava a venda quando aprovada
+async function atualizar(c: any, tk: string, forcar = false) {
+  if (c.mp_order_id && (forcar || !FINAIS.has(c.status))) {
+    const r = await mp(tk, `/v1/orders/${encodeURIComponent(c.mp_order_id)}`);
+    if (r.ok) c = await aplicarOrdem(c, r.corpo);
+  }
+  if (c.status === "aprovado" && !c.venda_gravada) c = await gravarVenda(c);
   return c;
 }
 
-const resposta = (c: any) => ({ cobranca: c.id, status: c.status, detalhe: c.status_detail, mensagem: motivo(c.status_detail, c.status), total: c.valor, bandeira: c.bandeira, venda_gravada: c.venda_gravada });
+// cria (ou reencontra) o pedido na maquininha. Mesmo corpo + mesma chave = mesmo pedido.
+function corpoOrdem(c: any) {
+  return JSON.stringify({
+    type: "point",
+    external_reference: referencia(c.id),
+    description: "Compra Beep",
+    expiration_time: EXPIRA,
+    transactions: { payments: [{ amount: reais(c.valor) }] },
+    config: { point: { terminal_id: c.terminal_id, print_on_terminal: "no_ticket" }, payment_method: { default_type: c.forma === "debito" ? "debit_card" : "credit_card" } },
+  });
+}
+async function enviarOrdem(c: any, tk: string) {
+  let r = await mp(tk, "/v1/orders", { method: "POST", body: corpoOrdem(c) }, `beep-criar-${c.id}`);
+  if (r.status === 0 || r.status >= 500) r = await mp(tk, "/v1/orders", { method: "POST", body: corpoOrdem(c) }, `beep-criar-${c.id}`); // repetir é seguro
+  return r;
+}
 
-// ---------- aviso do Mercado Pago (webhook, tópico "orders") ----------
+async function cancelarNoMp(c: any, tk: string) {
+  return await mp(tk, `/v1/orders/${encodeURIComponent(c.mp_order_id)}/cancel`, { method: "POST", headers: { "x-allow-cancelable-status": "at_terminal" } }, `beep-cancelar-${c.id}`);
+}
+
+const resposta = (c: any) => ({ cobranca: c.id, status: c.status, detalhe: c.status_detail, mensagem: motivo(c.status_detail, c.status), total: c.valor, bandeira: c.bandeira, venda_gravada: !!c.venda_gravada, venda_id: c.venda_id });
+
+// ---------- aviso do Mercado Pago (webhook, tópico "order") ----------
 async function webhook(req: Request) {
   const url = new URL(req.url);
   let b: any = {};
   try { b = await req.json(); } catch { /* corpo vazio */ }
-  const dataId = String(url.searchParams.get("data.id") ?? b?.data?.id ?? "");
-  const tipo = String(b?.type ?? url.searchParams.get("type") ?? "");
-  const sig = req.headers.get("x-signature") ?? "", reqId = req.headers.get("x-request-id") ?? "";
-  const partes = Object.fromEntries(sig.split(",").map((p) => p.split("=").map((s) => s.trim())));
-  // descobre de qual empresa é o pedido para usar a assinatura certa
-  const { data: cob } = dataId ? await db.from("cobrancas_cartao").select("*").eq("mp_order_id", dataId).maybeSingle() : { data: null };
-  const cred = cob ? await credencial(cob.empresa_id) : { token: "", segredo: (Deno.env.get("MP_WEBHOOK_SECRET") ?? "").trim() };
-  const segredo = cred.segredo;
-  let valido = false;
-  if (segredo && partes.ts && partes.v1 && dataId && reqId) {
-    const chave = await crypto.subtle.importKey("raw", new TextEncoder().encode(segredo), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-    const assinatura = await crypto.subtle.sign("HMAC", chave, new TextEncoder().encode(`id:${dataId.toLowerCase()};request-id:${reqId};ts:${partes.ts};`));
-    const esperado = [...new Uint8Array(assinatura)].map((x) => x.toString(16).padStart(2, "0")).join("");
-    valido = esperado.length === partes.v1.length && esperado === partes.v1;
+  const dataId = String(url.searchParams.get("data.id") ?? b?.data?.id ?? "").slice(0, 80);
+  const tipo = String(b?.type ?? url.searchParams.get("type") ?? "").slice(0, 40);
+
+  // acha a cobrança: pelo id do pedido ou, se o aviso chegou antes de guardarmos o id, pela referência externa
+  let { data: cob } = dataId ? await db.from("cobrancas_cartao").select("*").eq("mp_order_id", dataId).maybeSingle() : { data: null as any };
+  if (!cob) {
+    const id = cobrancaDaReferencia(b?.data?.external_reference);
+    if (id) cob = (await db.from("cobrancas_cartao").select("*").eq("id", id).maybeSingle()).data;
   }
-  await db.from("mp_webhooks").insert({ tipo, data_id: dataId || null, valido, corpo: b });
+  const cred = cob ? await credencial(cob.empresa_id) : { token: "", segredo: GLOBAL() ? (Deno.env.get("MP_WEBHOOK_SECRET") ?? "").trim() : "" };
+  const valido = await assinaturaValida({ segredo: cred.segredo, cabecalho: req.headers.get("x-signature"), requestId: req.headers.get("x-request-id"), dataId });
+  // aviso inválido não guarda o corpo (evita encher a tabela com lixo de quem não é o Mercado Pago)
+  await db.from("mp_webhooks").insert({ tipo, data_id: dataId || null, valido, corpo: valido ? b : null });
   if (!valido) return new Response("assinatura inválida", { status: 401 });
+  if (!cob || !cred.token) return new Response("ok", { status: 200 });
+
   // a fonte da verdade é sempre a consulta ao Mercado Pago, nunca o corpo do aviso
-  if (cob) { const tk = cred.token; await db.from("cobrancas_cartao").update({ webhook_ok: true }).eq("id", cob.id); await atualizar(cob, tk); }
+  if (!cob.mp_order_id) {
+    const r = await mp(cred.token, `/v1/orders/${encodeURIComponent(dataId)}`);
+    if (!r.ok || cobrancaDaReferencia(r.corpo?.external_reference) !== cob.id) return new Response("ok", { status: 200 });
+    const { data } = await db.from("cobrancas_cartao").update({ mp_order_id: dataId }).eq("id", cob.id).is("mp_order_id", null).select("*").maybeSingle();
+    if (data) cob = data;
+  }
+  await db.from("cobrancas_cartao").update({ webhook_ok: true }).eq("id", cob.id);
+  await atualizar(cob, cred.token, true); // forçado: também pega estorno feito depois da aprovação
   return new Response("ok", { status: 200 });
+}
+
+// cobrança anterior deste caixa que ficou aberta: tenta encerrar antes de abrir outra
+async function encerrarAnterior(a: any, tk: string) {
+  if (!a.mp_order_id) {
+    // ficou em "criando": pergunta de novo com a mesma chave; se o pedido existe, volta o mesmo
+    const r = await enviarOrdem(a, tk);
+    if (r.ok && r.corpo?.id) {
+      const { data } = await db.from("cobrancas_cartao").update({ mp_order_id: String(r.corpo.id) }).eq("id", a.id).select("*").single();
+      a = data ?? { ...a, mp_order_id: String(r.corpo.id) };
+    } else if (r.status >= 400 && r.status < 500) {
+      const { data } = await db.from("cobrancas_cartao").update({ status: "falhou", erro: msgMp(r), atualizado_em: agora() }).eq("id", a.id).select("*").single();
+      return data ?? a;
+    } else return a; // sem resposta: não dá para saber, continua aberta
+  }
+  a = await atualizar(a, tk);
+  if (FINAIS.has(a.status)) return a;
+  const r = await cancelarNoMp(a, tk);
+  if (r.ok && r.corpo?.status) a = await aplicarOrdem(a, r.corpo);
+  if (!FINAIS.has(a.status)) a = await atualizar(a, tk);
+  return a;
 }
 
 Deno.serve(async (req) => {
@@ -176,14 +234,14 @@ Deno.serve(async (req) => {
   const terminal = d.mp_terminal_id || (TESTE() ? TERMINAL_VIRTUAL : null);
 
   // o caixa pergunta se já pode cobrar no cartão
-  if (acao === "config") return json({ provedor: "mercadopago", pronto: temToken && !!terminal, credencial: temToken, terminal, teste: TESTE() });
+  if (acao === "config") return json({ provedor: "mercadopago", pronto: temToken && !!terminal, credencial: temToken, terminal, teste: TESTE() || terminal === TERMINAL_VIRTUAL });
 
   if (!temToken) return erro("Credencial do Mercado Pago ainda não cadastrada. O dono cadastra no Painel, em Configurações.", 503);
 
   // configuração: maquininhas da conta
   if (acao === "terminais") {
     const r = await mp(tk, "/terminals/v1/list?limit=50&offset=0");
-    if (!r.ok) return erro("Mercado Pago recusou a consulta das maquininhas", 502, { detalhe: r.corpo?.message ?? r.status });
+    if (!r.ok) return erro("Mercado Pago recusou a consulta das maquininhas", 502, { detalhe: msgMp(r) });
     const lista = (r.corpo?.data?.terminals ?? r.corpo?.terminals ?? r.corpo?.results ?? []).map((t: any) => ({ id: t.id, modo: t.operating_mode ?? null, loja: t.store_id ?? null, caixa: t.pos_id ?? null }));
     if (TESTE() && !lista.some((t: any) => t.id === TERMINAL_VIRTUAL)) lista.push({ id: TERMINAL_VIRTUAL, modo: "PDV", virtual: true });
     return json({ terminais: lista, atual: d.mp_terminal_id });
@@ -193,10 +251,11 @@ Deno.serve(async (req) => {
   if (acao === "vincular") {
     const id = String(b.terminal_id ?? "").trim();
     if (!/^[A-Z0-9_]{6,80}$/i.test(id)) return erro("Maquininha inválida");
+    if (id === TERMINAL_VIRTUAL && !TESTE()) return erro("A maquininha virtual só existe no modo teste");
     let aviso: string | null = null;
     if (id !== TERMINAL_VIRTUAL) {
       const r = await mp(tk, "/terminals/v1/setup", { method: "PATCH", body: JSON.stringify({ terminals: [{ id, operating_mode: "PDV" }] }) });
-      if (!r.ok) aviso = `Não consegui ativar o modo PDV (${r.corpo?.message ?? r.status}). Reinicie a maquininha e tente de novo.`;
+      if (!r.ok) aviso = `Não consegui ativar o modo PDV (${msgMp(r)}). Reinicie a maquininha e tente de novo.`;
     }
     await db.from("dispositivos").update({ mp_terminal_id: id }).eq("id", d.id);
     return json({ ok: true, terminal: id, aviso, reiniciar: !aviso && id !== TERMINAL_VIRTUAL });
@@ -210,40 +269,42 @@ Deno.serve(async (req) => {
     if (!forma) return erro("Forma de pagamento inválida");
     const { data: vendida } = await db.from("vendas").select("id").eq("id", b.venda_id).maybeSingle();
     if (vendida) return erro("Esta venda já foi paga", 409);
-    // uma cobrança aberta por caixa: cancela a anterior que tenha ficado pendurada
-    const { data: abertas } = await db.from("cobrancas_cartao").select("*").eq("dispositivo_id", d.id).in("status", ["criando", "aguardando", "na_maquininha", "verificar"]);
-    for (const a of abertas ?? []) {
-      const at = await atualizar(a, tk);
-      if (at.status === "aprovado") return erro("Há um pagamento aprovado pendente neste caixa", 409, { cobranca: at.id });
-      if (!FINAIS.has(at.status) && at.mp_order_id) await mp(tk, `/v1/orders/${encodeURIComponent(at.mp_order_id)}/cancel`, { method: "POST", headers: { "x-allow-cancelable-status": "at_terminal" } }, true);
+    const { data: aprovada } = await db.from("cobrancas_cartao").select("*").eq("venda_id", b.venda_id).eq("status", "aprovado").maybeSingle();
+    if (aprovada) return json(resposta(await atualizar(aprovada, tk))); // já pagou: só termina de gravar
+
+    // uma cobrança aberta por caixa: encerra a anterior que tenha ficado pendurada
+    const { data: abertas } = await db.from("cobrancas_cartao").select("*").eq("dispositivo_id", d.id).in("status", ABERTOS);
+    for (const a0 of abertas ?? []) {
+      const a = await encerrarAnterior(a0, tk);
+      if (a.status === "aprovado") {
+        if (a.venda_id === b.venda_id) return json(resposta(a));
+        return erro("Há um pagamento aprovado de outra compra neste caixa. Ele já foi registrado.", 409, { cobranca: a.id });
+      }
+      if (!FINAIS.has(a.status)) return erro("A maquininha ainda está com a cobrança anterior. Cancele na maquininha e tente de novo.", 409, { cobranca: a.id });
     }
+
     const c0: any = await calcular(d, b.itens);
     if (c0.erro) return erro(c0.erro);
     const { data: cob, error } = await db.from("cobrancas_cartao").insert({
       empresa_id: d.empresa_id, local_id: d.local_id, dispositivo_id: d.id, venda_id: b.venda_id, forma, valor: c0.total, itens: c0.linhas,
-      iniciada_em: typeof b.iniciada_em === "string" ? b.iniciada_em : null, maior18_em: typeof b.maior18_em === "string" ? b.maior18_em : null, terminal_id: terminal,
+      iniciada_em: dataOk(b.iniciada_em), maior18_em: dataOk(b.maior18_em), terminal_id: terminal, status: "criando",
     }).select("*").single();
+    if (error?.code === "23505") return erro("Já há um pagamento em andamento neste caixa", 409);
     if (error || !cob) return erro("Não foi possível registrar a cobrança", 500);
-    const ref = "beep" + cob.id.replace(/-/g, "");
-    const r = await mp(tk, "/v1/orders", {
-      method: "POST",
-      body: JSON.stringify({
-        type: "point",
-        external_reference: ref,
-        description: "Compra Beep",
-        expiration_time: "PT3M",
-        transactions: { payments: [{ amount: reais(c0.total) }] },
-        config: { point: { terminal_id: terminal, print_on_terminal: "no_ticket" }, payment_method: { default_type: forma === "debito" ? "debit_card" : "credit_card" } },
-      }),
-    }, true);
-    if (!r.ok) {
-      const m = r.corpo?.message ?? r.corpo?.errors?.[0]?.message ?? `erro ${r.status}`;
-      await db.from("cobrancas_cartao").update({ status: "falhou", erro: String(m).slice(0, 300) }).eq("id", cob.id);
+
+    const r = await enviarOrdem(cob, tk);
+    if (r.status === 0) {
+      // não sabemos se a maquininha recebeu: a cobrança fica "criando" e a próxima tentativa reencontra o pedido pela mesma chave
+      await db.from("cobrancas_cartao").update({ erro: msgMp(r), atualizado_em: agora() }).eq("id", cob.id);
+      return erro("Sem resposta do Mercado Pago. Tente de novo.", 504, { cobranca: cob.id });
+    }
+    if (!r.ok || !r.corpo?.id) {
+      const m = msgMp(r);
+      await db.from("cobrancas_cartao").update({ status: "falhou", erro: m, atualizado_em: agora() }).eq("id", cob.id);
       return erro("A maquininha não recebeu a cobrança: " + m, 502);
     }
-    const o = lerOrdem(r.corpo);
-    const { data: c } = await db.from("cobrancas_cartao").update({ mp_order_id: String(r.corpo.id), status: o.status === "aguardando" ? "aguardando" : o.status, status_detail: o.status_detail, atualizado_em: new Date().toISOString() }).eq("id", cob.id).select("*").single();
-    return json(resposta(c ?? cob));
+    const { data: c1 } = await db.from("cobrancas_cartao").update({ mp_order_id: String(r.corpo.id), erro: null, atualizado_em: agora() }).eq("id", cob.id).select("*").single();
+    return json(resposta(await aplicarOrdem(c1 ?? { ...cob, mp_order_id: String(r.corpo.id) }, r.corpo)));
   }
 
   // 2) o caixa acompanha o pagamento
@@ -260,14 +321,16 @@ Deno.serve(async (req) => {
     const { data: c0 } = await db.from("cobrancas_cartao").select("*").eq("id", b.cobranca).eq("dispositivo_id", d.id).maybeSingle();
     if (!c0) return erro("Cobrança não encontrada", 404);
     let c = await atualizar(c0, tk);
-    if (FINAIS.has(c.status)) return json(resposta(c));
-    const r = await mp(tk, `/v1/orders/${encodeURIComponent(c.mp_order_id)}/cancel`, { method: "POST", headers: { "x-allow-cancelable-status": "at_terminal" } }, true);
-    // 200 = cancelado na hora; 202 = pedido aceito (a maquininha confirma em seguida)
-    if (r.status === 200) {
-      const { data } = await db.from("cobrancas_cartao").update({ status: "cancelado", status_detail: "canceled_by_api", atualizado_em: new Date().toISOString() }).eq("id", c.id).select("*").single();
-      c = data ?? c;
+    if (FINAIS.has(c.status)) return json({ ...resposta(c), pedido: "ja_terminou" });
+    if (!c.mp_order_id) {
+      const { data } = await db.from("cobrancas_cartao").update({ status: "cancelado", status_detail: "canceled_by_api", atualizado_em: agora() }).eq("id", c.id).eq("status", "criando").is("mp_order_id", null).select("*").maybeSingle();
+      return json({ ...resposta(data ?? c), pedido: data ? "ok" : "nao_cancelou" });
     }
-    return json({ ...resposta(c), pedido: r.status === 202 ? "cancelamento_pedido" : r.ok ? "ok" : "nao_cancelou" });
+    const r = await cancelarNoMp(c, tk);
+    // 200 = cancelado na hora; 202 = pedido aceito (a maquininha confirma em seguida, pela consulta ou pelo aviso)
+    if (r.ok && r.corpo?.status) c = await aplicarOrdem(c, r.corpo);
+    if (!FINAIS.has(c.status)) c = await atualizar(c, tk);
+    return json({ ...resposta(c), pedido: FINAIS.has(c.status) ? "ok" : r.status === 202 ? "cancelamento_pedido" : "nao_cancelou" });
   }
 
   return erro("Ação desconhecida");
