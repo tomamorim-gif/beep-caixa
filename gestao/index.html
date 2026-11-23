@@ -150,8 +150,9 @@ function telaLogin(modo='entrar',msg=''){
 
 // ---------- carga ----------
 async function carregar(){const e=S.emp.id;
- const q=(t,sel='*')=>sb.from(t).select(sel).eq('empresa_id',e);
- const [lc,pr,cd,cf,pc,pf,pi]=await Promise.all([q('locais','id,nome,tipo,ativo,portfolio_id,app_consulta,app_compra,app_pendente'),q('produtos','id,ean,nome,ncm,cest,unidade,custo,ativo').order('nome'),q('produto_codigos','produto_id,ean'),q('produto_codigos_fornecedor','produto_id,fornecedor_cnpj,codigo,fator'),q('precos_local','produto_id,local_id,preco,ativo_no_mix,estoque_min,estoque_max'),q('portfolios','id,nome,descricao,cor').order('criado_em'),q('portfolio_itens','portfolio_id,produto_id,estoque_min,estoque_max')]);
+ // o servidor devolve no máximo 1.000 linhas por consulta: busca em páginas até trazer tudo
+ const q=async(t,sel='*',ord)=>{const out=[];for(let de=0;;de+=1000){let c=sb.from(t).select(sel).eq('empresa_id',e);c=ord?c.order(ord).order('id',{ascending:true}):c;const r=await c.range(de,de+999);if(r.error)return r;out.push(...r.data);if(r.data.length<1000)return {data:out,error:null}}};
+ const [lc,pr,cd,cf,pc,pf,pi]=await Promise.all([q('locais','id,nome,tipo,ativo,portfolio_id,app_consulta,app_compra,app_pendente'),q('produtos','id,ean,nome,ncm,cest,unidade,custo,ativo','nome'),q('produto_codigos','produto_id,ean'),q('produto_codigos_fornecedor','produto_id,fornecedor_cnpj,codigo,fator'),q('precos_local','produto_id,local_id,preco,ativo_no_mix,estoque_min,estoque_max'),q('portfolios','id,nome,descricao,cor','criado_em'),q('portfolio_itens','portfolio_id,produto_id,estoque_min,estoque_max')]);
  for(const r of [lc,pr,cd,cf,pc,pf,pi])if(r.error)throw r.error;
  S.locais=lc.data;S.produtos=pr.data;S.codigos=cd.data;S.codForn=cf.data;S.precos=pc.data;S.portfolios=pf.data;S.pitens=pi.data}
 async function iniciar(){const {data:{session}}=await sb.auth.getSession();if(!session){telaLogin();return}S.user=session.user;
@@ -291,8 +292,9 @@ const reais=c=>c==null?'':((c||0)/100).toFixed(2).replace('.',',');
 const prCent=v=>{const s=String(v??'').trim().replace(/\s|R\$/g,'');if(!s)return null;const n=Number(s.includes(',')?s.replace(/\./g,'').replace(',','.'):s);return Number.isFinite(n)&&n>=0?Math.round(n*100):NaN};
 async function prCarregarExtras(force){
  const e=S.emp.id;
- if(force||!PR.det){const {data,error}=await sb.from('produtos').select('id,ncm,cest,cfop_saida,origem,grupo_fiscal_id,custo,unidade,ativo').eq('empresa_id',e);if(error)throw error;PR.det=new Map(data.map(x=>[x.id,x]))}
- if(force||!PR.fotos){const {data,error}=await sb.from('produto_fotos').select('produto_id,path').eq('empresa_id',e).eq('principal',true);if(error)throw error;PR.fotos=new Map(data.map(x=>[x.produto_id,x.path]))}
+ const pag=async(t,sel,f)=>{const out=[];for(let de=0;;de+=1000){let c=sb.from(t).select(sel).eq('empresa_id',e);if(f)c=f(c);const r=await c.order('id').range(de,de+999);if(r.error)throw r.error;out.push(...r.data);if(r.data.length<1000)return out}};
+ if(force||!PR.det){const data=await pag('produtos','id,ncm,cest,cfop_saida,origem,grupo_fiscal_id,custo,unidade,ativo');PR.det=new Map(data.map(x=>[x.id,x]))}
+ if(force||!PR.fotos){const data=await pag('produto_fotos','produto_id,path',c=>c.eq('principal',true));PR.fotos=new Map(data.map(x=>[x.produto_id,x.path]))}
  if(force||!PR.grupos){const {data}=await sb.from('grupos_fiscais').select('id,nome,cfop_saida,csosn,cst_pis_cofins').eq('empresa_id',e).order('nome');PR.grupos=data||[]}}
 async function prUrls(paths){const falta=paths.filter(p=>p&&!PR.urls[p]);if(!falta.length)return;const {data}=await sb.storage.from('produtos').createSignedUrls(falta,3600);(data||[]).forEach(u=>{if(u.signedUrl)PR.urls[u.path]=u.signedUrl})}
 const prPrecos=pid=>S.precos.filter(p=>p.produto_id===pid);
