@@ -10,10 +10,10 @@ create unique index if not exists cobrancas_cartao_uma_aberta_por_venda
   on public.cobrancas_cartao (venda_id)
   where status in ('criando', 'aguardando', 'na_maquininha', 'verificar');
 
--- só uma cobrança aprovada por venda
+-- só uma cobrança aprovada por venda (a segunda aprovação vira "pagamento_em_dobro" e pode ser estornada)
 create unique index if not exists cobrancas_cartao_uma_aprovada_por_venda
   on public.cobrancas_cartao (venda_id)
-  where status in ('aprovado', 'estornado');
+  where status = 'aprovado';
 
 alter table public.cobrancas_cartao add column if not exists estornado_em timestamptz;
 alter table public.cobrancas_cartao add column if not exists estornado_por uuid;

@@ -65,9 +65,12 @@ Deno.serve(async (req) => {
   if (b.acao === "estornar") {
     const vendaId = typeof b.venda_id === "string" && /^[0-9a-f-]{36}$/i.test(b.venda_id) ? b.venda_id : null;
     if (!vendaId) return erro("Venda inválida");
-    const { data: c } = await db.from("cobrancas_cartao").select("id, mp_order_id, status, valor").eq("empresa_id", emp).eq("venda_id", vendaId).in("status", ["aprovado", "estornado"]).maybeSingle();
-    if (!c) return erro("Esta venda não foi paga na maquininha Mercado Pago", 404);
-    if (c.status === "estornado") return json({ ok: true, status: "estornado" });
+    const { data: c } = await db.from("cobrancas_cartao").select("id, mp_order_id, status, valor").eq("empresa_id", emp).eq("venda_id", vendaId).eq("status", "aprovado").maybeSingle();
+    if (!c) {
+      const { count } = await db.from("cobrancas_cartao").select("id", { count: "exact", head: true }).eq("empresa_id", emp).eq("venda_id", vendaId).eq("status", "estornado");
+      if (count) return json({ ok: true, status: "estornado" });
+      return erro("Esta venda não foi paga na maquininha Mercado Pago", 404);
+    }
     const cred = await atual();
     if (!cred?.access_token) return erro("Credencial do Mercado Pago não cadastrada", 409);
     let r: Response;
