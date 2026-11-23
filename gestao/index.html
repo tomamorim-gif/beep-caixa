@@ -28,14 +28,14 @@ label.f{display:grid;gap:6px;font-size:13px;color:var(--mu);font-weight:500}
 /* login */
 .login{min-height:100vh;display:grid;place-items:center;padding:24px}
 .login .card{width:min(420px,100%);padding:32px;display:grid;gap:16px}
-.login img{height:44px;width:auto}
+.login img{height:56px;width:auto;justify-self:start;object-fit:contain}
 .tabs2{display:grid;grid-template-columns:1fr 1fr;background:var(--p2);border-radius:12px;padding:4px}
 .tabs2 button{min-height:38px;border-radius:9px;font-weight:600;color:var(--mu)}.tabs2 button.on{background:var(--p3);color:var(--ink)}
 .erro{color:#f87171;font-size:13px;min-height:18px}
 /* app */
 .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
 .side{border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
-.side img{height:36px;width:auto;margin:0 8px 18px}
+.side img.logo{align-self:flex-start;height:52px;width:auto;max-width:200px;object-fit:contain;margin:0 8px 20px}
 .nav{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--mu);font-weight:600;text-align:left}
 .nav:hover{background:var(--p2);color:var(--ink)}.nav.on{background:var(--p2);color:var(--ink);box-shadow:inset 3px 0 0 var(--y)}
 .nav svg{flex:none}
@@ -82,6 +82,19 @@ input[type=file]{font-size:13px;color:var(--mu)}input[type=file]::file-selector-
 @media print{body:has(#modal.on #cartaz) .app,body:has(#modal.on #cartaz) #toast,#mbox .row{display:none!important}body:has(#modal.on #cartaz) #modal{position:static;inset:auto;background:none;display:block;padding:0}body:has(#modal.on #cartaz) #mbox{box-shadow:none;border:0;background:#fff;max-width:none;width:auto;max-height:none;overflow:visible}#cartaz,#cartaz h2{color:#000!important}#cartaz .mu{color:#333!important}}
 @media print{.side,.head .row,.barra{display:none!important}.app{display:block}body,html{background:#fff;color:#000}.tblwrap,.kpi,.card{background:#fff;border-color:#ccc}.tbl th{background:#fff;color:#333}}
 @media(max-width:900px){.app{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;overflow:auto;padding:12px}.side img,.side .quem{display:none}main{padding:20px 16px 80px}.grid4{grid-template-columns:1fr 1fr}}
+
+/* produtos */
+.prbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.prbusca{position:relative;flex:1;min-width:260px}.prbusca svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--mu)}.prbusca input{padding-left:40px!important}
+.prchip{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--p2);color:var(--mu);font-weight:600;font-size:13px}
+.prchip span{background:var(--p3);color:var(--ink);border-radius:999px;padding:1px 8px;font-size:12px}.prchip.on{border-color:var(--y);color:var(--ink);background:rgba(255,214,10,.08)}.prchip.on span{background:var(--y);color:#111}
+.prtbl tbody tr{cursor:pointer;transition:background .12s}.prtbl tbody tr:hover{background:var(--p2)}.prtbl td{vertical-align:middle}
+.prthumb{width:44px;height:44px;border-radius:10px;background:#fff;display:grid;place-items:center;overflow:hidden;color:#9aa0ab}.prthumb img{width:100%;height:100%;object-fit:contain}
+.prform{display:grid;grid-template-columns:220px minmax(0,1fr);gap:24px;align-items:start}
+.prfoto{display:grid;gap:10px;position:sticky;top:0}.prfbox{aspect-ratio:1;border-radius:16px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;color:#6b7280}.prfbox img{width:100%;height:100%;object-fit:contain}
+.prsec{display:grid;gap:12px;padding-bottom:18px;border-bottom:1px solid var(--line)}.prsec h3{font-size:15px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:12px}
+@media(max-width:900px){.prform,.g3{grid-template-columns:1fr}.prfoto{position:static}}
 </style>
 </head>
 <body>
@@ -117,7 +130,7 @@ function precoRef(pid){const ps=S.precos.filter(p=>p.produto_id===pid);return ps
 // ---------- login ----------
 function telaLogin(modo='entrar',msg=''){
  $('#raiz').innerHTML=`<div class="login"><div class="card">
-  <img src="../logo.png" alt="Beep Smart Mercadinhos">
+  <img src="../logo-claro.png" alt="Beep Smart Mercadinhos">
   <div><h1 style="font-size:24px">Gestão da loja</h1><p class="mu sm">Entrada de notas, portfólios e configurações.</p></div>
   <div class="tabs2"><button class="${modo==='entrar'?'on':''}" data-m="entrar">Entrar</button><button class="${modo==='convite'?'on':''}" data-m="convite">Tenho um convite</button></div>
   <form id="fLogin" style="display:grid;gap:12px">
@@ -147,8 +160,9 @@ async function iniciar(){const {data:{session}}=await sb.auth.getSession();if(!s
  S.papel=m[0].papel;const {data:emp}=await sb.from('empresas').select('id,nome_exibicao,razao_social,cnpj,regra_preco,gravacao,dias_video').eq('id',m[0].empresa_id).single();S.emp=emp;
  try{await carregar()}catch(e){$('#raiz').innerHTML=`<div class="login"><div class="card"><h2>Não foi possível carregar</h2><p class="mu">${esc(e.message)}</p><button class="btn" onclick="location.reload()">Tentar de novo</button></div></div>`;return}
  shell()}
-function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img src="../logo.png" alt="Beep">
+function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img class="logo" src="../logo-claro.png" alt="Beep Smart Mercadinhos">
   <button class="nav" data-t="vend"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Vendas</button>
+  <button class="nav" data-t="prod"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Produtos</button>
   <button class="nav" data-t="est"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Estoque e reposição</button>
   <button class="nav" data-t="nf">${ICON.nf}Entrada de NF-e</button><button class="nav" data-t="pf">${ICON.pf}Portfólios</button>
   <button class="nav" data-t="cx"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>Caixas</button>
@@ -158,7 +172,7 @@ function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img
   <button class="nav" data-t="cfg">${ICON.cfg}Configurações</button>
   <div class="quem"><b style="color:var(--ink)">${esc(S.emp.nome_exibicao||S.emp.razao_social)}</b><br>${esc(S.user.email)} · ${S.papel==='dono'?'Dono':'Gerente'}<br><button class="btn sm" id="sair" style="margin-top:10px">Sair</button></div></aside><main id="main"></main></div>`;
  document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{S.tela=b.dataset.t;render()});$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
-function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({vend:telaVend,est:telaEst,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
+function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({vend:telaVend,prod:telaProd,est:telaEst,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
 
 // ---------- leitura do XML (NF-e modelo 55) ----------
 const tx=(el,sel)=>{if(!el)return '';const n=el.getElementsByTagName(sel)[0];return n?n.textContent.trim():''};
@@ -268,6 +282,137 @@ async function lancar(){const bt=$('#okLancar');bt.disabled=true;bt.textContent=
    ${alertas.length?`<div class="aviso"><span>⚠️</span><span><b>Custo mudou e o preço não foi alterado:</b><br>${alertas.map(l=>`${esc(bonito(l.prod.nome))}: custo ${brl(l.prod.custo)} → ${brl(l.it.custoUn)}, preço ${brl(precoRef(l.prod.id))}`).join('<br>')}</span></div>`:''}
    <div class="row"><span class="sp"></span><button class="btn pri" data-close>Concluir</button></div>`);
   S.nota=null;S.linhas=[];render()}catch(err){bt.disabled=false;bt.textContent='Lançar nota';toast('Erro: '+(err.message||err))}}
+
+// ---------- tela: produtos (cadastro) ----------
+const PR={q:'',filtro:'todos',pag:0,fotos:null,urls:{},grupos:null,det:null};
+const POR_PAG=40;
+const soDig=v=>String(v??'').replace(/\D/g,'');
+const reais=c=>c==null?'':((c||0)/100).toFixed(2).replace('.',',');
+const prCent=v=>{const s=String(v??'').trim().replace(/\s|R\$/g,'');if(!s)return null;const n=Number(s.includes(',')?s.replace(/\./g,'').replace(',','.'):s);return Number.isFinite(n)&&n>=0?Math.round(n*100):NaN};
+async function prCarregarExtras(force){
+ const e=S.emp.id;
+ if(force||!PR.det){const {data,error}=await sb.from('produtos').select('id,ncm,cest,cfop_saida,origem,grupo_fiscal_id,custo,unidade,ativo').eq('empresa_id',e);if(error)throw error;PR.det=new Map(data.map(x=>[x.id,x]))}
+ if(force||!PR.fotos){const {data,error}=await sb.from('produto_fotos').select('produto_id,path').eq('empresa_id',e).eq('principal',true);if(error)throw error;PR.fotos=new Map(data.map(x=>[x.produto_id,x.path]))}
+ if(force||!PR.grupos){const {data}=await sb.from('grupos_fiscais').select('id,nome,cfop_saida,csosn,cst_pis_cofins').eq('empresa_id',e).order('nome');PR.grupos=data||[]}}
+async function prUrls(paths){const falta=paths.filter(p=>p&&!PR.urls[p]);if(!falta.length)return;const {data}=await sb.storage.from('produtos').createSignedUrls(falta,3600);(data||[]).forEach(u=>{if(u.signedUrl)PR.urls[u.path]=u.signedUrl})}
+const prPrecos=pid=>S.precos.filter(p=>p.produto_id===pid);
+function prLista(){
+ const q=PR.q.trim().toLowerCase(),qd=soDig(q);
+ return S.produtos.filter(p=>{const d=PR.det?.get(p.id)||{},ps=prPrecos(p.id),ativo=d.ativo??p.ativo;
+  if(PR.filtro==='inativos'){if(ativo)return false}else if(!ativo)return false;
+  if(PR.filtro==='semfoto'&&PR.fotos?.has(p.id))return false;
+  if(PR.filtro==='sempreco'&&ps.some(x=>x.preco>0))return false;
+  if(PR.filtro==='semncm'&&/^\d{8}$/.test(d.ncm||''))return false;
+  if(!q)return true;
+  if(p.nome.toLowerCase().includes(q))return true;
+  if(qd.length>=3&&((p.ean||'').includes(qd)||(d.ncm||'').startsWith(qd)||S.codigos.some(c=>c.produto_id===p.id&&c.ean.includes(qd))))return true;
+  return false})}
+async function telaProd(){const M=$('#main');
+ M.innerHTML=`<div class="head"><div><h1>Produtos</h1><p>Cadastro, fotos, dados fiscais e preço de cada loja.</p></div><button class="btn pri" id="prNovo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Novo produto</button></div><div class="vazio">Carregando produtos…</div>`;
+ $('#prNovo').onclick=()=>prEditar(null);
+ try{await prCarregarExtras()}catch(e){M.querySelector('.vazio').textContent='Não foi possível carregar: '+e.message;return}
+ const ativos=S.produtos.filter(p=>(PR.det.get(p.id)?.ativo??p.ativo));
+ const cont={todos:ativos.length,semfoto:ativos.filter(p=>!PR.fotos.has(p.id)).length,sempreco:ativos.filter(p=>!prPrecos(p.id).some(x=>x.preco>0)).length,semncm:ativos.filter(p=>!/^\d{8}$/.test(PR.det.get(p.id)?.ncm||'')).length,inativos:S.produtos.length-ativos.length};
+ const chip=(k,t)=>`<button class="prchip${PR.filtro===k?' on':''}" data-f="${k}">${t}<span class="num">${cont[k]}</span></button>`;
+ M.innerHTML=`<div class="head"><div><h1>Produtos</h1><p>Cadastro, fotos, dados fiscais e preço de cada loja.</p></div><button class="btn pri" id="prNovo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Novo produto</button></div>
+ <div class="prbar"><div class="prbusca"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="prQ" placeholder="Buscar por nome, código de barras ou NCM" value="${esc(PR.q)}" autocomplete="off"></div>
+ <div class="row">${chip('todos','Todos')}${chip('semfoto','Sem foto')}${chip('sempreco','Sem preço')}${chip('semncm','Sem NCM')}${chip('inativos','Inativos')}</div></div>
+ <div class="tblwrap"><table class="tbl prtbl"><thead><tr><th style="width:64px"></th><th>Produto</th><th class="hm">NCM</th><th class="n">Preço</th><th class="hm">Lojas</th><th></th></tr></thead><tbody id="prBody"></tbody></table></div>
+ <div class="row" id="prPag" style="margin-top:14px"></div>`;
+ $('#prNovo').onclick=()=>prEditar(null);
+ let t;$('#prQ').oninput=e=>{clearTimeout(t);t=setTimeout(()=>{PR.q=e.target.value;PR.pag=0;prDesenhar()},180)};
+ M.querySelectorAll('.prchip').forEach(b=>b.onclick=()=>{PR.filtro=b.dataset.f;PR.pag=0;telaProd()});
+ prDesenhar()}
+async function prDesenhar(){
+ const L=prLista(),tot=L.length,pags=Math.max(1,Math.ceil(tot/POR_PAG));PR.pag=Math.min(PR.pag,pags-1);
+ const pg=L.slice(PR.pag*POR_PAG,(PR.pag+1)*POR_PAG),nLojas=lojas().length;
+ const B=$('#prBody');if(!B)return;
+ B.innerHTML=pg.length?pg.map(p=>{const d=PR.det.get(p.id)||{},ps=prPrecos(p.id).filter(x=>x.preco>0),vs=ps.map(x=>x.preco),mix=prPrecos(p.id).filter(x=>x.ativo_no_mix&&x.preco>0&&lojas().some(l=>l.id===x.local_id)).length;
+  const preco=vs.length?(Math.min(...vs)===Math.max(...vs)?brl(vs[0]):`${brl(Math.min(...vs))} – ${brl(Math.max(...vs))}`):'<span class="pill warn">Sem preço</span>';
+  const ft=PR.fotos.get(p.id);
+  return `<tr data-id="${p.id}"><td><div class="prthumb">${ft?`<img data-path="${esc(ft)}" alt="">`:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>`}</div></td>
+  <td><div class="stack"><b>${esc(p.nome)}</b><span class="mu sm num">${esc(p.ean||'sem código de barras')}${(d.ativo??p.ativo)?'':' · <span class="pill bad">Inativo</span>'}</span></div></td>
+  <td class="hm num">${/^\d{8}$/.test(d.ncm||'')?esc(d.ncm.replace(/^(\d{4})(\d{2})(\d{2})$/,'$1.$2.$3')):'<span class="pill warn">Falta</span>'}</td>
+  <td class="n num">${preco}</td><td class="hm"><span class="mu sm">${mix} de ${nLojas}</span></td>
+  <td class="n"><button class="btn sm" data-ed="${p.id}">Editar</button></td></tr>`}).join(''):`<tr><td colspan="6"><div class="vazio">Nenhum produto encontrado.</div></td></tr>`;
+ B.querySelectorAll('tr[data-id]').forEach(tr=>tr.onclick=()=>prEditar(tr.dataset.id));
+ const P=$('#prPag');P.innerHTML=tot?`<span class="mu sm">${(PR.pag*POR_PAG+1).toLocaleString('pt-BR')}–${Math.min(tot,(PR.pag+1)*POR_PAG).toLocaleString('pt-BR')} de ${tot.toLocaleString('pt-BR')}</span><span class="sp"></span><button class="btn sm" id="prAnt" ${PR.pag?'':'disabled'}>Anterior</button><button class="btn sm" id="prProx" ${PR.pag<pags-1?'':'disabled'}>Próxima</button>`:'';
+ if(tot){$('#prAnt').onclick=()=>{PR.pag--;prDesenhar();$('#main').scrollIntoView()};$('#prProx').onclick=()=>{PR.pag++;prDesenhar();$('#main').scrollIntoView()}}
+ const imgs=[...B.querySelectorAll('img[data-path]')];await prUrls(imgs.map(i=>i.dataset.path));imgs.forEach(i=>{const u=PR.urls[i.dataset.path];if(u)i.src=u})}
+
+function prEditar(pid){
+ const p=pid?S.produtos.find(x=>x.id===pid):null,d=(pid&&PR.det?.get(pid))||{},novo=!p;
+ const extras=pid?S.codigos.filter(c=>c.produto_id===pid).map(c=>c.ean).filter(e=>e!==p.ean):[];
+ const locs=[...lojas(),...S.locais.filter(l=>l.ativo&&l.tipo!=='loja')];
+ const ps=pid?prPrecos(pid):[];const pl=lid=>ps.find(x=>x.local_id===lid);
+ const sugerido=d.custo>0?precoSugerido(d.custo):null;
+ const ft=pid&&PR.fotos?.get(pid);
+ $('#modal').classList.add('wide');
+ modal(`<div class="row"><h2 style="font-size:22px">${novo?'Novo produto':esc(p.nome)}</h2><span class="sp"></span>${novo?'':`<span class="pill ${(d.ativo??p.ativo)?'ok':'bad'}">${(d.ativo??p.ativo)?'Ativo':'Inativo'}</span>`}</div>
+ <form id="prF" class="prform" autocomplete="off">
+  <div class="prfoto"><div class="prfbox" id="prFbox">${ft&&PR.urls[ft]?`<img src="${PR.urls[ft]}" alt="">`:`<div class="mu sm" style="text-align:center;padding:10px"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="display:block;margin:0 auto 6px"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>Sem foto</div>`}</div>
+   <label class="btn sm" style="width:100%">${ft?'Trocar foto':'Enviar foto'}<input type="file" id="prArq" accept="image/jpeg,image/png,image/webp" hidden></label>
+   <span class="mu sm" style="text-align:center">JPG, PNG ou WebP até 3 MB. Embalagem de frente, fundo claro.</span></div>
+  <div class="stack" style="gap:18px">
+   <section class="prsec"><h3>Identificação</h3>
+    <label class="f">Nome do produto<input name="nome" required maxlength="120" value="${esc(p?.nome||'')}" placeholder="Ex.: Coca-Cola Lata 350ml"></label>
+    <div class="g2"><label class="f">Código de barras principal<input name="ean" inputmode="numeric" maxlength="14" value="${esc(p?.ean||'')}" placeholder="789..."></label>
+    <label class="f">Unidade<select name="unidade">${['UN','KG','CX','PCT'].map(u=>`<option ${(d.unidade||p?.unidade||'UN')===u?'selected':''}>${u}</option>`).join('')}</select></label></div>
+    <label class="f">Outros códigos de barras <span class="mu" style="font-weight:400">(caixa, embalagem antiga; separe por vírgula)</span><input name="extras" value="${esc(extras.join(', '))}" inputmode="numeric"></label></section>
+   <section class="prsec"><h3>Fiscal</h3>
+    <div class="g3"><label class="f">NCM<input name="ncm" inputmode="numeric" maxlength="10" value="${esc(d.ncm||'')}" placeholder="8 dígitos"></label>
+    <label class="f">CEST<input name="cest" inputmode="numeric" maxlength="9" value="${esc(d.cest||'')}" placeholder="opcional"></label>
+    <label class="f">Origem<select name="origem">${[[0,'0 · Nacional'],[1,'1 · Importação direta'],[2,'2 · Importado no mercado interno'],[3,'3 · Nacional, 40% a 70% importado'],[4,'4 · Nacional, processo básico'],[5,'5 · Nacional, até 40% importado'],[6,'6 · Importação direta, sem similar'],[7,'7 · Importado, sem similar'],[8,'8 · Nacional, mais de 70% importado']].map(([v,t])=>`<option value="${v}" ${(d.origem??0)===v?'selected':''}>${t}</option>`).join('')}</select></label></div>
+    <label class="f">Grupo fiscal <span class="mu" style="font-weight:400">(define CSOSN, CFOP e PIS/COFINS)</span><select name="grupo"><option value="">Sem grupo</option>${(PR.grupos||[]).map(g=>`<option value="${g.id}" ${d.grupo_fiscal_id===g.id?'selected':''}>${esc(g.nome)} · CFOP ${esc(g.cfop_saida)}</option>`).join('')}</select></label></section>
+   <section class="prsec"><div class="row"><h3>Preço e mix</h3><span class="sp"></span><label class="f" style="grid-auto-flow:column;align-items:center;gap:8px">Custo<input name="custo" class="inp-s" value="${reais(d.custo||0)}" inputmode="decimal"></label></div>
+    <div class="row"><span class="mu sm">${sugerido?`Pela regra (custo ÷ ${String(regra().divisor).replace('.',',')}) o preço sugerido é <b style="color:var(--ink)">${brl(sugerido)}</b>.`:'Informe o custo para ver o preço sugerido.'}</span><span class="sp"></span><input class="inp-s" id="prTodos" placeholder="0,00" inputmode="decimal"><button type="button" class="btn sm" id="prAplicar">Aplicar a todas</button></div>
+    <div class="tblwrap"><table class="tbl"><thead><tr><th>Local</th><th class="n">Preço</th><th class="n">À venda</th></tr></thead><tbody>
+    ${locs.map(l=>{const x=pl(l.id);return `<tr><td>${esc(l.nome)}${l.tipo!=='loja'?' <span class="pill">CD</span>':''}</td><td class="n"><input class="inp-s" data-pl="${l.id}" value="${x?reais(x.preco):''}" inputmode="decimal" placeholder="—"></td><td class="n"><input type="checkbox" data-mx="${l.id}" ${x?(x.ativo_no_mix?'checked':''):'checked'} style="accent-color:var(--y);width:18px;height:18px"></td></tr>`}).join('')}
+    </tbody></table></div></section>
+   <div class="erro" id="prErro"></div>
+  </div></form>
+ <div class="row">${novo?'':`<button class="btn dang" id="prAtv">${(d.ativo??p.ativo)?'Inativar produto':'Reativar produto'}</button>`}<span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="prSalvar">${novo?'Cadastrar produto':'Salvar alterações'}</button></div>`);
+ let arquivo=null;
+ $('#prArq').onchange=e=>{const f=e.target.files[0];if(!f)return;if(!['image/jpeg','image/png','image/webp'].includes(f.type))return toast('Use JPG, PNG ou WebP');if(f.size>3e6)return toast('A imagem passa de 3 MB');arquivo=f;$('#prFbox').innerHTML=`<img src="${URL.createObjectURL(f)}" alt="">`};
+ $('#prAplicar').onclick=()=>{const v=$('#prTodos').value.trim();if(Number.isNaN(prCent(v))||!v)return toast('Digite um preço, ex.: 12,90');document.querySelectorAll('[data-pl]').forEach(i=>i.value=v)};
+ if(!novo)$('#prAtv').onclick=async()=>{const at=!(d.ativo??p.ativo);const r=await sb.from('produtos').update({ativo:at,atualizado_em:new Date().toISOString()}).eq('id',pid).eq('empresa_id',S.emp.id);if(r.error)return toast('Erro: '+r.error.message);toast(at?'Produto reativado':'Produto inativado. Sai dos caixas em até 10 minutos.');fechar();await carregar();await prCarregarExtras(true);telaProd()};
+ $('#prSalvar').onclick=()=>prSalvar(pid,arquivo);
+ $('#prF').onsubmit=e=>{e.preventDefault();prSalvar(pid,arquivo)}}
+
+async function prSalvar(pid,arquivo){
+ const F=$('#prF'),err=m=>{$('#prErro').textContent=m;return false},bt=$('#prSalvar');
+ const nome=F.nome.value.trim().replace(/\s+/g,' '),ean=soDig(F.ean.value),ncm=soDig(F.ncm.value),cest=soDig(F.cest.value),custo=prCent(F.custo.value)??0;
+ const extras=[...new Set(F.extras.value.split(/[,;\s]+/).map(soDig).filter(Boolean))].filter(e=>e!==ean);
+ if(nome.length<2)return err('Informe o nome do produto.');
+ if(ean&&(ean.length<8||ean.length>14))return err('O código de barras precisa ter de 8 a 14 dígitos.');
+ if(extras.some(e=>e.length<8||e.length>14))return err('Cada código extra precisa ter de 8 a 14 dígitos.');
+ if(ncm&&ncm.length!==8)return err('O NCM precisa ter 8 dígitos.');
+ if(cest&&cest.length!==7)return err('O CEST precisa ter 7 dígitos.');
+ if(Number.isNaN(custo))return err('Custo inválido. Use o formato 4,59.');
+ const z=s=>s.replace(/^0+/,'');const meus=new Set([ean,...extras].filter(Boolean).map(z));
+ const dono=S.produtos.find(x=>x.id!==pid&&(meus.has(z(x.ean||''))||S.codigos.some(c=>c.produto_id===x.id&&meus.has(z(c.ean)))));
+ if(dono)return err(`Esse código de barras já está em "${dono.nome}".`);
+ const precos=[];for(const i of document.querySelectorAll('[data-pl]')){const v=prCent(i.value);if(Number.isNaN(v))return err('Preço inválido em uma das lojas. Use o formato 12,90.');if(v===0)return err('Preço zero não vale. Deixe em branco a loja que não vende o produto.');if(v!=null)precos.push({local_id:i.dataset.pl,preco:v,ativo_no_mix:document.querySelector(`[data-mx="${i.dataset.pl}"]`).checked})}
+ const g=(PR.grupos||[]).find(x=>x.id===F.grupo.value);
+ const dados={nome,ean:ean||null,unidade:F.unidade.value,custo,ncm:ncm||null,cest:cest||null,origem:+F.origem.value,grupo_fiscal_id:g?.id||null,cfop_saida:g?.cfop_saida||null,atualizado_em:new Date().toISOString()};
+ if(ncm&&ncm!==(PR.det?.get(pid)?.ncm||'')){dados.ncm_sugerido=ncm;dados.ncm_fonte='Painel de gestão'}
+ bt.disabled=true;bt.textContent='Salvando…';
+ try{const e=S.emp.id;let id=pid;
+  if(pid){const r=await sb.from('produtos').update(dados).eq('id',pid).eq('empresa_id',e);if(r.error)throw r.error}
+  else{const r=await sb.from('produtos').insert({...dados,empresa_id:e,ativo:true}).select('id').single();if(r.error)throw r.error;id=r.data.id}
+  const antes=S.codigos.filter(c=>c.produto_id===id).map(c=>c.ean),sai=antes.filter(c=>!extras.includes(c)),entra=extras.filter(c=>!antes.includes(c));
+  if(sai.length){const r=await sb.from('produto_codigos').delete().eq('produto_id',id).eq('empresa_id',e).in('ean',sai);if(r.error)throw r.error}
+  if(entra.length){const r=await sb.from('produto_codigos').insert(entra.map(c=>({empresa_id:e,produto_id:id,ean:c})));if(r.error)throw r.error}
+  if(precos.length){const r=await sb.from('precos_local').upsert(precos.map(x=>({...x,empresa_id:e,produto_id:id,atualizado_em:new Date().toISOString()})),{onConflict:'produto_id,local_id'});if(r.error)throw r.error}
+  const limpos=[...document.querySelectorAll('[data-pl]')].filter(i=>!i.value.trim()).map(i=>i.dataset.pl);
+  if(pid&&limpos.length){const r=await sb.from('precos_local').delete().eq('produto_id',id).eq('empresa_id',e).in('local_id',limpos);if(r.error)throw r.error}
+  if(arquivo){const ext=arquivo.type==='image/png'?'png':arquivo.type==='image/webp'?'webp':'jpg',path=`${e}/${id}/manual-${Date.now()}.${ext}`;
+   const up=await sb.storage.from('produtos').upload(path,arquivo,{contentType:arquivo.type});if(up.error)throw new Error('A foto não subiu: '+up.error.message);
+   await sb.from('produto_fotos').delete().eq('produto_id',id).eq('empresa_id',e).eq('principal',true);
+   const r=await sb.from('produto_fotos').insert({empresa_id:e,produto_id:id,path,principal:true,ordem:0});if(r.error)throw r.error}
+  fechar();toast(pid?'Produto salvo. Os caixas atualizam em até 10 minutos.':'Produto cadastrado. Os caixas recebem em até 10 minutos.');
+  await carregar();await prCarregarExtras(true);telaProd()}
+ catch(x){bt.disabled=false;bt.textContent=pid?'Salvar alterações':'Cadastrar produto';err('Não foi possível salvar: '+(x.message||x))}}
 
 // ---------- tela: portfólios ----------
 function itensDe(pid){return S.pitens.filter(i=>i.portfolio_id===pid)}
