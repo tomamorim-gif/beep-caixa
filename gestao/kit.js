@@ -13,7 +13,7 @@ async function apiKit(acao, corpo = {}, auth = false) {
   let r; try { r = await fetch(C.SB_URL + '/functions/v1/kit', { method: 'POST', headers: h, body: JSON.stringify({ acao, ...corpo }) }); } catch { throw new Error('Sem internet. Confira a conexão e tente de novo.'); }
   const j = await r.json().catch(() => ({ erro: 'Resposta inválida' })); if (!r.ok) throw new Error(j.erro || 'Erro'); return j;
 }
-const tela = (h) => { C.$('#raiz').innerHTML = `<div class="login kitm"><div class="card"><img src="../logo-claro.png" alt="Beep">${h}</div></div>`; };
+const tela = (h) => { C.$('#raiz').innerHTML = `<div class="login kitm"><div class="card"><img src="../logo-claro.png" alt="Beep Smart Pay">${h}</div></div>`; };
 const passos = n => `<div class="kitpassos">${['Conta', 'Loja', 'Tablet'].map((t, i) => `<span class="${i < n ? 'ok' : i === n ? 'on' : ''}"><i></i>${t}</span>`).join('')}</div>`;
 
 export async function telaKit(ctx, codigo) {

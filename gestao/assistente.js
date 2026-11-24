@@ -119,7 +119,7 @@ const CORPOS = {
   produtos() {
     const { S } = C, ativos = S.produtos.filter(p => p.ativo).length, comPreco = new Set(S.precos.filter(p => p.ativo_no_mix && p.preco > 0).map(p => p.produto_id)).size;
     C.$('#wzCorpo').innerHTML = `<div class="wzstat"><div><b class="num">${ativos}</b><span>produtos no cadastro</span></div><div><b class="num">${comPreco}</b><span>à venda nas lojas</span></div></div>
-      <ol class="wzpassos"><li>Junte os <b>XMLs das notas de compra</b> (ou use as que chegaram da SEFAZ) ou preencha a <b>planilha modelo</b>.</li><li>O Beep monta os produtos com custo, preço sugerido, NCM e categoria.</li><li>Você revisa, aprova e recebe o relatório com o que conferir.</li></ol>
+      <ol class="wzpassos"><li>Junte os <b>XMLs das notas de compra</b> (ou use as que chegaram da SEFAZ) ou preencha a <b>planilha modelo</b>.</li><li>O Beep Smart Pay monta os produtos com custo, preço sugerido, NCM e categoria.</li><li>Você revisa, aprova e recebe o relatório com o que conferir.</li></ol>
       <button class="btn pri" id="wzAg">Abrir Configurar minha loja</button>`;
     C.$('#wzAg').onclick = () => { salvarProgresso().catch(() => { }); C.fechar(); C.ir('ag'); };
   },
@@ -129,7 +129,7 @@ const CORPOS = {
     C.cartaoNf();
   },
   maquininha() {
-    C.$('#wzCorpo').innerHTML = `<div class="wzmp"><div><b>Conecte a conta que vai receber as vendas</b><p class="mu sm">O Beep cobra na maquininha Point e no Pix da sua conta Mercado Pago. O dinheiro cai direto para você.</p></div>
+    C.$('#wzCorpo').innerHTML = `<div class="wzmp"><div><b>Conecte a conta que vai receber as vendas</b><p class="mu sm">O Beep Smart Pay cobra na maquininha Point e no Pix da sua conta Mercado Pago. O dinheiro cai direto para você.</p></div>
        <a class="btn pri" href="https://www.mercadopago.com.br/developers/panel/app" target="_blank" rel="noopener">Conectar Mercado Pago</a></div>
       <ol class="wzpassos"><li>No Mercado Pago, abra <b>Suas integrações</b> e crie uma aplicação (tipo "Pagamentos presenciais").</li><li>Em <b>Credenciais de produção</b>, copie o <b>Access Token</b>. Em <b>Webhooks</b>, copie a <b>assinatura secreta</b>.</li><li>Cole os dois aqui embaixo e salve. Depois, ligue a maquininha ao caixa em <b>Caixas</b>.</li></ol>
       <div class="card wzsub"><div class="row"><b style="flex:1">Maquininha · Mercado Pago</b><span class="pill" id="mpEstado">Verificando…</span></div><div id="mpCorpo" style="display:grid;gap:12px"></div></div>`;

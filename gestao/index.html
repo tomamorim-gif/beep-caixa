@@ -156,7 +156,7 @@ async function carregar(){const e=S.emp.id;
  const [lc,pr,cd,cf,pc,pf,pi,gf]=await Promise.all([q('locais','id,nome,tipo,ativo,portfolio_id,app_consulta,app_compra,app_pendente'),q('produtos','id,ean,nome,ncm,cest,unidade,custo,ativo,grupo_fiscal_id','nome'),q('produto_codigos','produto_id,ean'),q('produto_codigos_fornecedor','produto_id,fornecedor_cnpj,codigo,fator'),q('precos_local','produto_id,local_id,preco,ativo_no_mix,estoque_min,estoque_max'),q('portfolios','id,nome,descricao,cor','criado_em'),q('portfolio_itens','portfolio_id,produto_id,estoque_min,estoque_max'),q('grupos_fiscais','id,nome,csosn,cfop_saida,cst_pis_cofins','nome')]);
  for(const r of [lc,pr,cd,cf,pc,pf,pi,gf])if(r.error)throw r.error;
  S.locais=lc.data;S.produtos=pr.data;S.codigos=cd.data;S.codForn=cf.data;S.precos=pc.data;S.portfolios=pf.data;S.pitens=pi.data;S.grupos=gf.data}
-async function iniciar(){const kit=(location.hash.match(/kit=([A-Za-z0-9]{8})/)||[])[1];if(kit){try{const m=await import('./kit.js?v=1');return m.telaKit({sb,$,esc,bonito,SB_URL,iniciar},kit)}catch(e){}}
+async function iniciar(){const kit=(location.hash.match(/kit=([A-Za-z0-9]{8})/)||[])[1];if(kit){try{const m=await import('./kit.js?v=2');return m.telaKit({sb,$,esc,bonito,SB_URL,iniciar},kit)}catch(e){}}
  const {data:{session}}=await sb.auth.getSession();if(!session){telaLogin();return}S.user=session.user;
  const {data:m}=await sb.from('membros').select('empresa_id,papel').eq('user_id',S.user.id).eq('ativo',true).in('papel',['dono','gerente']).limit(1);
  if(!m?.length){await sb.auth.signOut();telaLogin('entrar','Este login não tem acesso de dono ou gerente.');return}
@@ -182,10 +182,10 @@ function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggl
 // ---------- agente "Configurar minha loja" (arquivo próprio, carregado só quando abre a tela) ----------
 const ctxBeep=()=>({sb,S,$,esc,brl,toast,modal,fechar,bonito,lerNFe,grupoDe,precoSugerido,regra,lojas,carregar,render,
  ir:t=>{S.tela=t;render()},setFiltroProd:k=>{PR.filtro=k;PR.pag=0},setDiaVendas:d=>{VD.dia=d},setLocalEstoque:id=>{EST_LOCAL=id},novoProduto:()=>prEditar(null),editarProduto:id=>prEditar(id),gerarCodigo,apiPag,apiNf,cartaoMp,cartaoNf,
- abrirAssistente:async e=>{const m=await import('./assistente.js?v=1');m.abrirAssistente(ctxBeep(),e)},resumoAssistente:async()=>{const m=await import('./assistente.js?v=1');return m.resumoAssistente(ctxBeep())}});
+ abrirAssistente:async e=>{const m=await import('./assistente.js?v=2');m.abrirAssistente(ctxBeep(),e)},resumoAssistente:async()=>{const m=await import('./assistente.js?v=1');return m.resumoAssistente(ctxBeep())}});
 // conta nova (sem produtos): abre os primeiros passos sozinho
 async function talvezAssistente(){if(S.papel!=='dono'||S.produtos.length)return;try{const c=ctxBeep(),r=await c.resumoAssistente();if(!r.concluido)c.abrirAssistente()}catch(e){}}
-async function telaAg(){try{const m=await import('./agente.js?v=3');await m.telaAgente(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
+async function telaAg(){try{const m=await import('./agente.js?v=4');await m.telaAgente(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
 // ---------- "O que você quer fazer?" (pedidos simples, por regras) ----------
 async function abrirCmd(t=''){try{const m=await import('./comando.js?v=1');m.abrirComando(ctxBeep(),t)}catch(e){toast('Não foi possível abrir: '+e.message)}}
 addEventListener('keydown',e=>{if(!S.emp||!$('#main'))return;const k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&k==='k'){e.preventDefault();abrirCmd()}else if(k==='/'&&!/input|textarea|select/i.test(document.activeElement?.tagName||'')&&!$('#modal').classList.contains('on')){e.preventDefault();abrirCmd()}});
@@ -583,7 +583,7 @@ async function telaEst(){const M=$('#main');const locs=S.locais.filter(l=>l.ativ
 // ---------- tela: caixas ----------
 async function telaCx(){const M=$('#main');
  M.innerHTML=`<div class="head"><div><h1>Caixas</h1><p>Aparelhos ativados em cada loja. Gere um código para ativar um caixa novo.</p></div><button class="btn pri" id="novoCx">+ Ativar caixa novo</button></div><div id="cCorpo"><p class="vazio">Carregando…</p></div><div id="cxFab"></div>`;
- $('#novoCx').onclick=gerarCodigo;import('./kit.js?v=1').then(m=>m.cartaoFabrica({sb,$,esc,toast,modal,fechar,SB_URL},$('#cxFab'))).catch(()=>{});
+ $('#novoCx').onclick=gerarCodigo;import('./kit.js?v=2').then(m=>m.cartaoFabrica({sb,$,esc,toast,modal,fechar,SB_URL},$('#cxFab'))).catch(()=>{});
  const {data,error}=await sb.from('dispositivos').select('id,nome,local_id,ultimo_sinal,ativo,ativado_em,tipo').eq('empresa_id',S.emp.id).order('ativo',{ascending:false}).order('ultimo_sinal',{ascending:false,nullsFirst:false});const C=$('#cCorpo');if(!C)return;if(error){C.innerHTML=`<p class="vazio">${esc(error.message)}</p>`;return}
  const agora=Date.now(),nome=id=>S.locais.find(l=>l.id===id)?.nome||'—',dono=S.papel==='dono';
  const st=d=>{if(!d.ativo)return '<span class="pill">Desativado</span>';const m=d.ultimo_sinal?(agora-new Date(d.ultimo_sinal))/6e4:1e9;return m<15?'<span class="pill ok">Online</span>':m<1440?'<span class="pill warn">Sem sinal há '+(m<60?Math.round(m)+' min':Math.round(m/60)+' h')+'</span>':'<span class="pill bad">Offline</span>'};
