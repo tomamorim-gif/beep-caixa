@@ -581,9 +581,10 @@ const vez=(n,um,varios)=>n===1?um:varios.replace('#',n.toLocaleString('pt-BR'));
 async function telaIni(){const M=$('#main'),h=new Date().getHours(),saud=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
  const kSk='<div class="kpi"><span>&nbsp;</span><b><i class="sk" style="width:60%;height:22px"></i></b></div>';
  M.innerHTML=`<div class="head"><div><h1>${saud}</h1><p>${esc(S.emp.nome_exibicao||S.emp.razao_social)} · como estão as lojas agora e o que precisa de você.</p></div><div class="row"><span class="mu sm" id="iHora"></span><button class="btn" id="iAtualizar">Atualizar</button></div></div>
-  <div class="grid4" id="iKpi">${kSk.repeat(4)}</div>
+  <div class="grid4" id="iKpi">${kSk.repeat(4)}</div><p class="mu sm" id="iTeste" style="margin-top:8px"></p>
   <div class="ini"><section class="card"><h2>Precisa da sua atenção</h2><p class="mu sm">Em ordem de importância. Cada item tem o botão que resolve.</p><div id="iAt" style="margin-top:8px"><div class="at"><span class="dot"></span><div class="tx"><i class="sk" style="width:70%"></i><i class="sk" style="width:45%;margin-top:8px"></i></div></div></div></section>
   <section class="card" style="padding:0;overflow:hidden"><div style="padding:20px 20px 10px"><h2>Lojas hoje</h2><p class="mu sm">Toque numa loja para ver o estoque dela.</p></div><div id="iLj"><p class="vazio">Carregando…</p></div></section></div>
+  <div id="iPassos"></div>
   <h2 style="font-size:17px;margin:28px 0 12px">Atalhos</h2>
   <div class="atalhos">
    <button class="atalho" data-ir="nf"><span class="ic">${ICON.nf}</span><span><b>Lançar nota de compra</b><span>Puxar da SEFAZ e dar entrada</span></span></button>
@@ -593,28 +594,34 @@ async function telaIni(){const M=$('#main'),h=new Date().getHours(),saud=h<12?'B
   </div>`;
  $('#iAtualizar').onclick=()=>telaIni();
  M.querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>{const t=b.dataset.ir;if(t==='prodnovo'){ir('prod');setTimeout(()=>prEditar(null),0);return}if(t==='cxnovo'){ir('cx');gerarCodigo();return}ir(t)});
- const e=S.emp.id,agora=new Date(),hoje0=inicioDia(agora),ontem0=new Date(hoje0.getTime()-864e5),mesmaHoraOntem=new Date(agora.getTime()-864e5);
+ const e=S.emp.id,agora=new Date(),hoje0=inicioDia(agora),semAnt0=new Date(hoje0.getTime()-7*864e5),semAntFim=new Date(semAnt0.getTime()+864e5),mesmaHoraSemAnt=new Date(agora.getTime()-7*864e5);
+ // saldos passam de 1.000 linhas (limite do servidor por consulta): busca em páginas
+ const saldosTodos=async()=>{const out=[];for(let de=0;;de+=1000){const r=await sb.from('saldos_estoque').select('produto_id,local_id,saldo').eq('empresa_id',e).range(de,de+999);if(r.error)return r;out.push(...r.data);if(r.data.length<1000)return {data:out}}};
  const seguro=p=>Promise.resolve(p).then(r=>r,err=>({erro:err}));
- const [vd,dp,nf,sl,vi,av,stNf,stMp]=await Promise.all([
-  seguro(sb.from('vendas').select('local_id,total,finalizada_em').eq('empresa_id',e).eq('status','paga').eq('teste',false).gte('finalizada_em',ontem0.toISOString()).limit(5000)),
-  seguro(sb.from('dispositivos').select('id,nome,local_id,ultimo_sinal').eq('empresa_id',e).eq('ativo',true)),
+ const [vd,dp,nf,sl,vi,av,stNf,stMp,nfc]=await Promise.all([
+  seguro(sb.from('vendas').select('local_id,total,teste,finalizada_em,observacao').eq('empresa_id',e).eq('status','paga').gte('finalizada_em',semAnt0.toISOString()).limit(5000)),
+  seguro(sb.from('dispositivos').select('id,nome,local_id,ultimo_sinal,mp_terminal_id').eq('empresa_id',e).eq('ativo',true)),
   seguro(sb.from('nfe_recebidas').select('id',{count:'exact',head:true}).eq('empresa_id',e).eq('status','xml')),
-  seguro(sb.from('saldos_estoque').select('produto_id,local_id,saldo').eq('empresa_id',e).range(0,19999)),
+  seguro(saldosTodos()),
   seguro(sb.from('videos_seguranca').select('id',{count:'exact',head:true}).eq('empresa_id',e).eq('enviado',true).neq('motivo','paga').gte('inicio',hoje0.toISOString())),
   seguro(sb.from('avisos_estoque').select('produto_id',{count:'exact',head:true}).eq('empresa_id',e).is('avisado_em',null)),
-  seguro(apiNf('status')),seguro(apiPag('status'))]);
+  seguro(apiNf('status')),seguro(apiPag('status')),
+  seguro(sb.from('nfce').select('status,criado_em').eq('empresa_id',e).in('status',['rejeitada','fila','contingencia']).limit(500))]);
  if(S.tela!=='ini'||!$('#iKpi'))return;
  $('#iHora').textContent='Atualizado às '+hora(new Date().toISOString());
 
  // números do dia (só vendas reais; as de teste ficam de fora)
- const vendas=vd.data||[],hj=vendas.filter(v=>new Date(v.finalizada_em)>=hoje0),ont=vendas.filter(v=>{const t=new Date(v.finalizada_em);return t<hoje0&&t<=mesmaHoraOntem});
- const soma=a=>a.reduce((s,v)=>s+v.total,0),tHj=soma(hj),tOnt=soma(ont);
- const comp=tOnt>0?(()=>{const d=(tHj-tOnt)/tOnt;return `<small class="${d>=0?'up':'dn'}">${pct(d)} que ontem até esta hora</small>`})():`<small>${tHj?'Ontem até esta hora: sem vendas':'Nenhuma venda ainda hoje'}</small>`;
+ // compara com o mesmo dia da semana passada até a mesma hora (loja de condomínio vende diferente em cada dia da semana)
+ const todas=vd.data||[],vendas=todas.filter(v=>!v.teste),testesHoje=todas.filter(v=>v.teste&&new Date(v.finalizada_em)>=hoje0).length;
+ const hj=vendas.filter(v=>new Date(v.finalizada_em)>=hoje0),ant=vendas.filter(v=>{const t=new Date(v.finalizada_em);return t>=semAnt0&&t<semAntFim&&t<=mesmaHoraSemAnt});
+ const soma=a=>a.reduce((s,v)=>s+v.total,0),tHj=soma(hj),tAnt=soma(ant),diaSem=semAnt0.toLocaleDateString('pt-BR',{weekday:'long'}).replace('-feira','');
+ const comp=tAnt>0?(()=>{const d=(tHj-tAnt)/tAnt;return `<small class="${d>=0?'up':'dn'}">${pct(d)} que ${diaSem} passada, mesma hora</small>`})():`<small>${tHj?`${diaSem.charAt(0).toUpperCase()+diaSem.slice(1)} passada, mesma hora: sem vendas`:'Nenhuma venda ainda hoje'}</small>`;
  const disp=dp.data||[],min=d=>d.ultimo_sinal?(agora-new Date(d.ultimo_sinal))/6e4:1e9,online=disp.filter(d=>min(d)<15);
  $('#iKpi').innerHTML=`<div class="kpi"><span>Vendido hoje</span><b class="num">${brl(tHj)}</b>${comp}</div>
-  <div class="kpi"><span>Vendas hoje</span><b class="num">${hj.length}</b><small>${ont.length} ontem até esta hora</small></div>
+  <div class="kpi"><span>Vendas hoje</span><b class="num">${hj.length}</b><small>${ant.length} na ${diaSem} passada, mesma hora</small></div>
   <div class="kpi"><span>Ticket médio</span><b class="num">${brl(hj.length?Math.round(tHj/hj.length):0)}</b><small>Valor médio por compra</small></div>
   <div class="kpi"><span>Caixas online</span><b class="num" style="color:${disp.length&&!online.length?'#f87171':'inherit'}">${online.length} de ${disp.length}</b><small>Com sinal nos últimos 15 min</small></div>`;
+ const tst=$('#iTeste');if(tst)tst.textContent=testesHoje?`Fora destes números: ${vez(testesHoje,'1 venda de teste','# vendas de teste')} hoje.`:'';
 
  // o que precisa de ação, do mais grave para o menos grave
  const at=[],add=(nivel,icone,titulo,texto,botao,acao)=>at.push({nivel,icone,titulo,texto,botao,acao});
@@ -622,7 +629,11 @@ async function telaIni(){const M=$('#main'),h=new Date().getHours(),saud=h<12?'B
  if(mp&&!mp.configurado)add('bad',IC.cartao,'Maquininha de cartão não conectada','Sem a conta do Mercado Pago cadastrada, os caixas não cobram no cartão.','Conectar','cfg');
  else if(mp&&!mp.webhook)add('warn',IC.cartao,'Falta a assinatura do aviso automático do Mercado Pago','Sem ela, um pagamento aprovado pode demorar a aparecer como pago.','Resolver','cfg');
  const nfst=stNf.erro?null:stNf;
- if(nfst){const rej=(nfst.ultimas||[]).filter(n=>n.status==='rejeitada').length;
+ const nfs=nfc.data||[],presas=nfs.filter(n=>n.status!=='rejeitada'&&agora-new Date(n.criado_em)>30*6e4).length;
+ const diverg=vendas.filter(v=>v.observacao&&/diferente do total/i.test(v.observacao)).length;
+ if(diverg)add('bad',IC.cartao,vez(diverg,'1 venda com valor da maquininha diferente do total','# vendas com valor da maquininha diferente do total'),'Nos últimos 7 dias. Confira se o cliente pagou o valor certo.','Ver vendas','vend');
+ if(nfst){const rej=nfc.data?nfs.filter(n=>n.status==='rejeitada').length:(nfst.ultimas||[]).filter(n=>n.status==='rejeitada').length;
+  if(presas)add('warn',ICON.nf,vez(presas,'1 nota fiscal esperando a SEFAZ há mais de 30 min','# notas fiscais esperando a SEFAZ há mais de 30 min'),'O sistema continua tentando sozinho. Se passar de algumas horas, avise o suporte.','Ver vendas','vend');
   if(rej)add('bad',ICON.nf,vez(rej,'1 nota fiscal de venda rejeitada pela SEFAZ','# notas fiscais de venda rejeitadas pela SEFAZ'),'A venda foi feita, mas a nota não saiu. Veja o motivo e reenvie.','Ver vendas','vend');
   if(!nfst.ativo)add('warn',ICON.nf,'Nota fiscal das vendas (NFC-e) desligada','As vendas estão saindo sem nota fiscal.','Configurar','cfg');
   if(nfst.certificado){const dias=Math.round((new Date(nfst.certificado.validade)-agora)/864e5);if(dias<45)add(dias<10?'bad':'warn',ICON.nf,dias<0?'Certificado digital vencido':`Certificado digital vence em ${dias} ${dias===1?'dia':'dias'}`,'Sem certificado válido nenhuma nota fiscal é emitida. Peça o novo ao contador.','Ver','cfg')}}
@@ -647,6 +658,11 @@ async function telaIni(){const M=$('#main'),h=new Date().getHours(),saud=h<12?'B
  const ordem={bad:0,warn:1,info:2};at.sort((a,b)=>ordem[a.nivel]-ordem[b.nivel]);
  $('#iAt').innerHTML=at.length?at.map((x,i)=>`<div class="at ${x.nivel}"><span class="dot">${x.icone}</span><div class="tx"><b>${esc(x.titulo)}</b><p>${esc(x.texto)}</p></div><button class="btn sm${x.nivel==='bad'?' pri':''}" data-at="${i}">${esc(x.botao)}</button></div>`).join('')
   :`<div class="tudo"><span class="dot">${IC.ok}</span><div><b>Tudo em ordem</b><p class="mu sm">Caixas, pagamentos, notas fiscais e estoque sem pendências agora.</p></div></div>`;
+ // primeiros passos: só aparece enquanto falta algo (cliente novo); some quando tudo estiver feito
+ const passos=[[S.produtos.length>0,'Cadastrar os produtos','prod'],[disp.length>0,'Ativar o caixa em uma loja','cx'],[disp.some(d=>d.mp_terminal_id),'Ligar a maquininha a um caixa','cx'],[!!(mp&&mp.configurado),'Conectar a conta do Mercado Pago','cfg'],[vendas.length>0||hj.length>0,'Fazer a primeira venda real','cx']];
+ const faltam=passos.filter(x=>!x[0]).length;
+ $('#iPassos').innerHTML=faltam&&!vd.erro?`<section class="card" style="margin-top:16px"><div class="row"><h2 style="font-size:17px">Primeiros passos</h2><span class="sp"></span><span class="mu sm">Faltam ${faltam} de ${passos.length}</span></div><div style="margin-top:6px">${passos.map(([ok,t,go])=>`<div class="at ${ok?'':'info'}"><span class="dot" style="${ok?'background:rgba(34,197,94,.14);color:#4ade80':''}">${ok?IC.ok:''}</span><div class="tx"><b style="${ok?'color:var(--mu);text-decoration:line-through':''}">${esc(t)}</b></div>${ok?'':`<button class="btn sm" data-ir2="${go}">Fazer agora</button>`}</div>`).join('')}</div></section>`:'';
+ $('#iPassos').querySelectorAll('[data-ir2]').forEach(b=>b.onclick=()=>ir(b.dataset.ir2));
  $('#iAt').querySelectorAll('[data-at]').forEach(b=>b.onclick=()=>ir(at[+b.dataset.at].acao));
 
  // lojas hoje: vendas e situação do caixa
