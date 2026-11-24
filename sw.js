@@ -2,7 +2,7 @@
 const V = 'beep-caixa-v24';
 const FOTOS = 'beep-fotos'; // fotos dos produtos: guardadas no aparelho por 7 dias
 const SETE_DIAS = 7 * 24 * 60 * 60 * 1000;
-const ARQ = ['./', './index.html', './manifest.webmanifest', './logo.png', './icon-192.png', './icon-512.png'];
+const ARQ = ['./', './index.html', './manifest.webmanifest', './logo.png', './icon-192.png', './icon-512.png', './vendor/qrcode.js'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(V).then((c) => c.addAll(ARQ))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== V && k !== FOTOS).map((k) => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener('fetch', (e) => {

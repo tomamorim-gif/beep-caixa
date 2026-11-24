@@ -19,6 +19,8 @@ Sistema próprio de autoatendimento dos mercadinhos Beep. Roda primeiro nas loja
 - Venda guiada por voz. Tela final verde (finalizada) ou vermelha (cancelada/não finalizada), visível nas câmeras.
 - Câmera frontal: gravação opcional por cliente (tudo ou só intercorrências).
 - Produtos importados do SAC Varejo. NCM e dados fiscais gravados no cadastro, com lista para o contador revisar.
+- Contingência: o caixa manda sinal a cada 30 s (rpc `caixa_sinal`). Sem sinal por 90 s, nas lojas com "Aceita pagamento com sistema offline", o app do cliente libera a compra com Pix e o caixa mostra o QR do app; tudo volta sozinho quando o caixa volta. Histórico em `contingencias` (Painel › Caixas). No celular do cliente vale só a confirmação de 18+, sem câmera.
+- Pagamento no app do cliente: Pix real pela função `cartao` (ações `app_*`). Cartão salvo no app ainda não existe.
 - A loja Lira Holanda é só de testes.
 
 ## Pendências
