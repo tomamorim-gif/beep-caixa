@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Beep · Gestão</title>
+<title>Beep Smart Pay · Gestão</title>
 <meta name="robots" content="noindex">
-<link rel="icon" href="../icon-192.png">
+<link rel="icon" href="../site/marca/simbolo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -131,7 +131,7 @@ function precoRef(pid){const ps=S.precos.filter(p=>p.produto_id===pid);return ps
 // ---------- login ----------
 function telaLogin(modo='entrar',msg=''){
  $('#raiz').innerHTML=`<div class="login"><div class="card">
-  <img src="../logo-claro.png" alt="Beep Smart Mercadinhos">
+  <img src="../logo-claro.png" alt="Beep Smart Pay">
   <div><h1 style="font-size:24px">Gestão da loja</h1><p class="mu sm">Entrada de notas, portfólios e configurações.</p></div>
   <div class="tabs2"><button class="${modo==='entrar'?'on':''}" data-m="entrar">Entrar</button><button class="${modo==='convite'?'on':''}" data-m="convite">Tenho um convite</button></div>
   <form id="fLogin" style="display:grid;gap:12px">
