@@ -33,7 +33,7 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
-        android:label="Beep Caixa"
+        android:label="Beep Smart Pay"
         android:supportsRtl="true"
         android:usesCleartextTraffic="false"
         android:theme="@style/Tema.Beep"

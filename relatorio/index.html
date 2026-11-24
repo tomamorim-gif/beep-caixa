@@ -79,7 +79,7 @@ async function carregar(){
  <div class="card"><h2>Dia a dia</h2>${dias.length&&T.visualizacoes?`<div class="graf">${dias.map(d=>`<div class="c" title="${dBR(d.d)}: ${d.v} visualizações, ${d.c} cliques"><div class="k" style="height:${d.c/max*100}%"></div><div class="v" style="height:${d.v/max*100}%"></div></div>`).join('')}</div>
   <div class="eixo">${dias.map((d,i)=>`<span>${i%passo===0?d.d.slice(8,10)+'/'+d.d.slice(5,7):''}</span>`).join('')}</div><div class="leg"><span><i style="background:var(--y)"></i>Visualizações</span><span><i style="background:#38bdf8"></i>Cliques</span></div>`:'<p class="vazio">Os números aparecem aqui assim que o anúncio começar a ser visto.</p>'}</div>
  ${Object.keys(r.canais).length?`<div class="card"><h2>Por canal</h2><div class="canais">${Object.entries(r.canais).map(([k,x])=>`<div class="canal"><b>${esc(nomeCanal[k]||k)}</b><span>${n(x.v)} visualizações · ${n(x.c)} cliques</span></div>`).join('')}</div></div>`:''}
- <footer><span>Atualizado em ${new Date(r.gerado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}. Números contados pelo sistema Beep, sem dados pessoais dos moradores.</span><span>Beep Smart Mercadinhos</span></footer>`}
+ <footer><span>Atualizado em ${new Date(r.gerado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}. Números contados pelo sistema Beep Smart Pay, sem dados pessoais dos moradores.</span><span>Beep Smart Mercadinhos</span></footer>`}
 carregar();
 </script>
 </body>
