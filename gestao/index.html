@@ -34,7 +34,7 @@ label.f{display:grid;gap:6px;font-size:13px;color:var(--mu);font-weight:500}
 .erro{color:#f87171;font-size:13px;min-height:18px}
 /* app */
 .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
-.side{border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+.side{border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;overflow-y:auto}
 .side img.logo{align-self:flex-start;height:52px;width:auto;max-width:200px;object-fit:contain;margin:0 8px 20px}
 .nav{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--mu);font-weight:600;text-align:left}
 .nav:hover{background:var(--p2);color:var(--ink)}.nav.on{background:var(--p2);color:var(--ink);box-shadow:inset 3px 0 0 var(--y)}
@@ -96,6 +96,27 @@ input[type=file]{font-size:13px;color:var(--mu)}input[type=file]::file-selector-
 .prsec{display:grid;gap:12px;padding-bottom:18px;border-bottom:1px solid var(--line)}.prsec h3{font-size:15px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:12px}
 @media(max-width:900px){.prform,.g3{grid-template-columns:1fr}.prfoto{position:static}}
+/* início */
+.navsec{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b7180;padding:14px 12px 4px}
+.ini{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start;margin-top:16px}
+.ini h2{font-size:17px;margin-bottom:4px}
+.kpi small{display:block;font-size:12.5px;color:var(--mu);margin-top:2px;font-weight:500}.kpi small.up{color:#4ade80}.kpi small.dn{color:#fbbf24}
+.at{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-top:1px solid var(--line)}.at:first-of-type{border-top:0}
+.at .dot{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--p3);color:var(--mu);margin-top:1px}
+.at.bad .dot{background:rgba(239,68,68,.14);color:#f87171}.at.warn .dot{background:rgba(245,158,11,.14);color:#fbbf24}.at.info .dot{background:rgba(56,189,248,.12);color:#7dd3fc}
+.at .tx{flex:1;min-width:0}.at .tx b{display:block;font-size:14.5px}.at .tx p{color:var(--mu);font-size:13px;margin-top:2px}
+.at .btn{flex:none;align-self:center}
+.tudo{display:flex;gap:14px;align-items:center;padding:18px;border-radius:14px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.22);margin-top:12px}
+.tudo .dot{width:38px;height:38px;border-radius:12px;background:rgba(34,197,94,.16);color:#4ade80;display:grid;place-items:center;flex:none}
+.atalhos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.atalho{display:flex;gap:12px;align-items:center;text-align:left;padding:16px;border-radius:14px;background:var(--p1);border:1px solid var(--line);transition:border-color .15s,background .15s}
+.atalho:hover{border-color:#3a3e48;background:var(--p2)}.atalho .ic{width:38px;height:38px;border-radius:11px;background:rgba(255,214,10,.1);color:var(--y);display:grid;place-items:center;flex:none}
+.atalho b{display:block;font-size:14px}.atalho span{font-size:12.5px;color:var(--mu)}
+.ljrow{cursor:pointer}.ljrow:hover td{background:var(--p2)}
+.sk{display:block;height:14px;border-radius:7px;background:linear-gradient(90deg,var(--p2),var(--p3),var(--p2));background-size:200% 100%;animation:sk 1.2s infinite}@keyframes sk{to{background-position:-200% 0}}
+@media(max-width:1100px){.ini{grid-template-columns:1fr}.atalhos{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.navsec{display:none}.side .nav{white-space:nowrap;flex:none}}
+@media(max-width:560px){.atalhos{grid-template-columns:1fr}.at{flex-wrap:wrap}.at .tx{flex-basis:calc(100% - 48px)}.at .btn{margin-left:48px}#iLj .tbl td,#iLj .tbl th{padding-left:10px;padding-right:10px}}
 </style>
 </head>
 <body>
@@ -121,7 +142,11 @@ const ICON={nf:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stro
  up:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>'};
 
 // ---------- estado ----------
-const S={user:null,emp:null,papel:null,locais:[],produtos:[],codigos:[],codForn:[],precos:[],portfolios:[],pitens:[],tela:'vend',nota:null,linhas:[],destino:null,pfNovos:new Set()};
+const TELAS=['ini','vend','prod','est','nf','pf','cx','app','ads','vid','cfg'];
+// troca de tela pelo menu ou pelos atalhos do Início; o endereço (#vend…) deixa o botão Voltar funcionar
+function ir(t){if(!TELAS.includes(t))t='ini';if(S.tela===t&&location.hash==='#'+t){render();return}S.tela=t;history.pushState(null,'','#'+t);render();window.scrollTo(0,0)}
+addEventListener('popstate',()=>{const t=location.hash.slice(1);S.tela=TELAS.includes(t)?t:'ini';if($('#main'))render()});
+const S={user:null,emp:null,papel:null,locais:[],produtos:[],codigos:[],codForn:[],precos:[],portfolios:[],pitens:[],tela:TELAS.includes(location.hash.slice(1))?location.hash.slice(1):'ini',nota:null,linhas:[],destino:null,pfNovos:new Set()};
 const lojas=()=>S.locais.filter(l=>l.tipo==='loja'&&l.ativo);
 const regra=()=>S.emp?.regra_preco||{divisor:.57,terminacaoCentavos:90};
 function precoSugerido(custo){const r=regra(),bruto=Math.ceil(custo/r.divisor),reais=Math.floor(bruto/100);let c=reais*100+r.terminacaoCentavos;if(c<bruto)c+=100;return c}
@@ -163,18 +188,24 @@ async function iniciar(){const {data:{session}}=await sb.auth.getSession();if(!s
  try{await carregar()}catch(e){$('#raiz').innerHTML=`<div class="login"><div class="card"><h2>Não foi possível carregar</h2><p class="mu">${esc(e.message)}</p><button class="btn" onclick="location.reload()">Tentar de novo</button></div></div>`;return}
  shell()}
 function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img class="logo" src="../logo-claro.png" alt="Beep Smart Mercadinhos">
+  <button class="nav" data-t="ini"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
+  <div class="navsec">Dia a dia</div>
   <button class="nav" data-t="vend"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Vendas</button>
-  <button class="nav" data-t="prod"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Produtos</button>
   <button class="nav" data-t="est"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Estoque e reposição</button>
-  <button class="nav" data-t="nf">${ICON.nf}Entrada de NF-e</button><button class="nav" data-t="pf">${ICON.pf}Portfólios</button>
+  <button class="nav" data-t="nf">${ICON.nf}Entrada de NF-e</button>
+  <div class="navsec">Cadastros</div>
+  <button class="nav" data-t="prod"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Produtos</button>
+  <button class="nav" data-t="pf">${ICON.pf}Portfólios</button>
+  <div class="navsec">Lojas</div>
   <button class="nav" data-t="cx"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>Caixas</button>
   <button class="nav" data-t="app"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>App do cliente</button>
   <button class="nav" data-t="ads"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>Anúncios</button>
   <button class="nav" data-t="vid"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg>Vídeos</button>
+  <div class="navsec">Ajustes</div>
   <button class="nav" data-t="cfg">${ICON.cfg}Configurações</button>
   <div class="quem"><b style="color:var(--ink)">${esc(S.emp.nome_exibicao||S.emp.razao_social)}</b><br>${esc(S.user.email)} · ${S.papel==='dono'?'Dono':'Gerente'}<br><button class="btn sm" id="sair" style="margin-top:10px">Sair</button></div></aside><main id="main"></main></div>`;
- document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{S.tela=b.dataset.t;render()});$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
-function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({vend:telaVend,prod:telaProd,est:telaEst,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
+ document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>ir(b.dataset.t));$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
+function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({ini:telaIni,vend:telaVend,prod:telaProd,est:telaEst,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
 
 // ---------- leitura do XML (NF-e modelo 55) ----------
 const tx=(el,sel)=>{if(!el)return '';const n=el.getElementsByTagName(sel)[0];return n?n.textContent.trim():''};
@@ -500,11 +531,15 @@ function telaPF(){const M=$('#main');
  M.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{const p=S.portfolios.find(x=>x.id===b.dataset.del);if(!confirmar('Excluir o portfólio '+p.nome+'?'))return;const r=await sb.from('portfolios').delete().eq('id',p.id);if(r.error)return toast(r.error.message);await carregar();render();toast('Portfólio excluído')});
  M.querySelectorAll('[data-loja]').forEach(s=>s.onchange=()=>trocarPf(s.dataset.loja,s.value,s))}
 const confirmar=t=>window.confirm(t);
+// quantos produtos cada loja deixaria de vender se o portfólio ficar só com estes itens
+function pfPerdas(pid,dentro){return lojas().filter(l=>l.portfolio_id===pid).map(l=>{const hoje=S.precos.filter(x=>x.local_id===l.id&&x.ativo_no_mix);return {loja:l.nome,hoje:hoje.length,saem:hoje.filter(x=>!dentro.has(x.produto_id)).length}}).filter(x=>x.saem>=20||(x.hoje&&x.saem/x.hoje>=.2))}
+function confirmarPerda(perdas){const t=perdas.map(x=>`• ${x.loja}: ${x.saem} de ${x.hoje} produtos saem do caixa`).join('\n');
+ return window.prompt(`ATENÇÃO: salvar assim tira produtos de venda nas lojas que usam este portfólio.\n\n${t}\n\nOs clientes não vão conseguir comprar esses produtos até você corrigir. Para continuar mesmo assim, digite TIRAR e confirme.`)?.trim().toUpperCase()==='TIRAR'}
 function trocarPf(lid,pid,sel){const l=S.locais.find(x=>x.id===lid);if(!pid){sel.value=l.portfolio_id||'';toast('Escolha um portfólio');return}
  const p=S.portfolios.find(x=>x.id===pid),dentro=new Set(itensDe(pid).map(i=>i.produto_id)),hoje=S.precos.filter(x=>x.local_id===lid&&x.ativo_no_mix),saem=hoje.filter(x=>!dentro.has(x.produto_id)).length,entram=[...dentro].filter(id=>!hoje.some(x=>x.produto_id===id)).length;
  sel.value=l.portfolio_id||'';
- modal(`<h2>Trocar o portfólio da ${esc(l.nome)}</h2><p class="mu">Para <b style="color:var(--ink)">${esc(p.nome)}</b>.</p><div class="grid4" style="grid-template-columns:1fr 1fr"><div class="kpi"><span>Entram à venda</span><b class="num">${entram}</b></div><div class="kpi"><span>Saem de venda</span><b class="num">${saem}</b></div></div><p class="mu sm">O caixa da loja atualiza o catálogo em até 10 minutos. Produtos que saem deixam de ser repostos.</p><div class="row"><span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="okPf">Trocar</button></div>`);
- $('#okPf').onclick=async()=>{const r=await sb.rpc('aplicar_portfolio',{p_local:lid,p_portfolio:pid});if(r.error)return toast(r.error.message);fechar();await carregar();render();toast(`${l.nome}: ${r.data.no_mix} produtos à venda`+(r.data.sem_preco?` · ${r.data.sem_preco} sem preço ficaram de fora`:''))}}
+ modal(`<h2>Trocar o portfólio da ${esc(l.nome)}</h2><p class="mu">Para <b style="color:var(--ink)">${esc(p.nome)}</b>.</p><div class="grid4" style="grid-template-columns:1fr 1fr"><div class="kpi"><span>Entram à venda</span><b class="num">${entram}</b></div><div class="kpi"><span>Saem de venda</span><b class="num">${saem}</b></div></div>${saem>=20||(hoje.length&&saem/hoje.length>=.2)?`<div class="aviso" style="background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3);color:#fecaca"><span><b>Cuidado:</b> ${saem} dos ${hoje.length} produtos que a loja vende hoje saem do caixa. Confira se este é mesmo o portfólio certo.</span></div>`:''}<p class="mu sm">O caixa da loja atualiza o catálogo em até 10 minutos. Produtos que saem deixam de ser repostos.</p><div class="row"><span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="okPf">Trocar</button></div>`);
+ $('#okPf').onclick=async()=>{if((saem>=20||(hoje.length&&saem/hoje.length>=.2))&&!confirmarPerda([{loja:l.nome,hoje:hoje.length,saem}]))return;const r=await sb.rpc('aplicar_portfolio',{p_local:lid,p_portfolio:pid});if(r.error)return toast(r.error.message);fechar();await carregar();render();toast(`${l.nome}: ${r.data.no_mix} produtos à venda`+(r.data.sem_preco?` · ${r.data.sem_preco} sem preço ficaram de fora`:''))}}
 function editorPf(id,duplicar){const base=id?S.portfolios.find(p=>p.id===id):null;const E={id:duplicar?null:base?.id||null,nome:base?(duplicar?base.nome+' (cópia)':base.nome):'',descricao:base?.descricao||'',cor:base?.cor||'#38bdf8',itens:new Map((id?itensDe(id):[]).map(i=>[i.produto_id,{min:+i.estoque_min,max:+i.estoque_max}]))};let q='';$('#modal').classList.add('wide');
  const desenha=()=>{const t=q.trim().toLowerCase(),lista=S.produtos.filter(p=>p.ativo&&(!t||p.nome.toLowerCase().includes(t)||(p.ean||'').includes(t)));
   modal(`<h2>${E.id?'Editar portfólio':'Novo portfólio'}</h2>
@@ -520,6 +555,8 @@ function editorPf(id,duplicar){const base=id?S.portfolios.find(p=>p.id===id):nul
   document.querySelectorAll('[data-mx]').forEach(c=>c.onchange=()=>{const it=E.itens.get(c.dataset.mx);if(it)it.max=Math.max(it.min,parseFloat(c.value)||0)});
   $('#eTodos').onclick=()=>{sv();lista.forEach(p=>{if(!E.itens.has(p.id))E.itens.set(p.id,{min:2,max:8})});desenha()};$('#eNenhum').onclick=()=>{sv();lista.forEach(p=>E.itens.delete(p.id));desenha()};
   $('#eSalvar').onclick=async()=>{sv();if(!E.nome.trim())return toast('Dê um nome ao portfólio');if(!E.itens.size)return toast('Marque pelo menos um produto');const b=$('#eSalvar');b.disabled=true;
+   const perdas=E.id?pfPerdas(E.id,new Set(E.itens.keys())):[];
+   if(perdas.length&&!confirmarPerda(perdas)){b.disabled=false;return}
    try{let pid=E.id;const cab={empresa_id:S.emp.id,nome:E.nome.trim(),descricao:E.descricao.trim()||null,cor:E.cor};
     if(pid){const r=await sb.from('portfolios').update(cab).eq('id',pid);if(r.error)throw r.error}else{const r=await sb.from('portfolios').insert(cab).select('id').single();if(r.error)throw r.error;pid=r.data.id}
     const d=await sb.from('portfolio_itens').delete().eq('portfolio_id',pid);if(d.error)throw d.error;
@@ -527,6 +564,97 @@ function editorPf(id,duplicar){const base=id?S.portfolios.find(p=>p.id===id):nul
     const r2=await sb.from('portfolio_itens').insert(rows);if(r2.error)throw r2.error;
     const usam=lojas().filter(l=>l.portfolio_id===pid);for(const l of usam){const r=await sb.rpc('aplicar_portfolio',{p_local:l.id,p_portfolio:pid});if(r.error)throw r.error}
     fechar();await carregar();render();toast('Portfólio salvo'+(usam.length?' e aplicado em '+usam.length+' loja(s)':''))}catch(err){b.disabled=false;toast('Erro: '+err.message)}}};desenha()}
+
+// ---------- tela: início ----------
+// Primeira tela do painel: como estão as lojas agora e uma lista curta do que precisa de ação, cada item com o botão que resolve.
+const IC={alerta:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
+ caixa:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>',
+ cartao:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
+ caixaP:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
+ video:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg>',
+ pessoa:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+ ok:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>',
+ mais:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>',
+ qr:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v7h-7"/></svg>'};
+const inicioDia=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x};
+const vez=(n,um,varios)=>n===1?um:varios.replace('#',n.toLocaleString('pt-BR'));
+async function telaIni(){const M=$('#main'),h=new Date().getHours(),saud=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
+ const kSk='<div class="kpi"><span>&nbsp;</span><b><i class="sk" style="width:60%;height:22px"></i></b></div>';
+ M.innerHTML=`<div class="head"><div><h1>${saud}</h1><p>${esc(S.emp.nome_exibicao||S.emp.razao_social)} · como estão as lojas agora e o que precisa de você.</p></div><div class="row"><span class="mu sm" id="iHora"></span><button class="btn" id="iAtualizar">Atualizar</button></div></div>
+  <div class="grid4" id="iKpi">${kSk.repeat(4)}</div>
+  <div class="ini"><section class="card"><h2>Precisa da sua atenção</h2><p class="mu sm">Em ordem de importância. Cada item tem o botão que resolve.</p><div id="iAt" style="margin-top:8px"><div class="at"><span class="dot"></span><div class="tx"><i class="sk" style="width:70%"></i><i class="sk" style="width:45%;margin-top:8px"></i></div></div></div></section>
+  <section class="card" style="padding:0;overflow:hidden"><div style="padding:20px 20px 10px"><h2>Lojas hoje</h2><p class="mu sm">Toque numa loja para ver o estoque dela.</p></div><div id="iLj"><p class="vazio">Carregando…</p></div></section></div>
+  <h2 style="font-size:17px;margin:28px 0 12px">Atalhos</h2>
+  <div class="atalhos">
+   <button class="atalho" data-ir="nf"><span class="ic">${ICON.nf}</span><span><b>Lançar nota de compra</b><span>Puxar da SEFAZ e dar entrada</span></span></button>
+   <button class="atalho" data-ir="prodnovo"><span class="ic">${IC.mais}</span><span><b>Cadastrar produto</b><span>Foto, preço e dados fiscais</span></span></button>
+   <button class="atalho" data-ir="cxnovo"><span class="ic">${IC.caixa}</span><span><b>Ativar um caixa</b><span>Gera o QR para o tablet</span></span></button>
+   <button class="atalho" data-ir="app"><span class="ic">${IC.qr}</span><span><b>QR do app do cliente</b><span>Imprimir para o balcão</span></span></button>
+  </div>`;
+ $('#iAtualizar').onclick=()=>telaIni();
+ M.querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>{const t=b.dataset.ir;if(t==='prodnovo'){ir('prod');setTimeout(()=>prEditar(null),0);return}if(t==='cxnovo'){ir('cx');gerarCodigo();return}ir(t)});
+ const e=S.emp.id,agora=new Date(),hoje0=inicioDia(agora),ontem0=new Date(hoje0.getTime()-864e5),mesmaHoraOntem=new Date(agora.getTime()-864e5);
+ const seguro=p=>Promise.resolve(p).then(r=>r,err=>({erro:err}));
+ const [vd,dp,nf,sl,vi,av,stNf,stMp]=await Promise.all([
+  seguro(sb.from('vendas').select('local_id,total,finalizada_em').eq('empresa_id',e).eq('status','paga').eq('teste',false).gte('finalizada_em',ontem0.toISOString()).limit(5000)),
+  seguro(sb.from('dispositivos').select('id,nome,local_id,ultimo_sinal').eq('empresa_id',e).eq('ativo',true)),
+  seguro(sb.from('nfe_recebidas').select('id',{count:'exact',head:true}).eq('empresa_id',e).eq('status','xml')),
+  seguro(sb.from('saldos_estoque').select('produto_id,local_id,saldo').eq('empresa_id',e).range(0,19999)),
+  seguro(sb.from('videos_seguranca').select('id',{count:'exact',head:true}).eq('empresa_id',e).eq('enviado',true).neq('motivo','paga').gte('inicio',hoje0.toISOString())),
+  seguro(sb.from('avisos_estoque').select('produto_id',{count:'exact',head:true}).eq('empresa_id',e).is('avisado_em',null)),
+  seguro(apiNf('status')),seguro(apiPag('status'))]);
+ if(S.tela!=='ini'||!$('#iKpi'))return;
+ $('#iHora').textContent='Atualizado às '+hora(new Date().toISOString());
+
+ // números do dia (só vendas reais; as de teste ficam de fora)
+ const vendas=vd.data||[],hj=vendas.filter(v=>new Date(v.finalizada_em)>=hoje0),ont=vendas.filter(v=>{const t=new Date(v.finalizada_em);return t<hoje0&&t<=mesmaHoraOntem});
+ const soma=a=>a.reduce((s,v)=>s+v.total,0),tHj=soma(hj),tOnt=soma(ont);
+ const comp=tOnt>0?(()=>{const d=(tHj-tOnt)/tOnt;return `<small class="${d>=0?'up':'dn'}">${pct(d)} que ontem até esta hora</small>`})():`<small>${tHj?'Ontem até esta hora: sem vendas':'Nenhuma venda ainda hoje'}</small>`;
+ const disp=dp.data||[],min=d=>d.ultimo_sinal?(agora-new Date(d.ultimo_sinal))/6e4:1e9,online=disp.filter(d=>min(d)<15);
+ $('#iKpi').innerHTML=`<div class="kpi"><span>Vendido hoje</span><b class="num">${brl(tHj)}</b>${comp}</div>
+  <div class="kpi"><span>Vendas hoje</span><b class="num">${hj.length}</b><small>${ont.length} ontem até esta hora</small></div>
+  <div class="kpi"><span>Ticket médio</span><b class="num">${brl(hj.length?Math.round(tHj/hj.length):0)}</b><small>Valor médio por compra</small></div>
+  <div class="kpi"><span>Caixas online</span><b class="num" style="color:${disp.length&&!online.length?'#f87171':'inherit'}">${online.length} de ${disp.length}</b><small>Com sinal nos últimos 15 min</small></div>`;
+
+ // o que precisa de ação, do mais grave para o menos grave
+ const at=[],add=(nivel,icone,titulo,texto,botao,acao)=>at.push({nivel,icone,titulo,texto,botao,acao});
+ const mp=stMp.erro?null:stMp;
+ if(mp&&!mp.configurado)add('bad',IC.cartao,'Maquininha de cartão não conectada','Sem a conta do Mercado Pago cadastrada, os caixas não cobram no cartão.','Conectar','cfg');
+ else if(mp&&!mp.webhook)add('warn',IC.cartao,'Falta a assinatura do aviso automático do Mercado Pago','Sem ela, um pagamento aprovado pode demorar a aparecer como pago.','Resolver','cfg');
+ const nfst=stNf.erro?null:stNf;
+ if(nfst){const rej=(nfst.ultimas||[]).filter(n=>n.status==='rejeitada').length;
+  if(rej)add('bad',ICON.nf,vez(rej,'1 nota fiscal de venda rejeitada pela SEFAZ','# notas fiscais de venda rejeitadas pela SEFAZ'),'A venda foi feita, mas a nota não saiu. Veja o motivo e reenvie.','Ver vendas','vend');
+  if(!nfst.ativo)add('warn',ICON.nf,'Nota fiscal das vendas (NFC-e) desligada','As vendas estão saindo sem nota fiscal.','Configurar','cfg');
+  if(nfst.certificado){const dias=Math.round((new Date(nfst.certificado.validade)-agora)/864e5);if(dias<45)add(dias<10?'bad':'warn',ICON.nf,dias<0?'Certificado digital vencido':`Certificado digital vence em ${dias} ${dias===1?'dia':'dias'}`,'Sem certificado válido nenhuma nota fiscal é emitida. Peça o novo ao contador.','Ver','cfg')}}
+ const pfs=S.portfolios.map(p=>{const us=lojas().filter(l=>l.portfolio_id===p.id);if(!us.length)return null;const n=itensDe(p.id).length,mixMax=Math.max(...us.map(l=>S.precos.filter(x=>x.local_id===l.id&&x.ativo_no_mix).length));return mixMax>=20&&n<mixMax*.8?{p,n,mixMax,us}:null}).filter(Boolean);
+ pfs.forEach(x=>add('bad',IC.alerta,`Portfólio "${x.p.nome}" tem só ${x.n} ${x.n===1?'produto':'produtos'}, mas as lojas vendem ${x.mixMax}`,`Se ele for salvo ou reaplicado assim, ${x.us.length===1?'a loja deixa':'as lojas deixam'} de vender o resto. O sistema agora pede confirmação antes, mas o certo é completar o portfólio.`,'Ver portfólios','pf'));
+ const semSinal=disp.filter(d=>min(d)>=1440),lojasCaixa=new Set(disp.map(d=>d.local_id)),semCaixa=lojas().filter(l=>!lojasCaixa.has(l.id));
+ const lojaComOnline=new Set(online.map(d=>d.local_id)),lojasParadas=lojas().filter(l=>lojasCaixa.has(l.id)&&!lojaComOnline.has(l.id)&&disp.some(d=>d.local_id===l.id&&min(d)<1440));
+ if(lojasParadas.length)add('bad',IC.caixa,vez(lojasParadas.length,'1 loja com o caixa sem sinal agora','# lojas com o caixa sem sinal agora'),lojasParadas.map(l=>l.nome).join(', ')+'. Confira se o tablet está ligado e com internet. As vendas sem internet ficam guardadas e sobem quando a conexão volta.','Ver caixas','cx');
+ if(semSinal.length)add('warn',IC.caixa,vez(semSinal.length,'1 caixa sem sinal há mais de um dia','# caixas sem sinal há mais de um dia'),'Se o aparelho não é mais usado, desative. Assim ninguém vende com ele.','Ver caixas','cx');
+ if(nf.count)add('warn',ICON.nf,vez(nf.count,'1 nota de compra esperando conferência','# notas de compra esperando conferência'),'Confira e lance no estoque. Se a mercadoria já foi contada, marque "Ignorar".','Conferir notas','nf');
+ if(vi.count)add('warn',IC.video,vez(vi.count,'1 ocorrência gravada hoje','# ocorrências gravadas hoje'),'Compras canceladas, abandonadas ou com pagamento recusado. Vale dar uma olhada.','Assistir','vid');
+ const saldos=sl.data||[],porLoja=new Map();saldos.forEach(r=>{(porLoja.get(r.local_id)||porLoja.set(r.local_id,new Map()).get(r.local_id)).set(r.produto_id,+r.saldo)});
+ const semEstoque=[],repor=[];let negativos=0;
+ lojas().forEach(l=>{const sal=porLoja.get(l.id),mix=S.precos.filter(x=>x.local_id===l.id&&x.ativo_no_mix);if(!mix.length)return;
+  if(!sal||![...sal.values()].some(v=>v>0)){semEstoque.push(l);return}
+  negativos+=[...sal.values()].filter(v=>v<0).length;const n=mix.filter(x=>(sal.get(x.produto_id)||0)<(+x.estoque_min||0)).length;if(n)repor.push({l,n})});
+ if(repor.length){const tot=repor.reduce((s,x)=>s+x.n,0);add('warn',IC.caixaP,vez(tot,'1 produto abaixo do mínimo','# produtos abaixo do mínimo')+` em ${vez(repor.length,'1 loja','# lojas')}`,repor.sort((a,b)=>b.n-a.n).slice(0,3).map(x=>`${x.l.nome} (${x.n})`).join(', ')+(repor.length>3?'…':''),'Ver reposição','est')}
+ if(negativos)add('warn',IC.caixaP,vez(negativos,'1 produto com estoque negativo','# produtos com estoque negativo'),'Vendeu mais do que entrou no sistema. Normalmente falta lançar uma nota ou um abastecimento.','Ver estoque','est');
+ if(semEstoque.length)add('info',IC.caixaP,vez(semEstoque.length,'1 loja ainda sem estoque no sistema','# lojas ainda sem estoque no sistema'),'A reposição só fica certa depois da primeira entrada: lance as notas de compra no CD e registre o que foi para cada loja.','Ver estoque','est');
+ if(semCaixa.length)add('info',IC.caixa,vez(semCaixa.length,'1 loja sem caixa ativado','# lojas sem caixa ativado'),semCaixa.map(l=>l.nome).join(', '),'Ativar caixa','cx');
+ if(av.count)add('info',IC.pessoa,vez(av.count,'1 pedido de produto feito por cliente','# pedidos de produto feitos por clientes'),'Clientes pediram pelo app para avisar quando chegar.','Ver pedidos','app');
+ const ordem={bad:0,warn:1,info:2};at.sort((a,b)=>ordem[a.nivel]-ordem[b.nivel]);
+ $('#iAt').innerHTML=at.length?at.map((x,i)=>`<div class="at ${x.nivel}"><span class="dot">${x.icone}</span><div class="tx"><b>${esc(x.titulo)}</b><p>${esc(x.texto)}</p></div><button class="btn sm${x.nivel==='bad'?' pri':''}" data-at="${i}">${esc(x.botao)}</button></div>`).join('')
+  :`<div class="tudo"><span class="dot">${IC.ok}</span><div><b>Tudo em ordem</b><p class="mu sm">Caixas, pagamentos, notas fiscais e estoque sem pendências agora.</p></div></div>`;
+ $('#iAt').querySelectorAll('[data-at]').forEach(b=>b.onclick=()=>ir(at[+b.dataset.at].acao));
+
+ // lojas hoje: vendas e situação do caixa
+ const st=l=>{const ds=disp.filter(d=>d.local_id===l.id);if(!ds.length)return '<span class="pill">Sem caixa</span>';const m=Math.min(...ds.map(min));return m<15?'<span class="pill ok">Online</span>':m<1440?`<span class="pill warn">Sem sinal há ${m<60?Math.round(m)+' min':Math.round(m/60)+' h'}</span>`:'<span class="pill bad">Offline</span>'};
+ const vl=new Map();hj.forEach(v=>{const x=vl.get(v.local_id)||{n:0,t:0};x.n++;x.t+=v.total;vl.set(v.local_id,x)});
+ const ls=[...lojas()].sort((a,b)=>(vl.get(b.id)?.t||0)-(vl.get(a.id)?.t||0));
+ $('#iLj').innerHTML=`<table class="tbl"><thead><tr><th>Loja</th><th>Caixa</th><th class="n hm">Vendas</th><th class="n">Total</th></tr></thead><tbody>${ls.map(l=>{const x=vl.get(l.id)||{n:0,t:0};return `<tr class="ljrow" data-lj="${l.id}"><td><b>${esc(l.nome)}</b></td><td>${st(l)}</td><td class="n num hm">${x.n}</td><td class="n num"><b>${brl(x.t)}</b></td></tr>`}).join('')||'<tr><td colspan="4" class="vazio">Nenhuma loja cadastrada.</td></tr>'}</tbody></table>`;
+ $('#iLj').querySelectorAll('[data-lj]').forEach(r=>r.onclick=()=>{EST_LOCAL=r.dataset.lj;ir('est')})}
 
 // ---------- tela: vendas ----------
 const hojeISO=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
