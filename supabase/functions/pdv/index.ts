@@ -103,15 +103,24 @@ Deno.serve(async (req) => {
     const fotos = new Map<string, string>();
     const ids = ativos.map((p: any) => p.produtos.id);
     if (ids.length) {
-      const { data: fs } = await db.from("produto_fotos").select("produto_id, path, principal, ordem").eq("empresa_id", d.empresa_id).in("produto_id", ids).order("principal", { ascending: false }).order("ordem");
-      const primeira = new Map<string, string>();
-      for (const f of fs ?? []) if (!primeira.has(f.produto_id)) primeira.set(f.produto_id, f.path);
-      if (primeira.size) {
-        const paths = [...primeira.values()];
-        const { data: urls } = await db.storage.from("produtos").createSignedUrls(paths, 60 * 60 * 24 * 7);
-        const porPath = new Map((urls ?? []).filter((u: any) => u.signedUrl).map((u: any) => [u.path, u.signedUrl]));
-        for (const [pid, path] of primeira) if (porPath.has(path)) fotos.set(pid, porPath.get(path)!);
+      // consulta em lotes de 150 produtos: a lista com centenas de ids numa URL só ficava longa demais e a consulta falhava calada (sem nenhuma foto)
+      const fs: any[] = [];
+      for (let i = 0; i < ids.length; i += 150) {
+        const { data, error } = await db.from("produto_fotos").select("produto_id, path, principal, ordem").eq("empresa_id", d.empresa_id).in("produto_id", ids.slice(i, i + 150)).order("principal", { ascending: false }).order("ordem");
+        if (error) console.error("catalogo: fotos", error.message);
+        fs.push(...(data ?? []));
       }
+      const primeira = new Map<string, string>();
+      for (const f of fs) if (!primeira.has(f.produto_id)) primeira.set(f.produto_id, f.path);
+      const paths = [...primeira.values()];
+      const porPath = new Map<string, string>();
+      // links assinados em lotes de 100
+      for (let i = 0; i < paths.length; i += 100) {
+        const { data: urls, error: eUrls } = await db.storage.from("produtos").createSignedUrls(paths.slice(i, i + 100), 60 * 60 * 24 * 7);
+        if (eUrls) console.error("catalogo: links das fotos", eUrls.message);
+        for (const u of urls ?? []) if (u.signedUrl && u.path) porPath.set(u.path, u.signedUrl);
+      }
+      for (const [pid, path] of primeira) if (porPath.has(path)) fotos.set(pid, porPath.get(path)!);
     }
     const produtos = ativos.map((p: any) => ({
       id: p.produtos.id, nome: p.produtos.nome, preco: p.preco, unidade: p.produtos.unidade, maior18: p.produtos.idade_minima === 18, foto: fotos.get(p.produtos.id) ?? null,
