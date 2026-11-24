@@ -46,7 +46,8 @@ main{padding:28px 32px 80px;min-width:0}
 .drop{border:2px dashed #3a3e48;border-radius:20px;padding:48px 24px;text-align:center;display:grid;gap:10px;place-items:center;background:var(--p1);transition:border-color .15s,background .15s}
 .drop.over{border-color:var(--y);background:rgba(255,214,10,.05)}
 .drop .ic{width:64px;height:64px;border-radius:18px;background:rgba(255,214,10,.1);color:var(--y);display:grid;place-items:center}
-.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.fis{display:grid;gap:6px;justify-items:start;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.fis .chk{padding:4px 8px;font-size:12px;line-height:1.35;align-items:flex-start}.fis .chk input{margin-top:2px}
 .kpi{background:var(--p1);border:1px solid var(--line);border-radius:14px;padding:14px 16px}.kpi span{font-size:12px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.04em}.kpi b{display:block;font:800 22px Manrope,Inter,sans-serif;margin-top:4px}
 .tbl{width:100%;border-collapse:collapse}.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mu);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:600;position:sticky;top:0;background:var(--p1)}
 .tbl td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}.tbl tr:last-child td{border-bottom:0}.tbl .n{text-align:right}
@@ -81,7 +82,7 @@ input[type=file]{font-size:13px;color:var(--mu)}input[type=file]::file-selector-
 .vazio{padding:28px;text-align:center;color:var(--mu)}
 @media print{body:has(#modal.on #cartaz) .app,body:has(#modal.on #cartaz) #toast,#mbox .row{display:none!important}body:has(#modal.on #cartaz) #modal{position:static;inset:auto;background:none;display:block;padding:0}body:has(#modal.on #cartaz) #mbox{box-shadow:none;border:0;background:#fff;max-width:none;width:auto;max-height:none;overflow:visible}#cartaz,#cartaz h2{color:#000!important}#cartaz .mu{color:#333!important}}
 @media print{.side,.head .row,.barra{display:none!important}.app{display:block}body,html{background:#fff;color:#000}.tblwrap,.kpi,.card{background:#fff;border-color:#ccc}.tbl th{background:#fff;color:#333}}
-@media(max-width:900px){.app{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;overflow:auto;padding:12px}.side img,.side .quem{display:none}main{padding:20px 16px 80px}.grid4{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.app{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;overflow:auto;padding:12px}.side img,.side .quem{display:none}main{padding:20px 16px 80px}.grid4,.grid5{grid-template-columns:1fr 1fr}}
 
 /* produtos */
 .prbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
@@ -152,9 +153,9 @@ function telaLogin(modo='entrar',msg=''){
 async function carregar(){const e=S.emp.id;
  // o servidor devolve no máximo 1.000 linhas por consulta: busca em páginas até trazer tudo
  const q=async(t,sel='*',ord)=>{const out=[];for(let de=0;;de+=1000){let c=sb.from(t).select(sel).eq('empresa_id',e);c=ord?c.order(ord).order('id',{ascending:true}):c;const r=await c.range(de,de+999);if(r.error)return r;out.push(...r.data);if(r.data.length<1000)return {data:out,error:null}}};
- const [lc,pr,cd,cf,pc,pf,pi]=await Promise.all([q('locais','id,nome,tipo,ativo,portfolio_id,app_consulta,app_compra,app_pendente'),q('produtos','id,ean,nome,ncm,cest,unidade,custo,ativo','nome'),q('produto_codigos','produto_id,ean'),q('produto_codigos_fornecedor','produto_id,fornecedor_cnpj,codigo,fator'),q('precos_local','produto_id,local_id,preco,ativo_no_mix,estoque_min,estoque_max'),q('portfolios','id,nome,descricao,cor','criado_em'),q('portfolio_itens','portfolio_id,produto_id,estoque_min,estoque_max')]);
- for(const r of [lc,pr,cd,cf,pc,pf,pi])if(r.error)throw r.error;
- S.locais=lc.data;S.produtos=pr.data;S.codigos=cd.data;S.codForn=cf.data;S.precos=pc.data;S.portfolios=pf.data;S.pitens=pi.data}
+ const [lc,pr,cd,cf,pc,pf,pi,gf]=await Promise.all([q('locais','id,nome,tipo,ativo,portfolio_id,app_consulta,app_compra,app_pendente'),q('produtos','id,ean,nome,ncm,cest,unidade,custo,ativo,grupo_fiscal_id','nome'),q('produto_codigos','produto_id,ean'),q('produto_codigos_fornecedor','produto_id,fornecedor_cnpj,codigo,fator'),q('precos_local','produto_id,local_id,preco,ativo_no_mix,estoque_min,estoque_max'),q('portfolios','id,nome,descricao,cor','criado_em'),q('portfolio_itens','portfolio_id,produto_id,estoque_min,estoque_max'),q('grupos_fiscais','id,nome,csosn,cfop_saida,cst_pis_cofins','nome')]);
+ for(const r of [lc,pr,cd,cf,pc,pf,pi,gf])if(r.error)throw r.error;
+ S.locais=lc.data;S.produtos=pr.data;S.codigos=cd.data;S.codForn=cf.data;S.precos=pc.data;S.portfolios=pf.data;S.pitens=pi.data;S.grupos=gf.data}
 async function iniciar(){const {data:{session}}=await sb.auth.getSession();if(!session){telaLogin();return}S.user=session.user;
  const {data:m}=await sb.from('membros').select('empresa_id,papel').eq('user_id',S.user.id).eq('ativo',true).in('papel',['dono','gerente']).limit(1);
  if(!m?.length){await sb.auth.signOut();telaLogin('entrar','Este login não tem acesso de dono ou gerente.');return}
@@ -190,15 +191,40 @@ function lerNFe(xml){if(xml.length>5e6)throw new Error('Arquivo grande demais');
   const qCom=nr(tx(p,'qCom')),qTrib=nr(tx(p,'qTrib'))||qCom,fator=qCom>0?Math.max(1,Math.round(qTrib/qCom*1000)/1000):1;
   let impostos=0;if(imp){const ipi=imp.getElementsByTagName('IPI')[0];if(ipi)impostos+=nr(tx(ipi,'vIPI'));for(const st of imp.getElementsByTagName('vICMSST'))impostos+=nr(st.textContent)}
   const total=nr(tx(p,'vProd'))-nr(tx(p,'vDesc'))+nr(tx(p,'vFrete'))+nr(tx(p,'vSeg'))+nr(tx(p,'vOutro'))+impostos,ct=centavos(total),un=qCom*fator;
-  return {nItem:+det.getAttribute('nItem'),codigo:tx(p,'cProd'),ean:eanOk(tx(p,'cEAN')),eanUn:eanOk(tx(p,'cEANTrib')),desc:tx(p,'xProd'),ncm:tx(p,'NCM'),cest:tx(p,'CEST')||null,uCom:tx(p,'uCom'),qCom,fator,custoTotal:ct,custoUn:un>0?Math.round(ct/un):ct}});
+  const fis=lerFiscalItem(imp);
+  return {...fis,cfop:tx(p,'CFOP'),nItem:+det.getAttribute('nItem'),codigo:tx(p,'cProd'),ean:eanOk(tx(p,'cEAN')),eanUn:eanOk(tx(p,'cEANTrib')),desc:tx(p,'xProd'),ncm:tx(p,'NCM'),cest:tx(p,'CEST')||null,uCom:tx(p,'uCom'),qCom,fator,custoTotal:ct,custoUn:un>0?Math.round(ct/un):ct}});
  return {chave,numero:tx(ide,'nNF'),serie:tx(ide,'serie'),emissao:tx(ide,'dhEmi')||tx(ide,'dEmi'),fornCnpj:tx(emit,'CNPJ')||tx(emit,'CPF'),fornNome:tx(emit,'xNome'),destCnpj:tx(dest,'CNPJ'),total:centavos(nr(tx(inf.getElementsByTagName('ICMSTot')[0],'vNF'))),itens,xml}}
+
+// ICMS do item na nota do fornecedor: diz se a mercadoria já veio com ST (retida ou cobrada antes)
+const CST_ST=new Set(['10','30','60','70']),CSOSN_ST=new Set(['201','202','203','500']);
+function lerFiscalItem(imp){const r={icmsCst:'',st:false,pisCst:''};if(!imp)return r;
+ const icms=imp.getElementsByTagName('ICMS')[0],g=icms&&[...icms.children][0];
+ if(g){const cst=tx(g,'CST'),csosn=tx(g,'CSOSN');r.icmsCst=csosn||cst;
+  const temValor=['vICMSST','vICMSSTRet','vBCSTRet','vICMSSubstituto'].some(t=>nr(tx(g,t))>0);
+  r.st=CSOSN_ST.has(csosn)||CST_ST.has(cst)||(['90','900'].includes(r.icmsCst)&&temValor)}
+ const pis=imp.getElementsByTagName('PIS')[0];if(pis){const gp=[...pis.children][0];r.pisCst=gp?tx(gp,'CST'):''}
+ return r}
+// grupo fiscal sugerido pela nota (regra do contador): com ST = CSOSN 500/5405, sem ST = CSOSN 201/5403.
+// PIS/COFINS: 04 (monofásico) se o cadastro já é 04 ou o fornecedor usou 04; senão 49.
+function grupoDe(st,pis){const gs=S.grupos||[],pref=st?/^com st/i:/^sem st/i,cs=st?'500':'201';
+ const cand=gs.filter(g=>g.csosn===cs&&g.cst_pis_cofins===pis);return cand.find(g=>pref.test(g.nome))||cand[0]||null}
+const grupoNome=id=>(S.grupos||[]).find(g=>g.id===id)?.nome||'sem grupo';
+function sugerirFiscal(it,prod){const gAtual=prod&&(S.grupos||[]).find(g=>g.id===prod.grupo_fiscal_id);
+ const pis=(gAtual?.cst_pis_cofins==='04'||it.pisCst==='04')?'04':'49';
+ const ncmNota=/^\d{8}$/.test(it.ncm)?it.ncm:null,cestNota=/^\d{7}$/.test(it.cest||'')?it.cest:null;
+ if(!prod){const g=grupoDe(it.st,pis);return {ncm:ncmNota,cest:cestNota,grupo:g?.id||null,mudaNcm:false,mudaGrupo:false,stSemCadastro:false,aplicar:true}}
+ const mudaNcm=!!ncmNota&&ncmNota!==(prod.ncm||'');
+ const atualST=gAtual?gAtual.csosn==='500':null;
+ // só sobe para Com ST automaticamente; Com ST -> Sem ST fica só como aviso até o contador confirmar o CSOSN 201
+ const gNovo=it.st&&atualST!==true?grupoDe(true,pis):null;
+ return {ncm:ncmNota,cest:cestNota,grupo:gNovo?.id||null,mudaNcm,mudaGrupo:!!gNovo,stSemCadastro:!it.st&&atualST===true,aplicar:mudaNcm||!!gNovo}}
 
 // casa cada item com o cadastro: primeiro pelo código do fornecedor, depois pelo código de barras
 function conferir(n){const porEan=new Map();S.produtos.forEach(p=>{if(p.ean)porEan.set(p.ean,p)});S.codigos.forEach(c=>{const p=S.produtos.find(x=>x.id===c.produto_id);if(p)porEan.set(c.ean,p)});
  return n.itens.map(it=>{let p=null,por=null;const cf=S.codForn.find(c=>c.fornecedor_cnpj===n.fornCnpj&&c.codigo===it.codigo);
   if(cf){p=S.produtos.find(x=>x.id===cf.produto_id);por='codigo';if(cf.fator&&+cf.fator!==1&&it.fator===1){it.fator=+cf.fator;it.custoUn=Math.round(it.custoTotal/(it.qCom*it.fator))}}
   if(!p&&(it.eanUn||it.ean)){p=porEan.get(it.eanUn)||porEan.get(it.ean)||null;if(p)por='ean'}
-  return {it,prod:p,por,nome:bonito(it.desc),preco:p?null:precoSugerido(it.custoUn),novoPreco:''}})}
+  return {it,prod:p,por,nome:bonito(it.desc),preco:p?null:precoSugerido(it.custoUn),novoPreco:'',fis:sugerirFiscal(it,p)}})}
 
 // ---------- tela: entrada de NF-e ----------
 function telaNF(){const M=$('#main');
@@ -208,11 +234,11 @@ function telaNF(){const M=$('#main');
   <h2 style="font-size:18px;margin:28px 0 12px">Últimas notas</h2><div id="ultimas" class="tblwrap"><p class="vazio">Carregando…</p></div>`;
   const d=$('#drop');['dragenter','dragover'].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.classList.add('over')}));['dragleave','drop'].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.classList.remove('over')}));
   d.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)abrirXml(f)});$('#fXml').onchange=e=>{const f=e.target.files[0];if(f)abrirXml(f)};ultimas();return}
- const n=S.nota,L=S.linhas,novos=L.filter(l=>!l.prod).length,mudou=L.filter(l=>l.prod&&l.prod.custo!==l.it.custoUn).length,locs=S.locais.filter(l=>l.ativo);
+ const n=S.nota,L=S.linhas,novos=L.filter(l=>!l.prod).length,mudou=L.filter(l=>l.prod&&l.prod.custo!==l.it.custoUn).length,locs=S.locais.filter(l=>l.ativo),fiscal=L.filter(l=>l.prod&&(l.fis.mudaNcm||l.fis.mudaGrupo)).length;
  M.innerHTML=`<div class="head"><div><h1>Conferência da nota ${esc(n.numero)}</h1><p>${esc(bonito(n.fornNome))} · CNPJ ${esc(n.fornCnpj)} · emitida em ${n.emissao?new Date(n.emissao).toLocaleDateString('pt-BR'):'—'}</p></div><button class="btn" id="trocar">Trocar arquivo</button></div>
   ${n.jaLancada?`<div class="aviso" style="margin-bottom:14px"><span>⚠️</span><span><b>Esta nota já foi lançada</b> em ${new Date(n.jaLancada).toLocaleString('pt-BR')}. Lançar de novo duplicaria o estoque.</span></div>`:''}
   ${n.destCnpj&&S.emp.cnpj&&n.destCnpj!==S.emp.cnpj?`<div class="aviso" style="margin-bottom:14px"><span>⚠️</span><span>O destinatário desta nota (CNPJ ${esc(n.destCnpj)}) não é a ${esc(S.emp.nome_exibicao||'empresa')}. Confira se é a nota certa.</span></div>`:''}
-  <div class="grid4" style="margin-bottom:16px"><div class="kpi"><span>Valor da nota</span><b class="num">${brl(n.total)}</b></div><div class="kpi"><span>Itens</span><b class="num">${L.length}</b></div><div class="kpi"><span>Produtos novos</span><b class="num" style="color:#7dd3fc">${novos}</b></div><div class="kpi"><span>Custo mudou</span><b class="num" style="color:${mudou?'#fbbf24':'inherit'}">${mudou}</b></div></div>
+  <div class="grid5" style="margin-bottom:16px"><div class="kpi"><span>Valor da nota</span><b class="num">${brl(n.total)}</b></div><div class="kpi"><span>Itens</span><b class="num">${L.length}</b></div><div class="kpi"><span>Produtos novos</span><b class="num" style="color:#7dd3fc">${novos}</b></div><div class="kpi"><span>Custo mudou</span><b class="num" style="color:${mudou?'#fbbf24':'inherit'}">${mudou}</b></div><div class="kpi"><span>Fiscal a corrigir</span><b class="num" style="color:${fiscal?'#fbbf24':'inherit'}">${fiscal}</b></div></div>
   <div class="tblwrap"><table class="tbl"><thead><tr><th>#</th><th>Produto</th><th>Situação</th><th class="n">Unidades</th><th class="n">Custo un.</th><th class="n">Preço de venda</th></tr></thead><tbody>
   ${L.map((l,k)=>{const it=l.it,un=+(it.qCom*it.fator).toFixed(3);
    let sit,precoCel;
@@ -221,6 +247,7 @@ function telaNF(){const M=$('#main');
    else{const ant=l.prod.custo,ref=precoRef(l.prod.id),v=ant>0?(it.custoUn-ant)/ant:0;
     sit=`<div class="stack"><span class="pill ok">Vinculado${l.por==='codigo'?' pelo código do fornecedor':' pelo código de barras'}</span><span class="sm">${esc(bonito(l.prod.nome))}</span>${ant!==it.custoUn?`<span class="pill ${v>0?'warn':'ok'}">Custo ${v>0?'subiu':'caiu'} ${pct(v)} (era ${brl(ant)})</span>`:'<span class="mu sm">Custo igual</span>'}</div>`;
     precoCel=`<div class="stack" style="justify-items:end"><span class="num">${ref!=null?brl(ref):'sem preço'}</span>${ref!=null?`<span class="mu sm">margem com custo novo ${(margem(ref,it.custoUn)*100).toFixed(0)}%</span>`:''}<input class="inp-s num" data-k="${k}" data-f="novoPreco" value="${esc(l.novoPreco)}" placeholder="manter" aria-label="Novo preço (opcional)"></div>`}
+   sit+=celFiscal(l,k);
    return `<tr><td class="mu num">${it.nItem}</td><td><div class="stack">${!l.prod?`<input type="text" data-k="${k}" data-f="nome" value="${esc(l.nome)}" aria-label="Nome do produto" style="min-height:36px">`:`<b>${esc(bonito(it.desc))}</b>`}<span class="mu sm">Cód. ${esc(it.codigo)}${it.eanUn||it.ean?' · EAN '+esc(it.eanUn||it.ean):' · sem código de barras'} · NCM ${esc(it.ncm||'—')}</span>
     <span class="row"><button class="btn sm" data-vinc="${k}">${l.prod?'Vincular a outro':'Vincular a um produto existente'}</button>${l.prod?`<button class="btn sm" data-novo="${k}">Cadastrar como novo</button>`:''}</span></div></td>
     <td>${sit}</td><td class="n"><div class="stack" style="justify-items:end"><b class="num">${un.toLocaleString('pt-BR')}</b><span class="mu sm">${it.qCom.toLocaleString('pt-BR')} ${esc(it.uCom)} × <input class="inp-s num" style="width:58px!important" data-k="${k}" data-f="fator" value="${it.fator}" aria-label="Unidades por embalagem"></span></div></td>
@@ -235,10 +262,16 @@ function telaNF(){const M=$('#main');
   if(f==='preco'){const c=Math.round(parseFloat(v.replace(/\./g,'').replace(',','.'))*100);if(c>0)l.preco=c;render()}
   if(f==='novoPreco'){if(!v){l.novoPreco='';return}const c=Math.round(parseFloat(v.replace(/\./g,'').replace(',','.'))*100);l.novoPreco=c>0?(c/100).toFixed(2).replace('.',','):'';render()}
   if(f==='fator'){const x=parseFloat(v.replace(',','.'));if(x>0){l.it.fator=x;l.it.custoUn=Math.round(l.it.custoTotal/(l.it.qCom*x));if(!l.prod)l.preco=precoSugerido(l.it.custoUn)}render()}});
+ M.querySelectorAll('[data-fis]').forEach(c=>c.onchange=()=>{S.linhas[+c.dataset.fis].fis.aplicar=c.checked});
  M.querySelectorAll('[data-pf]').forEach(c=>c.onchange=()=>{c.checked?S.pfNovos.add(c.dataset.pf):S.pfNovos.delete(c.dataset.pf)});
  M.querySelectorAll('[data-vinc]').forEach(b=>b.onclick=()=>vincular(+b.dataset.vinc));
- M.querySelectorAll('[data-novo]').forEach(b=>b.onclick=()=>{const l=S.linhas[+b.dataset.novo];l.prod=null;l.por=null;l.preco=precoSugerido(l.it.custoUn);render()});
+ M.querySelectorAll('[data-novo]').forEach(b=>b.onclick=()=>{const l=S.linhas[+b.dataset.novo];l.prod=null;l.por=null;l.preco=precoSugerido(l.it.custoUn);l.fis=sugerirFiscal(l.it,null);render()});
  $('#lancar').onclick=confirmarLancamento}
+// fiscal do item: o que a nota diz e o que muda no cadastro
+function celFiscal(l,k){const it=l.it,f=l.fis,st=it.st?'<span class="pill ok" title="ICMS '+esc(it.icmsCst||'—')+' na nota do fornecedor">Veio com ST</span>':'<span class="pill" title="ICMS '+esc(it.icmsCst||'—')+' na nota do fornecedor">Sem ST na nota</span>';
+ if(!l.prod)return `<div class="fis">${st}<span class="mu sm">Entra como ${esc(grupoNome(f.grupo))}</span>${!it.st?'<span class="pill warn">CSOSN 201 aguarda o contador: NFC-e deste item fica bloqueada</span>':''}</div>`;
+ const muda=[];if(f.mudaNcm)muda.push(`NCM ${esc(l.prod.ncm||'vazio')} → <b>${esc(f.ncm)}</b>`);if(f.mudaGrupo)muda.push(`${esc(grupoNome(l.prod.grupo_fiscal_id))} → <b>Com ST</b>`);
+ return `<div class="fis">${st}${muda.length?`<label class="chk sm"><input type="checkbox" data-fis="${k}" ${f.aplicar?'checked':''}> Corrigir cadastro: ${muda.join(' · ')}</label>`:'<span class="mu sm">Fiscal confere com o cadastro</span>'}${f.stSemCadastro?'<span class="mu sm">Cadastro está Com ST e a nota veio sem ST. Mantido até o contador confirmar.</span>':''}</div>`}
 async function ultimas(){const {data,error}=await sb.from('notas_entrada').select('numero,fornecedor_nome,valor_total,status,lancada_em,criado_em').eq('empresa_id',S.emp.id).order('criado_em',{ascending:false}).limit(8);const el=$('#ultimas');if(!el)return;
  if(error||!data?.length){el.innerHTML='<p class="vazio">Nenhuma nota lançada ainda.</p>';return}
  el.innerHTML=`<table class="tbl"><thead><tr><th>Nota</th><th>Fornecedor</th><th class="n">Valor</th><th>Situação</th><th>Data</th></tr></thead><tbody>${data.map(r=>`<tr><td class="num">${esc(r.numero)}</td><td>${esc(bonito(r.fornecedor_nome))}</td><td class="n num">${brl(r.valor_total)}</td><td><span class="pill ${r.status==='lancada'?'ok':'warn'}">${r.status==='lancada'?'Lançada':r.status==='conferencia'?'Em conferência':'Descartada'}</span></td><td class="mu">${new Date(r.lancada_em||r.criado_em).toLocaleDateString('pt-BR')}</td></tr>`).join('')}</tbody></table>`}
@@ -253,12 +286,13 @@ function vincular(k){const l=S.linhas[k];let q='';$('#modal').classList.add('wid
    <div class="tblwrap" style="max-height:52vh"><table class="tbl"><tbody>${lista.map(p=>`<tr><td>${esc(bonito(p.nome))}<br><span class="mu sm">${esc(p.ean||'sem código')} · custo ${brl(p.custo)}</span></td><td class="n"><button class="btn sm pri" data-esc="${p.id}">Escolher</button></td></tr>`).join('')||'<tr><td class="vazio">Nenhum produto encontrado</td></tr>'}</tbody></table></div>
    <div class="row"><span class="sp"></span><button class="btn" data-close>Cancelar</button></div>`);
   const i=$('#vq');i.focus();i.setSelectionRange(q.length,q.length);i.oninput=()=>{q=i.value;clearTimeout(i._t);i._t=setTimeout(desenha,200)};
-  document.querySelectorAll('[data-esc]').forEach(b=>b.onclick=()=>{l.prod=S.produtos.find(p=>p.id===b.dataset.esc);l.por='manual';fechar();render()})};desenha()}
+  document.querySelectorAll('[data-esc]').forEach(b=>b.onclick=()=>{l.prod=S.produtos.find(p=>p.id===b.dataset.esc);l.por='manual';l.fis=sugerirFiscal(l.it,l.prod);fechar();render()})};desenha()}
 function confirmarLancamento(){const n=S.nota,L=S.linhas,dest=S.locais.find(l=>l.id===S.destino),novos=L.filter(l=>!l.prod),precos=L.filter(l=>l.prod&&l.novoPreco),sem=novos.filter(l=>!l.nome.trim());
  if(sem.length){toast('Dê nome a todos os produtos novos');return}
  modal(`<h2>Lançar a nota ${esc(n.numero)}?</h2><div class="stack mu">
   <span>• ${L.length} itens entram no estoque de <b style="color:var(--ink)">${esc(dest.nome)}</b></span>
-  <span>• ${novos.length} produtos novos serão cadastrados com o preço sugerido em todas as lojas</span>
+  <span>• ${novos.length} produtos novos serão cadastrados${novos.length?' e entram à venda nas lojas dos portfólios marcados':''}</span>
+  <span>• ${L.filter(l=>l.prod&&l.fis.aplicar&&(l.fis.mudaNcm||l.fis.mudaGrupo)).length} produtos terão NCM ou ST corrigidos pela nota</span>
   <span>• ${precos.length?precos.length+' preços alterados por você':'Nenhum preço de produto existente será alterado'}</span>
   <span>• Custo atualizado em ${L.filter(l=>l.prod&&l.prod.custo!==l.it.custoUn).length} produtos</span></div>
   <p class="mu sm">Não dá para desfazer pelo painel: confira as quantidades antes.</p>
@@ -268,18 +302,22 @@ async function lancar(){const bt=$('#okLancar');bt.disabled=true;bt.textContent=
  try{const path=`${e}/${n.chave}.xml`;const up=await sb.storage.from('notas').upload(path,new Blob([n.xml],{type:'text/xml'}),{upsert:true,contentType:'text/xml'});if(up.error)throw new Error('Não foi possível guardar o XML: '+up.error.message);
   let notaId=n.notaId;const cab={empresa_id:e,chave:n.chave,numero:n.numero,serie:n.serie,emissao:n.emissao||null,fornecedor_cnpj:n.fornCnpj,fornecedor_nome:n.fornNome,valor_total:n.total,local_destino_id:S.destino,xml_path:path,status:'conferencia'};
   if(notaId){const r=await sb.from('notas_entrada').update(cab).eq('id',notaId);if(r.error)throw r.error}else{const r=await sb.from('notas_entrada').insert(cab).select('id').single();if(r.error)throw r.error;notaId=r.data.id}
-  const itens=S.linhas.map(l=>{const it=l.it,o={produto_id:l.prod?.id||'',custo_unit:it.custoUn,quantidade:+(it.qCom*it.fator).toFixed(3),fornecedor_codigo:it.codigo,fator:it.fator};
-   if(!l.prod){o.novo={ean:it.eanUn||it.ean||'',nome:l.nome.trim().slice(0,120),ncm:it.ncm,cest:it.cest||'',unidade:'UN'};o.preco_aprovado=l.preco}
+  // produto novo entra no mix só das lojas que usam os portfólios marcados (sem reaplicar portfólio em loja nenhuma)
+  const lojasNovos=lojas().filter(l=>l.portfolio_id&&S.pfNovos.has(l.portfolio_id)).map(l=>l.id);
+  const itens=S.linhas.map(l=>{const it=l.it,f=l.fis,o={n_item:it.nItem,descricao:it.desc,ean:it.eanUn||it.ean||'',produto_id:l.prod?.id||'',custo_unit:it.custoUn,quantidade:+(it.qCom*it.fator).toFixed(3),fornecedor_codigo:it.codigo,fator:it.fator,
+    nota:{ncm:it.ncm,cest:it.cest||'',cfop:it.cfop,icms_cst:it.icmsCst,st:it.st},
+    fiscal:{aplicar:!!f.aplicar,ncm:f.aplicar&&(f.mudaNcm||!l.prod)?f.ncm||'':'',cest:f.aplicar&&(f.mudaNcm||!l.prod)?f.cest||'':'',grupo_fiscal_id:f.aplicar&&(f.mudaGrupo||!l.prod)?f.grupo||'':''}};
+   if(!l.prod){o.novo={ean:it.eanUn||it.ean||'',nome:l.nome.trim().slice(0,120),ncm:it.ncm,cest:it.cest||'',unidade:'UN'};o.preco_aprovado=l.preco;o.lojas_preco=lojasNovos}
    else if(l.novoPreco){o.preco_aprovado=Math.round(parseFloat(l.novoPreco.replace(',','.'))*100)}return o});
-  const r=await sb.rpc('lancar_nota_entrada',{p_nota:notaId,p_itens:itens});if(r.error)throw r.error;
+  const r=await sb.rpc('lancar_nota_entrada',{p_nota:notaId,p_itens:itens});if(r.error)throw r.error;const res=r.data||{};
   // produtos novos: entram nos portfólios escolhidos e as lojas de cada portfólio são atualizadas
   const novosCod=S.linhas.filter(l=>!l.prod).map(l=>l.it.codigo);let avisoPf='';
   if(novosCod.length&&S.pfNovos.size){const {data:cf}=await sb.from('produto_codigos_fornecedor').select('produto_id,codigo').eq('empresa_id',e).eq('fornecedor_cnpj',n.fornCnpj).in('codigo',novosCod);
    const linhasPf=[];for(const pf of S.pfNovos)for(const c of cf||[])linhasPf.push({portfolio_id:pf,produto_id:c.produto_id,empresa_id:e,estoque_min:2,estoque_max:8});
    if(linhasPf.length){const ins=await sb.from('portfolio_itens').upsert(linhasPf,{onConflict:'portfolio_id,produto_id',ignoreDuplicates:true});if(ins.error)avisoPf=' (portfólios: '+ins.error.message+')'}}
-  await carregar();for(const l of lojas())if(l.portfolio_id)await sb.rpc('aplicar_portfolio',{p_local:l.id,p_portfolio:l.portfolio_id});await carregar();
+  await carregar();
   const alertas=S.linhas.filter(l=>l.prod&&l.prod.custo!==l.it.custoUn&&!l.novoPreco);
-  modal(`<h2>Nota ${esc(n.numero)} lançada ✓</h2><p class="mu">${S.linhas.length} itens entraram no estoque${avisoPf}.</p>
+  modal(`<h2>Nota ${esc(n.numero)} lançada ✓</h2><p class="mu">${S.linhas.length} itens entraram no estoque de ${esc(S.locais.find(l=>l.id===S.destino)?.nome||'destino')}${res.novos?`, ${res.novos} produtos novos cadastrados`:''}${res.fiscal?`, fiscal corrigido em ${res.fiscal} produtos`:''}${avisoPf}.</p>
    ${alertas.length?`<div class="aviso"><span>⚠️</span><span><b>Custo mudou e o preço não foi alterado:</b><br>${alertas.map(l=>`${esc(bonito(l.prod.nome))}: custo ${brl(l.prod.custo)} → ${brl(l.it.custoUn)}, preço ${brl(precoRef(l.prod.id))}`).join('<br>')}</span></div>`:''}
    <div class="row"><span class="sp"></span><button class="btn pri" data-close>Concluir</button></div>`);
   S.nota=null;S.linhas=[];render()}catch(err){bt.disabled=false;bt.textContent='Lançar nota';toast('Erro: '+(err.message||err))}}
