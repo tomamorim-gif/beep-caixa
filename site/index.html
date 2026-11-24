@@ -29,7 +29,7 @@ a{color:inherit}
 :focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 var(--g)}
 .mono{font-family:var(--mono);font-size:12.5px;letter-spacing:.02em;text-transform:uppercase}
-h1,h2,h3{font-family:var(--disp);letter-spacing:-.03em;line-height:1.04;font-weight:800}
+h1,h2,h3{font-family:var(--disp);letter-spacing:-.03em;line-height:1.04;font-weight:800;text-wrap:balance}
 h2{font-size:clamp(32px,4.4vw,54px)}
 .lede{font-size:19px;color:var(--ink2);max-width:560px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:10px;font:700 16px var(--disp);text-decoration:none;border:1.5px solid var(--ink);transition:background .15s,color .15s}
@@ -150,6 +150,27 @@ section{padding:120px 0}
 @media(max-width:900px){.etapas{grid-template-columns:1fr 1fr;row-gap:40px}}
 @media(max-width:520px){.etapas{grid-template-columns:1fr}}
 
+/* diferenciais */
+.difs{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1.5px solid var(--ink)}
+.difs li{position:relative;padding:28px 28px 32px 0;border-bottom:1px solid var(--line)}
+.difs li:not(:nth-child(3n+1)){padding-left:28px;border-left:1px solid var(--line)}
+.difs .mono{color:var(--ink3);font-size:12px}
+.difs b{display:block;font:800 24px/1.15 var(--disp);letter-spacing:-.025em;margin:14px 0 10px}
+.difs p{color:var(--ink2);font-size:15.5px;max-width:46ch}
+.difs .tag{display:inline-block;margin-top:14px;font:600 11px var(--mono);text-transform:uppercase;letter-spacing:.04em;font-style:normal;padding:4px 8px;border-radius:4px;background:#fff1a8;color:#5a4a00}
+@media(max-width:900px){.difs{grid-template-columns:1fr 1fr}.difs li{padding-left:0!important;border-left:0!important;padding-right:24px}.difs li:nth-child(2n){padding-left:24px!important;border-left:1px solid var(--line)!important}}
+@media(max-width:560px){.difs{grid-template-columns:1fr}.difs li,.difs li:nth-child(2n){padding:24px 0!important;border-left:0!important}}
+.dif .app{display:grid;grid-template-columns:1fr 1fr;gap:var(--g);align-items:center;margin-top:72px;padding-top:56px;border-top:1.5px solid var(--ink)}
+.app-txt .mono{color:var(--ink3);font-size:12px}
+.app-txt b{display:block;font:800 clamp(28px,3.4vw,40px)/1.08 var(--disp);letter-spacing:-.03em;margin:14px 0}
+.app-txt p{color:var(--ink2);max-width:46ch}
+.app-txt ul{list-style:none;padding:0;margin:22px 0 0;border-top:1px solid var(--line);max-width:46ch}
+.app-txt li{padding:14px 0;border-bottom:1px solid var(--line);color:var(--ink2);font-size:15.5px}
+.app-txt strong{color:var(--ink);font-weight:600}
+.app-tels{display:flex;justify-content:center;gap:24px}
+.tel{width:min(46%,250px);background:#111;border-radius:34px;padding:9px;box-shadow:0 30px 60px -30px rgba(0,0,0,.45)}
+.tel img{display:block;width:100%;height:auto;border-radius:26px}
+@media(max-width:900px){.dif .app{grid-template-columns:1fr;gap:40px}}
 /* planos */
 .tabela{width:100%;border-collapse:collapse;font-size:16px}
 .tabela th,.tabela td{padding:16px 12px;border-bottom:1px solid var(--line);text-align:center}
@@ -217,7 +238,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 <header class="topo">
   <div class="wrap">
     <a href="#" class="logo" aria-label="Beep Smart Pay, início"><img src="marca/logo-fundo-claro.svg" alt="Beep Smart Pay" width="181" height="64"></a>
-    <nav aria-label="Seções"><a href="#compra">A compra</a><a href="#painel">Painel</a><a href="#seguranca">Segurança</a><a href="#modulos">Módulos</a><a href="#planos">Planos</a></nav>
+    <nav aria-label="Seções"><a href="#compra">A compra</a><a href="#diferenciais">Diferenciais</a><a href="#painel">Painel</a><a href="#seguranca">Segurança</a><a href="#modulos">Módulos</a><a href="#planos">Planos</a></nav>
     <a class="btn pri" href="#contato">Falar com a Beep</a>
   </div>
 </header>
@@ -240,7 +261,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
       </div>
     </div>
     <figure class="disp">
-      <div class="tablet"><img src="telas/caixa-carrinho.webp" alt="Tela do caixa Beep Smart Pay com cinco produtos no carrinho, total de R$ 30,95 e botão Pagar" width="1000" height="1600" fetchpriority="high"></div>
+      <div class="tablet"><img src="telas/caixa-carrinho.webp" alt="Tela do caixa Beep Smart Pay com cinco produtos no carrinho, total de R$ 28,70 e botão Pagar" width="1000" height="1600" fetchpriority="high"></div>
       <figcaption class="leg mono"><span>Tela real do caixa</span><span>Tablet 10″</span></figcaption>
     </figure>
   </div>
@@ -293,10 +314,46 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
   </div>
 </section>
 
+<section class="dif" id="diferenciais">
+  <div class="wrap">
+    <div class="cab">
+      <p class="mono">02 · Diferenciais</p>
+      <div>
+        <h2>O que a loja deixa de fazer na mão.</h2>
+        <p class="lede">Cada item abaixo funciona dentro do mesmo sistema, sem planilha e sem programa à parte.</p>
+      </div>
+    </div>
+    <ol class="difs">
+      <li><span class="mono">01</span><b>Estoque que entra pela nota</b><p>As notas de compra do seu CNPJ chegam da SEFAZ. Você confere e o estoque entra sozinho, com alerta quando o custo sobe.</p></li>
+      <li><span class="mono">02</span><b>Nota fiscal emitida sozinha</b><p>Cada venda gera a NFC-e na hora. Se a SEFAZ cair, a nota fica na fila e sai quando ela voltar.</p></li>
+      <li><span class="mono">03</span><b>Abastecimento simples</b><p>Mínimo e máximo por produto em cada loja. O sistema diz o que levar do depósito e marca a perda na hora da reposição.</p><em class="tag">Em implantação</em></li>
+      <li><span class="mono">04</span><b>Gravação do caixa</b><p>A câmera do tablet grava as compras, todas ou só as que tiveram problema. O vídeo fica no painel, ligado à venda.</p></li>
+      <li><span class="mono">05</span><b>Voz no atendimento</b><p>O caixa fala com o cliente em cada passo e atende por áudio quem prefere pedir o produto falando.</p></li>
+      <li><span class="mono">06</span><b>Financeiro completo</b><p>Vendas, custos e formas de pagamento por loja, com estorno de cartão e Pix pelo painel.</p><em class="tag">Em breve</em></li>
+</ol>
+    <div class="app">
+      <div class="app-txt">
+        <span class="mono">07</span>
+        <b>App do cliente, do seu jeito</b>
+        <p>O cliente instala pelo QR da loja e vê produtos, preços, estoque e ofertas. Você decide, por loja e por cliente, como ele compra:</p>
+        <ul>
+          <li><strong>Só consulta.</strong> Vê o que tem e quanto custa.</li>
+          <li><strong>Compra no celular.</strong> Paga com Pix ou cartão no app, sem passar no caixa.</li>
+          <li><strong>A pagar.</strong> Paga só as compras que a loja registrar para ele.</li>
+        </ul>
+      </div>
+      <div class="app-tels">
+        <div class="tel"><img src="telas/app-produtos.webp" alt="App do cliente: lista de produtos da loja com foto, preço e botão de adicionar" width="780" height="1688" loading="lazy"></div>
+        <div class="tel"><img src="telas/app-carrinho.webp" alt="App do cliente: carrinho com três produtos, total de R$ 12,30 e pagamento por Pix ou cartão" width="780" height="1688" loading="lazy"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="painel" id="painel">
   <div class="wrap">
     <div class="cab">
-      <p class="mono">02 · O painel</p>
+      <p class="mono">03 · O painel</p>
       <div>
         <h2>Cada venda aparece no painel na mesma hora.</h2>
         <p class="lede">Vendas por loja, notas de compra, produtos e aparelhos em um só lugar. Funciona no computador e no celular.</p>
@@ -323,10 +380,10 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 <section class="seg" id="seguranca">
   <div class="wrap">
     <div class="cab">
-      <p class="mono">03 · Segurança</p>
+      <p class="mono">04 · Segurança</p>
       <div>
-        <h2>Feito por quem perde dinheiro com furto.</h2>
-        <p class="lede">Cada compra termina numa tela que a câmera da loja consegue ver. Bebida alcoólica só é vendida depois da confirmação de idade.</p>
+        <h2>Verde é pago. Vermelho, não.</h2>
+        <p class="lede">A cor da tela diz para a câmera da loja como a compra terminou. Bebida alcoólica só entra no carrinho depois que o cliente confirma a idade.</p>
       </div>
     </div>
     <div class="trio">
@@ -343,7 +400,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 <section class="painel" id="modulos">
   <div class="wrap">
     <div class="cab">
-      <p class="mono">04 · Módulos</p>
+      <p class="mono">05 · Módulos</p>
       <div><h2>Tudo o que a loja precisa, num sistema só.</h2></div>
     </div>
     <table class="ficha">
@@ -357,6 +414,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
         <tr><td>App do cliente e anúncios</td><td>App instalado pelo QR da loja, ofertas e anúncios na tela do caixa com relatório para o anunciante.</td><td><span class="st">Em uso</span></td></tr>
         <tr><td>Abastecimento</td><td>Mínimo e máximo por produto em cada loja, lista do que levar e perdas apontadas na reposição.</td><td><span class="st br">Em implantação</span></td></tr>
         <tr><td>Kit Pronto</td><td>Tablet de fábrica que se liga à sua loja por QR code, com assistente que monta o cadastro.</td><td><span class="st br">Em implantação</span></td></tr>
+        <tr><td>Financeiro</td><td>Visão financeira completa por loja: vendas, custos, formas de pagamento e estornos num lugar só.</td><td><span class="st br">Em breve</span></td></tr>
       </tbody>
     </table>
   </div>
@@ -365,7 +423,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 <section class="kit" id="kit">
   <div class="wrap">
     <div class="cab">
-      <p class="mono">05 · Implantação</p>
+      <p class="mono">06 · Implantação</p>
       <div>
         <h2>Da assinatura à primeira venda em até 7 dias.</h2>
         <p class="lede">Você não precisa de técnico. A meta vale com os produtos e o certificado digital em mãos.</p>
@@ -383,7 +441,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 <section id="planos">
   <div class="wrap">
     <div class="cab">
-      <p class="mono">06 · Planos</p>
+      <p class="mono">07 · Planos</p>
       <div>
         <h2>A partir de R$ 149 por loja.</h2>
         <p class="lede">Mensalidade fixa, sem parte do faturamento. Contrato de 12 meses. Servidor, atualizações da SEFAZ e suporte incluídos.</p>
@@ -426,7 +484,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 
 <section class="painel" id="duvidas">
   <div class="wrap">
-    <div class="cab"><p class="mono">07 · Dúvidas</p><div><h2>Perguntas de dono de loja.</h2></div></div>
+    <div class="cab"><p class="mono">08 · Dúvidas</p><div><h2>Perguntas de dono de loja.</h2></div></div>
     <dl class="duv">
       <div><dt>Preciso de funcionário na loja?</dt><dd>Para vender, não. Você precisa de alguém para repor as prateleiras, e o sistema diz o que levar.</dd></div>
       <div><dt>Quais equipamentos eu preciso?</dt><dd>Um tablet de 10 polegadas fixo, um leitor de código de barras e uma maquininha Mercado Pago Point.</dd></div>
@@ -441,7 +499,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 <section class="contato" id="contato">
   <div class="wrap">
     <div>
-      <p class="mono">08 · Contato</p>
+      <p class="mono">09 · Contato</p>
       <h2>Vamos colocar sua loja para vender sozinha.</h2>
       <p class="lede">Conte como é a sua operação. A resposta vem pelo WhatsApp, com uma proposta para o seu caso.</p>
       <a class="whats" href="https://wa.me/5585999017203" target="_blank" rel="noopener">WhatsApp (85) 99901-7203</a>
