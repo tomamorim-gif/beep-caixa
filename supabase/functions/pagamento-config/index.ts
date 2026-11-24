@@ -61,6 +61,35 @@ Deno.serve(async (req) => {
     return json({ ok: true, configurado: !!c?.access_token, token_final: fim4(c?.access_token), webhook: !!c?.webhook_secret, conta: c?.conta_nome ?? null });
   }
 
+  // estorno total de uma venda paga no cartão da maquininha (devolve o dinheiro ao cliente e o produto ao estoque)
+  if (b.acao === "estornar") {
+    const vendaId = typeof b.venda_id === "string" && /^[0-9a-f-]{36}$/i.test(b.venda_id) ? b.venda_id : null;
+    if (!vendaId) return erro("Venda inválida");
+    const { data: c } = await db.from("cobrancas_cartao").select("id, mp_order_id, status, valor").eq("empresa_id", emp).eq("venda_id", vendaId).eq("status", "aprovado").maybeSingle();
+    if (!c) {
+      const { count } = await db.from("cobrancas_cartao").select("id", { count: "exact", head: true }).eq("empresa_id", emp).eq("venda_id", vendaId).eq("status", "estornado");
+      if (count) return json({ ok: true, status: "estornado" });
+      return erro("Esta venda não foi paga pelo Mercado Pago (maquininha ou Pix)", 404);
+    }
+    const cred = await atual();
+    if (!cred?.access_token) return erro("Credencial do Mercado Pago não cadastrada", 409);
+    let r: Response;
+    try {
+      r = await fetch(`https://api.mercadopago.com/v1/orders/${encodeURIComponent(c.mp_order_id)}/refund`, {
+        method: "POST", signal: AbortSignal.timeout(15_000),
+        headers: { Authorization: `Bearer ${cred.access_token}`, "Content-Type": "application/json", "X-Idempotency-Key": `beep-estornar-${c.id}` },
+      });
+    } catch { return erro("Sem resposta do Mercado Pago. Tente de novo.", 504); }
+    const o = await r.json().catch(() => ({}));
+    if (!r.ok) return erro("O Mercado Pago não aceitou o estorno: " + String(o?.errors?.[0]?.message ?? o?.message ?? r.status).slice(0, 200), 502);
+    if (o?.status === "refunded") {
+      await db.rpc("estornar_venda_cartao", { p_cobranca: c.id, p_usuario: u.user.id });
+      return json({ ok: true, status: "estornado" });
+    }
+    // o estorno pode levar alguns instantes: o aviso do Mercado Pago conclui sozinho
+    return json({ ok: true, status: "estorno_pedido" });
+  }
+
   if (b.acao === "remover") {
     await db.from("integracoes_pagamento").delete().eq("empresa_id", emp).eq("provedor", "mercadopago");
     return json({ ok: true });
