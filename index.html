@@ -342,6 +342,7 @@ h2{font-size:22px;font-weight:800}
   <div class="topo"><h2>Maquininha de cartão</h2><button class="pill" id="fecharMaq">Voltar</button></div>
   <div class="cartao">
     <div><b>Mercado Pago Point</b><br><span class="mu" id="maqStatus">Verificando…</span></div>
+    <div id="maqAviso" role="alert" style="display:none;border:1px solid #e0a400;background:#fff8e1;color:#5c4400;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.45"></div>
     <div id="maqLista" style="display:flex;flex-direction:column;gap:10px"></div>
     <button class="btn g" id="maqBuscar">Procurar maquininhas da conta</button>
     <p class="mu" style="font-size:13px;line-height:1.45">A maquininha precisa estar ligada, com internet e logada na conta do Mercado Pago. Ao escolher, ela entra no modo caixa (PDV): reinicie a maquininha depois para valer.</p>
@@ -516,12 +517,14 @@ const API_CARTAO=API.replace(/\/pdv$/,'/cartao');
 let mpCfg=null;
 async function apiCartao(acao,corpo={}){const r=await fetch(API_CARTAO,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(r.status===401){desativar(true);throw new Error(j.erro)}if(!r.ok){const e=new Error(j.erro||'Erro');e.status=r.status;throw e}return j}
 async function carregarMp(){if(!token)return;try{mpCfg=await apiCartao('config');ls.set('bp-mp',mpCfg)}catch(e){mpCfg=ls.get('bp-mp',null)}ajustarFormas()}
-async function abrirMaq(){mostrar('maqT');$('#maqLista').innerHTML='';$('#maqStatus').textContent='Verificando…';await carregarMp();
+async function abrirMaq(){mostrar('maqT');$('#maqLista').innerHTML='';maqAvisar('');$('#maqStatus').textContent='Verificando…';await carregarMp();
  const c=mpCfg;$('#maqStatus').textContent=!c?'Sem conexão com o servidor':!c.credencial?'Falta cadastrar a credencial do Mercado Pago no servidor':c.terminal?('Ligada: '+c.terminal+(c.teste?' (modo teste)':'')):'Nenhuma maquininha ligada a este caixa'}
 $('#maqBuscar').onclick=async()=>{const b=$('#maqBuscar');b.disabled=true;b.textContent='Procurando…';try{const r=await apiCartao('terminais');
- $('#maqLista').innerHTML=r.terminais.length?r.terminais.map(t=>`<button class="opcao" data-id="${t.id.replace(/[^A-Za-z0-9_]/g,'')}" style="justify-content:space-between"><span>${t.virtual?'Maquininha virtual (teste)':t.id.replace(/[^A-Za-z0-9_]/g,'')}</span><span class="mu" style="font-size:12px">${t.id===r.atual?'ligada':(t.modo||'')}</span></button>`).join(''):'<p class="mu">Nenhuma maquininha nesta conta. Confira se ela está logada na conta do Mercado Pago.</p>'}
+ $('#maqLista').innerHTML=r.terminais.length?r.terminais.map(t=>`<button class="opcao" data-id="${t.id.replace(/[^A-Za-z0-9_]/g,'')}" style="justify-content:space-between"><span>${t.virtual?'Maquininha virtual (teste)':t.id.replace(/[^A-Za-z0-9_]/g,'')}</span><span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px"><span class="mu" style="font-size:12px">${t.id===r.atual?'ligada a este caixa':''}</span><span style="font-size:12px;font-weight:600;color:${t.modo==='PDV'?'#1b7a3a':'#a15c00'}">${maqModo(t)}</span></span></button>`).join(''):'<p class="mu">Nenhuma maquininha nesta conta. Confira se ela está logada na conta do Mercado Pago.</p>'}
  catch(e){$('#maqLista').innerHTML=`<p class="mu">${String(e.message).replace(/</g,'&lt;')}</p>`}b.disabled=false;b.textContent='Procurar maquininhas da conta'};
-$('#maqLista').onclick=async e=>{const b=e.target.closest('.opcao[data-id]');if(!b)return;b.disabled=true;try{const r=await apiCartao('vincular',{terminal_id:b.dataset.id});toast(r.aviso||(r.reiniciar?'Pronto. Reinicie a maquininha.':'Maquininha ligada'));await abrirMaq()}catch(err){toast(err.message);b.disabled=false}};
+$('#maqLista').onclick=async e=>{const b=e.target.closest('.opcao[data-id]');if(!b)return;b.disabled=true;try{const r=await apiCartao('vincular',{terminal_id:b.dataset.id});await abrirMaq();if(r.aviso)maqAvisar(r.aviso+' Confira se a maquininha está ligada a uma loja e a um caixa no app do Mercado Pago (Seu negócio > Lojas e caixas).');else{toast('Maquininha ligada');$('#maqBuscar').click();if(r.reiniciar)maqAvisar('Pronto. Agora reinicie a maquininha. Depois confira nela em Mais opções > Configurações > Modo de vinculação: tem que estar "Ponto de Venda (PDV)".')}}catch(err){maqAvisar(err.message);b.disabled=false}};
+function maqAvisar(m){const a=$('#maqAviso');a.textContent=m;a.style.display=m?'block':'none'}
+function maqModo(t){if(t.virtual)return 'modo caixa (PDV)';if(t.modo==='PDV')return 'modo caixa (PDV)';const semLoja=!t.loja||!t.caixa;return (t.modo==='STANDALONE'?'modo avulso':'modo não definido')+(semLoja?' · sem loja/caixa no app':'')}
 async function cobrarMP(f){if(pagReal)return;clearTimeout(inativo);
  pagReal={mp:true,forma:f,cobranca:null,cancelando:false,inicio:Date.now()};
  telaCobranca('Preparando o pagamento…','Aguarde um instante');
