@@ -267,6 +267,7 @@ h2{font-size:22px;font-weight:800}
   <div class="topo"><button class="voltar-grande" id="voltarCarrinho" aria-label="Voltar para o carrinho"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Carrinho</button><span class="selo-sim">PAGAMENTO SIMULADO</span></div>
   <h1>Como quer pagar?</h1>
   <div class="total"><span class="mu">Total</span><span class="num" id="totalPag">R$ 0,00</span></div>
+  <p id="semPagamento" class="mu" style="display:none;text-align:center;font-size:18px;margin:18px 0">Pagamento indisponível neste caixa agora. Chame o responsável pela loja.</p>
   <div class="formas" id="formas">
     <button class="forma" data-f="pix"><b>Pix</b><small>QR na tela</small></button>
     <button class="forma" data-f="debito"><b>Débito</b><small>Na maquininha</small></button>
@@ -574,7 +575,8 @@ function mpTratar(c){const p=pagReal;if(!p)return true;const st=c.status;
 let pagReal=null;
 function statusNativo(){try{return NATIVO?JSON.parse(NATIVO.status()):null}catch(e){return null}}
 function cartaoReal(){if(mpCfg&&mpCfg.pronto)return true;const s=statusNativo();return !!(s&&s.cartao)}
-function ajustarFormas(){const real=cartaoReal();const px=document.querySelector('.forma[data-f="pix"]');if(px)px.style.display=real&&!pixReal()?'none':''; /* caixa real nunca mostra Pix simulado */const av=$('#avisoSimulado');if(av)av.style.display=real?'none':'';const t=document.querySelector('.forma[data-f="tapon"]');if(t)t.style.display=real?'none':'';document.querySelectorAll('.forma[data-f="debito"] small,.forma[data-f="credito"] small').forEach(x=>x.textContent=real?'Na maquininha ao lado':'Na maquininha')}
+// pagamento simulado só existe em loja de teste (o servidor também recusa nas outras)
+function ajustarFormas(){const real=cartaoReal(),sim=!real&&!!cat?.loja_teste,nada=!real&&!sim&&!pixReal();const px=document.querySelector('.forma[data-f="pix"]');if(px)px.style.display=(real||!sim)&&!pixReal()?'none':'';document.querySelectorAll('.forma[data-f="debito"],.forma[data-f="credito"]').forEach(x=>x.style.display=real||sim?'':'none');const sp=$('#semPagamento');if(sp)sp.style.display=nada?'':'none'; /* caixa real nunca mostra Pix simulado */const av=$('#avisoSimulado');if(av)av.style.display=sim?'':'none';const t=document.querySelector('.forma[data-f="tapon"]');if(t)t.style.display=sim?'':'none';document.querySelectorAll('.forma[data-f="debito"] small,.forma[data-f="credito"] small').forEach(x=>x.textContent=real?'Na maquininha ao lado':'Na maquininha')}
 function telaCobranca(msg,sub,botoes){$('#cobranca').innerHTML=`<div class="pag-real"><div class="pag-anel" aria-hidden="true"></div><p style="font-size:20px;font-weight:600" id="pagMsg">${msg}</p><p class="mu" style="font-size:14px" id="pagSub">${sub||''}</p>${botoes||''}</div>`}
 async function cobrarCartao(f){if(mpCfg&&mpCfg.pronto)return cobrarMP(f);if(pagReal)return;clearTimeout(inativo);const nome=f==='debito'?'débito':'crédito';
  const itens=carrinho.map(i=>({produto_id:i.id,quantidade:i.q}));let total=totalC();
