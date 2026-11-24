@@ -409,6 +409,22 @@ footer .logo .nome{font-size:21px}
 .abre .tablet.fone img{aspect-ratio:720/1600;border-radius:36px}
 .abre .tablet.fone::after{left:11px;right:11px}
 @media(max-width:980px){.abre .disp{margin-top:8px}.abre .disp:has(.fone){justify-self:center;width:300px}}
+.abre .scr{overflow:hidden;border-radius:36px}
+.trilho{display:flex;transition:transform .55s cubic-bezier(.65,0,.35,1);touch-action:pan-y}
+.slide{flex:0 0 100%;position:relative;container-type:inline-size}
+.slide video{display:block;width:100%;height:auto;aspect-ratio:720/1600;object-fit:cover;border-radius:36px;background:#0b0b0b}
+button.toque{border:0;padding:0;cursor:pointer;font:inherit}
+button.toque:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.carro-ctl{display:flex;align-items:center;gap:10px}
+.carro-ctl .seta{width:28px;height:28px;border-radius:50%;border:1px solid #3a3e4a;background:transparent;color:var(--kt);display:grid;place-items:center;cursor:pointer;padding:0;transition:border-color .2s,color .2s}
+.carro-ctl .seta svg{width:14px;height:14px}
+.carro-ctl .seta:hover{border-color:var(--y);color:var(--y)}
+.pontos{display:flex;gap:6px}
+.ponto{width:8px;height:8px;border-radius:4px;border:0;padding:0;background:#4a4f5c;cursor:pointer;transition:width .3s,background .3s}
+.ponto[aria-current=true]{width:22px;background:var(--y)}
+.carro-ctl button:focus-visible{outline:2px solid var(--y);outline-offset:3px}
+.abre .leg{align-items:center}
+@media(prefers-reduced-motion:reduce){.trilho{transition:none}}
 </style>
 </head>
 <body>
@@ -439,9 +455,12 @@ footer .logo .nome{font-size:21px}
         <div><b>NFC-e</b><span>emitida a cada venda</span></div>
       </div>
     </div>
-    <figure class="disp">
-      <div class="tablet fone"><div class="scr"><img src="telas/caixa-hero.webp" alt="Tela inicial real do caixa com a logo PagNow, o ícone de toque e a frase Toque para começar" width="720" height="1600" fetchpriority="high"><span class="toque" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg></span></div></div>
-      <figcaption class="leg mono"><span>Tela real do caixa</span><span>Loja de testes</span></figcaption>
+    <figure class="disp" id="carro" aria-roledescription="carrossel" aria-label="Telas do caixa">
+      <div class="tablet fone"><div class="scr"><div class="trilho" id="trilho">
+        <div class="slide" role="group" aria-roledescription="tela" aria-label="1 de 2: tela inicial"><img src="telas/caixa-hero.webp" alt="Tela inicial real do caixa com a logo PagNow, o ícone de toque e a frase Toque para começar" width="720" height="1600" fetchpriority="high"><button class="toque" id="toque" type="button" aria-label="Tocar para ver uma compra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg></button></div>
+        <div class="slide" role="group" aria-roledescription="tela" aria-label="2 de 2: cliente fazendo uma compra" aria-hidden="true"><video id="vcompra" muted playsinline preload="none" poster="telas/compra-poster.webp" width="720" height="1600" aria-label="Animação de uma compra real no caixa: o cliente passa quatro produtos no leitor, o total sobe para R$ 19,80, escolhe a forma de pagamento e a tela fica verde"><source src="telas/compra.webm" type="video/webm"><source src="telas/compra.mp4" type="video/mp4"></video></div>
+      </div></div></div>
+      <figcaption class="leg mono"><span id="carroLeg" aria-live="polite">Tela inicial</span><span class="carro-ctl"><button type="button" class="seta" id="carroAnt" aria-label="Tela anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button><span class="pontos"><button type="button" class="ponto" aria-label="Tela inicial" aria-current="true"></button><button type="button" class="ponto" aria-label="Cliente comprando"></button></span><button type="button" class="seta" id="carroProx" aria-label="Próxima tela"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button></span></figcaption>
     </figure>
   </div>
 </section>
@@ -718,6 +737,16 @@ const abas=[...document.querySelectorAll('.abas [role=tab]')],img=document.getEl
 function abrir(b){abas.forEach(x=>{const on=x===b;x.setAttribute('aria-selected',on);x.tabIndex=on?0:-1});img.src='telas/'+b.dataset.img+'.webp';img.alt=b.dataset.alt}
 abas.forEach((b,i)=>{b.onclick=()=>abrir(b);b.onkeydown=e=>{if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;const n=abas[(i+(e.key==='ArrowRight'?1:abas.length-1))%abas.length];abrir(n);n.focus()}});
 abas.slice(1).forEach(b=>{const i=new Image();i.src='telas/'+b.dataset.img+'.webp'});
+// carrossel do topo: tela inicial (toque piscando) e a compra animada
+(()=>{const tr=document.getElementById('trilho'),sl=[...tr.children],pts=[...document.querySelectorAll('#carro .ponto')],leg=document.getElementById('carroLeg'),v=document.getElementById('vcompra');
+const legs=['Tela inicial','Cliente comprando'],calmo=matchMedia('(prefers-reduced-motion: reduce)').matches;let at=0,tm=null,vis=true;
+function ir(n){at=(n+sl.length)%sl.length;tr.style.transform=`translateX(${-100*at}%)`;sl.forEach((s,i)=>s.setAttribute('aria-hidden',i!==at));pts.forEach((p,i)=>p.setAttribute('aria-current',i===at));leg.textContent=legs[at];
+ document.getElementById('toque').tabIndex=at===0?0:-1;clearTimeout(tm);if(at===1){v.currentTime=0;v.play().catch(()=>{})}else{v.pause();if(!calmo&&vis)tm=setTimeout(()=>ir(1),5000)}}
+v.addEventListener('ended',()=>ir(0));
+document.getElementById('toque').onclick=()=>ir(1);document.getElementById('carroProx').onclick=()=>ir(at+1);document.getElementById('carroAnt').onclick=()=>ir(at-1);pts.forEach((p,i)=>p.onclick=()=>ir(i));
+let x0=null;tr.addEventListener('pointerdown',e=>{x0=e.clientX});tr.addEventListener('pointerup',e=>{if(x0===null)return;const d=e.clientX-x0;x0=null;if(Math.abs(d)>40)ir(at+(d<0?1:-1))});
+new IntersectionObserver(([e])=>{vis=e.isIntersecting;if(!vis){clearTimeout(tm);v.pause()}else if(at===1)v.play().catch(()=>{});else if(!calmo){clearTimeout(tm);tm=setTimeout(()=>ir(1),5000)}}).observe(tr);
+setTimeout(()=>{v.preload='auto'},1500);ir(0)})();
 document.querySelectorAll('[data-plano]').forEach(a=>a.addEventListener('click',()=>{document.querySelector('[name=plano]').value=a.dataset.plano}));
 document.getElementById('form').addEventListener('submit',e=>{
   e.preventDefault();const f=new FormData(e.target),nome=(f.get('nome')||'').trim();
