@@ -1,7 +1,7 @@
 {
-  "name": "Beep Smart Pay · Caixa",
-  "short_name": "Beep Smart Pay",
-  "description": "Caixa de autoatendimento Beep Smart Pay",
+  "name": "PagNow · Caixa",
+  "short_name": "PagNow",
+  "description": "Caixa de autoatendimento PagNow",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",

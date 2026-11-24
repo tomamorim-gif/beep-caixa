@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="site/marca/simbolo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="site/marca/icone-192.png">
-<title>Beep Smart Pay · Caixa</title>
+<title>PagNow · Caixa</title>
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -195,7 +195,7 @@ h2{font-size:22px;font-weight:800}
 
 <!-- ativação -->
 <section class="tela" id="ativar">
-  <div class="topo"><img class="logo" src="site/marca/logo-fundo-escuro.svg" alt="Beep Smart Pay"><span class="pill">Ativação do aparelho</span></div>
+  <div class="topo"><img class="logo" src="logo.png" alt="Beep"><span class="pill">Ativação do aparelho</span></div>
   <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px">
     <h1>Ative este aparelho como caixa</h1>
     <p class="mu">Digite o código de ativação que o dono da loja recebeu. Ele vale uma vez só.</p>
@@ -283,12 +283,12 @@ h2{font-size:22px;font-weight:800}
 <!-- trava: caixa não vende em aba do navegador -->
 <div id="descanso" aria-label="Toque para comprar"><div id="dsSlides"></div><div class="barra"><img src="logo.png" alt="Beep"><b>Toque na tela para comprar</b><div class="prog" id="dsProg"></div></div></div>
 <div id="instalar" style="display:none;position:fixed;inset:0;z-index:90;background:#0b0b0b;padding:28px 24px;flex-direction:column;gap:18px;overflow:auto">
-  <img src="site/marca/logo-fundo-escuro.svg" alt="Beep Smart Pay" id="logoInst" style="height:44px;width:auto;align-self:flex-start">
+  <img src="logo.png" alt="Beep" id="logoInst" style="height:44px;width:auto;align-self:flex-start">
   <h2 style="font:800 28px/1.15 Manrope,Inter,sans-serif;margin-top:18px">Instale o caixa para usar</h2>
   <p style="color:var(--mu);font-size:16px;line-height:1.5">Aberto no navegador, a barra do Google fica liberada e qualquer pessoa pode navegar. Instalado, o caixa abre em tela cheia, sem barra.</p>
-  <button class="btn" id="btnInstalar" style="display:none">Instalar o Beep Smart Pay</button>
+  <button class="btn" id="btnInstalar" style="display:none">Instalar o PagNow</button>
   <div style="background:var(--k2);border-radius:18px;padding:18px;font-size:15px;line-height:1.6">
-    <b>Se o botão não aparecer:</b><br>1. Toque nos três pontinhos (⋮) do Chrome, no canto de cima.<br>2. Toque em <b>Instalar app</b> (ou <b>Adicionar à tela inicial › Instalar</b>).<br>3. Abra o <b>Beep Caixa</b> pelo ícone na tela inicial.<br>4. Depois fixe o app (Recentes ▢ › ícone › Fixar).
+    <b>Se o botão não aparecer:</b><br>1. Toque nos três pontinhos (⋮) do Chrome, no canto de cima.<br>2. Toque em <b>Instalar app</b> (ou <b>Adicionar à tela inicial › Instalar</b>).<br>3. Abra o <b>PagNow</b> pelo ícone na tela inicial.<br>4. Depois fixe o app (Recentes ▢ › ícone › Fixar).
   </div>
 </div>
 
@@ -737,7 +737,7 @@ const pedirMic=async()=>{try{const s=await navigator.mediaDevices.getUserMedia({
 const instalado=()=>!!NATIVO||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 let liberadoNav=false,promptInst=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptInst=e;$('#btnInstalar').style.display='block'});
-addEventListener('appinstalled',()=>{$('#btnInstalar').style.display='none';$('#instalar').querySelector('h2').textContent='Instalado! Abra pelo ícone Beep Smart Pay'});
+addEventListener('appinstalled',()=>{$('#btnInstalar').style.display='none';$('#instalar').querySelector('h2').textContent='Instalado! Abra pelo ícone PagNow'});
 $('#btnInstalar').onclick=async()=>{if(!promptInst)return;promptInst.prompt();await promptInst.userChoice.catch(()=>{});promptInst=null;$('#btnInstalar').style.display='none'};
 function travaNav(){$('#instalar').style.display=(token&&!instalado()&&!liberadoNav)?'flex':'none'}
 let tqi=0,tqiT=null;$('#logoInst').onclick=()=>{tqi++;clearTimeout(tqiT);tqiT=setTimeout(()=>tqi=0,2500);if(tqi>=5){tqi=0;if(!ls.get('bp-pin',''))return;liberarNav=true;$('#instalar').style.display='none';telaPin('entrar')}};

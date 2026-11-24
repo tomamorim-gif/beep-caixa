@@ -33,7 +33,7 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
-        android:label="Beep Smart Pay"
+        android:label="PagNow"
         android:supportsRtl="true"
         android:usesCleartextTraffic="false"
         android:theme="@style/Tema.Beep"
