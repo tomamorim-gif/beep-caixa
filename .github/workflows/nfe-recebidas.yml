@@ -1,0 +1,26 @@
+# Busca as notas de compra emitidas para o CNPJ da empresa na SEFAZ (Ambiente Nacional).
+# Roda quando o dono aperta "Atualizar notas" no painel (ou em Actions > Run workflow).
+# Repositório público: o script só imprime contagens, nunca dados de nota, certificado ou CNPJ.
+name: Notas de compra (SEFAZ)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nfe-recebidas
+  cancel-in-progress: false
+jobs:
+  buscar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar leitor do certificado
+        run: npm install --no-save --no-audit --no-fund node-forge@1.3.1
+      - name: Buscar notas
+        run: node --experimental-strip-types scripts/nfe-recebidas.ts
+        env:
+          BEEP_PONTE: ${{ secrets.BEEP_PONTE }}

@@ -66,17 +66,4 @@ end $$;
 revoke all on function public.nfe_recebida_ignorar(uuid, boolean) from public, anon;
 grant execute on function public.nfe_recebida_ignorar(uuid, boolean) to authenticated;
 
--- a cada 15 minutos o banco chama a função; ela mesma respeita a espera de 1 hora pedida pela SEFAZ
-create or replace function public.nfe_recebidas_chamar()
-returns void language plpgsql security definer set search_path to 'public' as $$
-begin
-  perform net.http_post(
-    url := 'https://gdnvjpmpfgautrmtkjmx.supabase.co/functions/v1/nfe-entrada',
-    body := jsonb_build_object('acao', 'sincronizar'),
-    headers := jsonb_build_object('Content-Type', 'application/json', 'x-beep-interno', public.fiscal_chave_interna()),
-    timeout_milliseconds := 150000);
-end $$;
-revoke all on function public.nfe_recebidas_chamar() from public, anon, authenticated;
-
-select cron.unschedule(jobid) from cron.job where jobname = 'nfe-recebidas';
-select cron.schedule('nfe-recebidas', '*/15 * * * *', $$ select public.nfe_recebidas_chamar() $$);
+-- (a chamada periódica fica no GitHub Actions: ver 20261124200000_dfe_ponte.sql)
