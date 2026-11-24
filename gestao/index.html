@@ -175,13 +175,16 @@ function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img
   <button class="nav" data-t="vid"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg>Vídeos</button>
   <button class="nav" data-t="cfg">${ICON.cfg}Configurações</button>
   <div class="quem"><b style="color:var(--ink)">${esc(S.emp.nome_exibicao||S.emp.razao_social)}</b><br>${esc(S.user.email)} · ${S.papel==='dono'?'Dono':'Gerente'}<br><button class="btn sm" id="sair" style="margin-top:10px">Sair</button></div></aside><main id="main"></main></div>`;
- document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{S.tela=b.dataset.t;render()});$('#navCmd').onclick=()=>abrirCmd();$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
+ document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{S.tela=b.dataset.t;render()});$('#navCmd').onclick=()=>abrirCmd();talvezAssistente();$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
 function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({ag:telaAg,vend:telaVend,prod:telaProd,est:telaEst,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
 
 // ---------- agente "Configurar minha loja" (arquivo próprio, carregado só quando abre a tela) ----------
 const ctxBeep=()=>({sb,S,$,esc,brl,toast,modal,fechar,bonito,lerNFe,grupoDe,precoSugerido,regra,lojas,carregar,render,
- ir:t=>{S.tela=t;render()},setFiltroProd:k=>{PR.filtro=k;PR.pag=0},setDiaVendas:d=>{VD.dia=d},setLocalEstoque:id=>{EST_LOCAL=id},novoProduto:()=>prEditar(null),editarProduto:id=>prEditar(id),gerarCodigo});
-async function telaAg(){try{const m=await import('./agente.js?v=2');await m.telaAgente(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
+ ir:t=>{S.tela=t;render()},setFiltroProd:k=>{PR.filtro=k;PR.pag=0},setDiaVendas:d=>{VD.dia=d},setLocalEstoque:id=>{EST_LOCAL=id},novoProduto:()=>prEditar(null),editarProduto:id=>prEditar(id),gerarCodigo,apiPag,apiNf,cartaoMp,cartaoNf,
+ abrirAssistente:async e=>{const m=await import('./assistente.js?v=1');m.abrirAssistente(ctxBeep(),e)},resumoAssistente:async()=>{const m=await import('./assistente.js?v=1');return m.resumoAssistente(ctxBeep())}});
+// conta nova (sem produtos): abre os primeiros passos sozinho
+async function talvezAssistente(){if(S.papel!=='dono'||S.produtos.length)return;try{const c=ctxBeep(),r=await c.resumoAssistente();if(!r.concluido)c.abrirAssistente()}catch(e){}}
+async function telaAg(){try{const m=await import('./agente.js?v=3');await m.telaAgente(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
 // ---------- "O que você quer fazer?" (pedidos simples, por regras) ----------
 async function abrirCmd(t=''){try{const m=await import('./comando.js?v=1');m.abrirComando(ctxBeep(),t)}catch(e){toast('Não foi possível abrir: '+e.message)}}
 addEventListener('keydown',e=>{if(!S.emp||!$('#main'))return;const k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&k==='k'){e.preventDefault();abrirCmd()}else if(k==='/'&&!/input|textarea|select/i.test(document.activeElement?.tagName||'')&&!$('#modal').classList.contains('on')){e.preventDefault();abrirCmd()}});

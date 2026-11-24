@@ -228,12 +228,13 @@ function inicio() {
   const semCat = S.produtos.filter(p => p.ativo).length;
   M.innerHTML = `<div class="head"><div><h1>Configurar minha loja</h1><p>Mande as notas de compra ou a planilha. O Beep monta o cadastro, você revisa e só então ele grava.</p></div>
    <div class="row"><button class="btn" id="agDic">Dicionário de categorias</button></div></div>
+  <div id="agPassos"></div>
   ${A.semBanco ? '<div class="aviso" style="margin-bottom:16px"><b>Falta atualizar o banco.</b>&nbsp;A leitura e a revisão funcionam, mas para gravar é preciso aplicar a atualização do agente no Supabase.</div>' : ''}
   ${r?.linhas?.length ? `<div class="aviso info" style="margin-bottom:16px;align-items:center"><div style="flex:1">Você tem uma revisão que não terminou: <b>${r.linhas.length} produtos</b>, guardada em ${esc(dataHora(r.em))}. Ela fica salva neste computador mesmo se a internet cair.</div><button class="btn sm pri" id="agCont">Continuar</button><button class="btn sm" id="agDesc">Descartar</button></div>` : ''}
   <div class="agopts">
    <div class="card agopt"><div class="agic">${IC.nota}</div><h3>Notas de compra</h3><p class="mu sm">Arraste os XMLs das notas (ou um .zip com todos). O Beep lê nome, código de barras, custo, NCM e unidade.</p>
     <div class="drop agdrop" id="agDropX"><b>Solte os XMLs aqui</b><span class="mu sm">ou</span><label class="btn sm">Escolher arquivos<input type="file" id="agFx" accept=".xml,.zip,text/xml,application/zip" multiple hidden></label></div>
-    <button class="btn sm" id="agSefaz" style="justify-self:start">Usar as notas que já chegaram da SEFAZ</button></div>
+    <button class="btn sm" id="agSefaz" style="justify-self:start">Usar as notas recebidas da SEFAZ</button></div>
    <div class="card agopt"><div class="agic">${IC.plan}</div><h3>Planilha</h3><p class="mu sm">Preencha a planilha modelo (Excel ou CSV). Só o nome é obrigatório; o resto o Beep completa ou aponta.</p>
     <div class="drop agdrop" id="agDropP"><b>Solte a planilha aqui</b><span class="mu sm">ou</span><label class="btn sm">Escolher planilha<input type="file" id="agFp" accept=".csv,.xlsx,.xls,.ods,.txt" hidden></label></div>
     <button class="btn sm" id="agModelo" style="justify-self:start">Baixar planilha modelo</button></div>
@@ -244,7 +245,7 @@ function inicio() {
   <div class="card agmk"><div style="flex:1;min-width:240px"><h2 style="font-size:17px">Markup padrão da loja</h2><p class="mu sm" style="margin-top:2px">Preço sugerido = custo + ${pctTxt(m)}, terminando em ,${String(C.regra().terminacaoCentavos).padStart(2, '0')}. Exemplo: custo ${brl(250)} → <b style="color:var(--ink)">${brl(C.precoSugerido(250))}</b>. Vale também para a entrada de NF-e.</p></div>
    ${dono ? `<div class="row"><label class="f" style="width:130px">Markup (%)<input id="agMk" inputmode="decimal" value="${(m * 100).toFixed(0)}"></label><button class="btn" id="agMkS" style="align-self:end">Salvar</button></div>` : '<span class="mu sm">Só o dono muda o markup.</span>'}</div>
   <h2 style="font-size:18px;margin:26px 0 10px">Importações feitas</h2><div class="tblwrap" id="agHist"></div>`;
-  historico();
+  historico(); passos();
   const lerX = async files => { if (!files.length) return; ocupado('Lendo as notas…'); try { const t = await textosDe(files); if (!t.length) throw new Error('Nenhum XML encontrado nos arquivos'); comecar('xml', deNotas(t)); } catch (e) { livre(); C.toast(e.message); } };
   const lerP = async f => { if (!f) return; ocupado('Lendo a planilha…'); try { comecar('planilha', await dePlanilha(f)); } catch (e) { livre(); C.toast(e.message); } };
   soltar($('#agDropX'), fs => lerX([...fs])); soltar($('#agDropP'), fs => lerP(fs[0]));
@@ -252,6 +253,15 @@ function inicio() {
   $('#agModelo').onclick = modeloCsv; $('#agSefaz').onclick = sefaz; $('#agOrg').onclick = organizar; $('#agDic').onclick = editarDic;
   if ($('#agCont')) { $('#agCont').onclick = () => { Object.assign(A, { modo: r.modo, origem: r.origem, linhas: r.linhas, leitura: r.leitura, lojas: r.lojas, filtro: 'todos', pag: 0, busca: '' }); revisao(); }; $('#agDesc').onclick = () => { apagarRasc(); inicio(); }; }
   if ($('#agMkS')) $('#agMkS').onclick = salvarMarkup;
+}
+async function passos() {
+  const el = C.$('#agPassos'); if (!el || !C.resumoAssistente) return;
+  try {
+    const r = await C.resumoAssistente(); if (r.concluido && r.feitos === r.total) { el.innerHTML = ''; return; }
+    const nomes = ['Conta', 'Produtos', 'Nota fiscal', 'Maquininha', 'Venda de teste'], ks = ['conta', 'produtos', 'fiscal', 'maquininha', 'teste'];
+    el.innerHTML = `<div class="wzbanner"><div><b>Primeiros passos</b><div class="mu sm">${r.feitos} de ${r.total} prontos</div></div><div class="agpbar">${ks.map((k, i) => `<span class="${r.ok[k] ? 'ok' : ''}"><i></i>${nomes[i]}</span>`).join('')}</div><button class="btn pri sm" id="agPassosBt">${r.feitos ? 'Continuar' : 'Começar'}</button></div>`;
+    C.$('#agPassosBt').onclick = () => C.abrirAssistente();
+  } catch { el.innerHTML = ''; }
 }
 function soltar(d, fn) {
   ['dragenter', 'dragover'].forEach(ev => d.addEventListener(ev, e => { e.preventDefault(); d.classList.add('over'); }));
@@ -567,6 +577,7 @@ function css() {
   s.textContent = `.agopts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.agopt{display:grid;gap:12px;align-content:start}.agopt h3{font-size:18px}
 .agic{width:44px;height:44px;border-radius:12px;background:rgba(255,214,10,.1);color:var(--y);display:grid;place-items:center}
 .agdrop{padding:22px 14px;gap:6px}.agnum{display:flex;align-items:baseline;gap:8px;padding:14px 0}.agnum b{font:800 34px Manrope,Inter,sans-serif}
+.wzbanner{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:16px 18px;border-radius:16px;border:1px solid rgba(255,214,10,.3);background:rgba(255,214,10,.05)}.agpbar{flex:1;min-width:260px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.agpbar span{display:grid;gap:6px;font-size:12px;font-weight:600;color:var(--mu)}.agpbar i{height:6px;border-radius:99px;background:var(--p3)}.agpbar .ok i{background:var(--ok)}.agpbar .ok{color:var(--ink)}
 .agmk{margin-top:14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
 .agtbl td{vertical-align:middle}.agtbl tr.off td{opacity:.5}.agtbl tr.off td:first-child{opacity:1}
 .agtbl input:not([type=checkbox]),.agtbl select{min-height:34px!important;padding:0 8px!important;font-size:13.5px}

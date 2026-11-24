@@ -43,7 +43,7 @@ function tirarLoja(t) {
 
 // ---------- intenções ----------
 const TELAS = [
-  [/configurar (minha )?loja|importar|planilha|xml|dicionario|organizar categorias|classificar|primeiro acesso|kit/, 'ag', 'Configurar minha loja'],
+  [/configurar (minha )?loja|importar|planilha|xml|dicionario|organizar categorias|classificar|kit/, 'ag', 'Configurar minha loja'],
   [/venda|faturamento|faturei|vendi|estorn/, 'vend', 'Vendas'],
   [/estoque|repor|reposicao|abastec|saldo/, 'est', 'Estoque e reposição'],
   [/nota|nf-?e|xml de compra|lancar|entrada|fornecedor/, 'nf', 'Entrada de NF-e'],
@@ -71,12 +71,14 @@ const EXEMPLOS = [
   'cadastrar produto',
   'novo caixa',
   'lançar nota de compra',
-  'configurar minha loja'
+  'configurar minha loja',
+  'primeiros passos'
 ];
 
 function entender(txt) {
   const n = limpa(txt);
   if (!n) return null;
+  if (/primeir[oa]s? (acesso|passos)|assistente|instalar (a )?loja|comecar do zero/.test(n)) return { tipo: 'assistente' };
   if (/^(ajuda|help|\?|comandos|o que (voce|vc) faz|exemplos?)$/.test(n)) return { tipo: 'ajuda' };
 
   // preço: "mudar/trocar o preço da X para 5,90 (na loja)" | "preço da X para 5,90" | "X para 5,90"
@@ -168,6 +170,7 @@ const ACOES = {
     R.innerHTML = cartao('Não entendi esse pedido', `<p class="mu sm">Tente escrever de outro jeito${perto.length ? ', por exemplo:' : '. Veja exemplos em "ajuda".'}</p>${perto.length ? `<div class="cmdchips">${perto.map(e => `<button class="cmdchip" data-ex="${C.esc(e)}">${C.esc(e)}</button>`).join('')}</div>` : ''}`, `<button class="btn sm" data-ex="ajuda">Ver o que sei fazer</button>`);
     ligarEx(R);
   },
+  assistente() { C.fechar(); C.abrirAssistente(); },
   tela(it) { ir(it.tela); C.toast('Abrindo ' + it.nome); },
   filtroProd(it) { C.setFiltroProd(it.filtro); ir('prod'); },
   novoProduto(it) { ir('prod', () => { C.novoProduto(); if (it.nome) { const f = document.querySelector('#prF [name=nome]'); if (f) f.value = C.bonito(it.nome); } }); },
