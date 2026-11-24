@@ -81,6 +81,29 @@ input[type=file]{font-size:13px;color:var(--mu)}input[type=file]::file-selector-
 .opt b{display:block}.opt small{color:var(--mu)}
 .vazio{padding:28px;text-align:center;color:var(--mu)}
 @media print{body:has(#modal.on #cartaz) .app,body:has(#modal.on #cartaz) #toast,#mbox .row{display:none!important}body:has(#modal.on #cartaz) #modal{position:static;inset:auto;background:none;display:block;padding:0}body:has(#modal.on #cartaz) #mbox{box-shadow:none;border:0;background:#fff;max-width:none;width:auto;max-height:none;overflow:visible}#cartaz,#cartaz h2{color:#000!important}#cartaz .mu{color:#333!important}}
+/* início */
+.ini-hoje{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:14px;margin-bottom:26px}
+.ini-hoje .kpi.big b{font-size:34px;line-height:1.15}
+.ini-hoje .cmp{display:block;margin-top:6px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0}
+.ini-hoje .cmp.up{color:#4ade80}.ini-hoje .cmp.down{color:#f87171}.ini-hoje .cmp.eq{color:var(--mu)}
+.ini-sec{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 12px}
+.ini-sec h2{font-size:18px}
+.ini-alertas{display:grid;gap:10px;margin-bottom:28px}
+.alerta{display:flex;align-items:center;gap:14px;background:var(--p1);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:14px;padding:14px 16px}
+.alerta.bad{border-left-color:var(--bad)}.alerta.info{border-left-color:var(--blue)}
+.alerta .tx{flex:1;min-width:0}.alerta .tx b{display:block}.alerta .tx span{color:var(--mu);font-size:13px}
+.alerta .qt{font:800 22px Manrope,Inter,sans-serif;min-width:34px;text-align:center}
+.tudo-ok{display:flex;align-items:center;gap:12px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:14px;padding:16px 18px;color:#4ade80;font-weight:600;margin-bottom:28px}
+.ini-lojas{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:28px}
+.lojac{background:var(--p1);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:8px;text-align:left;transition:border-color .15s}
+.lojac:hover{border-color:#3a3e48}.lojac h3{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lojac .v{font:800 22px Manrope,Inter,sans-serif}.lojac .mu{font-size:13px}
+.passos{display:grid;gap:8px;margin-bottom:28px}
+.passo{display:flex;align-items:center;gap:12px;background:var(--p1);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.passo .ck{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:none;border:2px solid var(--line);font-size:13px;font-weight:800}
+.passo.ok .ck{background:var(--ok);border-color:var(--ok);color:#06220f}.passo.ok .t{color:var(--mu);text-decoration:line-through}
+.passo .t{flex:1}
+@media(max-width:900px){.ini-hoje{grid-template-columns:1fr 1fr}.ini-hoje .kpi.big{grid-column:1/-1}.alerta{flex-wrap:wrap}.alerta .btn{width:100%}}
 @media print{.side,.head .row,.barra{display:none!important}.app{display:block}body,html{background:#fff;color:#000}.tblwrap,.kpi,.card{background:#fff;border-color:#ccc}.tbl th{background:#fff;color:#333}}
 @media(max-width:900px){.app{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;overflow:auto;padding:12px}.side img,.side .quem{display:none}main{padding:20px 16px 80px}.grid4,.grid5{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}}
 
@@ -121,7 +144,7 @@ const ICON={nf:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stro
  up:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>'};
 
 // ---------- estado ----------
-const S={user:null,emp:null,papel:null,locais:[],produtos:[],codigos:[],codForn:[],precos:[],portfolios:[],pitens:[],tela:'vend',nota:null,linhas:[],destino:null,pfNovos:new Set()};
+const S={user:null,emp:null,papel:null,locais:[],produtos:[],codigos:[],codForn:[],precos:[],portfolios:[],pitens:[],tela:'ini',nota:null,linhas:[],destino:null,pfNovos:new Set()};
 const lojas=()=>S.locais.filter(l=>l.tipo==='loja'&&l.ativo);
 const regra=()=>S.emp?.regra_preco||{divisor:.57,terminacaoCentavos:90};
 function precoSugerido(custo){const r=regra(),bruto=Math.ceil(custo/r.divisor),reais=Math.floor(bruto/100);let c=reais*100+r.terminacaoCentavos;if(c<bruto)c+=100;return c}
@@ -163,6 +186,7 @@ async function iniciar(){const {data:{session}}=await sb.auth.getSession();if(!s
  try{await carregar()}catch(e){$('#raiz').innerHTML=`<div class="login"><div class="card"><h2>Não foi possível carregar</h2><p class="mu">${esc(e.message)}</p><button class="btn" onclick="location.reload()">Tentar de novo</button></div></div>`;return}
  shell()}
 function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img class="logo" src="../logo-claro.png" alt="Beep Smart Mercadinhos">
+  <button class="nav" data-t="ini"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Início</button>
   <button class="nav" data-t="vend"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Vendas</button>
   <button class="nav" data-t="prod"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Produtos</button>
   <button class="nav" data-t="est"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Estoque e reposição</button>
@@ -174,7 +198,7 @@ function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img
   <button class="nav" data-t="cfg">${ICON.cfg}Configurações</button>
   <div class="quem"><b style="color:var(--ink)">${esc(S.emp.nome_exibicao||S.emp.razao_social)}</b><br>${esc(S.user.email)} · ${S.papel==='dono'?'Dono':'Gerente'}<br><button class="btn sm" id="sair" style="margin-top:10px">Sair</button></div></aside><main id="main"></main></div>`;
  document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{S.tela=b.dataset.t;render()});$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
-function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({vend:telaVend,prod:telaProd,est:telaEst,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
+function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({ini:telaInicio,vend:telaVend,prod:telaProd,est:telaEst,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
 
 // ---------- leitura do XML (NF-e modelo 55) ----------
 const tx=(el,sel)=>{if(!el)return '';const n=el.getElementsByTagName(sel)[0];return n?n.textContent.trim():''};
@@ -527,6 +551,62 @@ function editorPf(id,duplicar){const base=id?S.portfolios.find(p=>p.id===id):nul
     const r2=await sb.from('portfolio_itens').insert(rows);if(r2.error)throw r2.error;
     const usam=lojas().filter(l=>l.portfolio_id===pid);for(const l of usam){const r=await sb.rpc('aplicar_portfolio',{p_local:l.id,p_portfolio:pid});if(r.error)throw r.error}
     fechar();await carregar();render();toast('Portfólio salvo'+(usam.length?' e aplicado em '+usam.length+' loja(s)':''))}catch(err){b.disabled=false;toast('Erro: '+err.message)}}};desenha()}
+
+// ---------- tela: início (o que o dono precisa ver primeiro) ----------
+function ir(t){S.tela=t;render();window.scrollTo(0,0)}
+const haQuanto=ms=>{const m=ms/6e4;return m<60?Math.max(1,Math.round(m))+' min':m<1440?Math.round(m/60)+' h':Math.round(m/1440)+(m<2880?' dia':' dias')};
+async function telaInicio(){const M=$('#main');const e=S.emp.id;
+ const agora=new Date(),h=agora.getHours();const saud=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
+ const dataLonga=agora.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+ M.innerHTML=`<div class="head"><div><h1>${saud}</h1><p>${esc(dataLonga.charAt(0).toUpperCase()+dataLonga.slice(1))} · ${esc(S.emp.nome_exibicao||S.emp.razao_social)}</p></div><div class="row"><button class="btn" id="iAtual">Atualizar</button></div></div><div id="iCorpo"><p class="vazio">Carregando…</p></div>`;
+ $('#iAtual').onclick=telaInicio;
+ const ini=new Date(agora);ini.setHours(0,0,0,0);const semAnt=new Date(ini.getTime()-7*864e5);const ateSemAnt=new Date(agora.getTime()-7*864e5);
+ const lojaIds=new Set(lojas().map(l=>l.id));
+ // saldos podem passar de 1.000 linhas: busca em páginas
+ const saldos=async()=>{const out=[];for(let de=0;;de+=1000){const r=await sb.from('saldos_estoque').select('local_id,produto_id,saldo').eq('empresa_id',e).range(de,de+999);if(r.error)return r;out.push(...r.data);if(r.data.length<1000)return {data:out,error:null}}};
+ const [vd,dp,nf,nr,sl,tv]=await Promise.all([
+  sb.from('vendas').select('id,local_id,total,status,teste,finalizada_em,observacao').eq('empresa_id',e).eq('status','paga').gte('finalizada_em',semAnt.toISOString()).order('finalizada_em',{ascending:false}).limit(5000),
+  sb.from('dispositivos').select('id,nome,local_id,ultimo_sinal,ativo,mp_terminal_id').eq('empresa_id',e).eq('ativo',true),
+  sb.from('nfce').select('venda_id,status,numero,ultimo_erro,atualizado_em,criado_em').eq('empresa_id',e).in('status',['rejeitada','fila','contingencia']).limit(200),
+  sb.from('nfe_recebidas').select('id',{count:'exact',head:true}).eq('empresa_id',e).in('status',['resumo','ciencia','xml']),
+  saldos(),
+  sb.from('vendas').select('id',{count:'exact',head:true}).eq('empresa_id',e).eq('origem','pendente_app').eq('status','aberta')]);
+ const C=$('#iCorpo');if(!C||S.tela!=='ini')return;
+ const erro=[vd,dp,nf,nr,sl,tv].find(r=>r.error);if(erro){C.innerHTML=`<div class="card"><b>Não foi possível carregar o resumo.</b><p class="mu sm" style="margin-top:6px">${esc(erro.error.message)}</p><button class="btn" style="margin-top:12px" id="iDeNovo">Tentar de novo</button></div>`;$('#iDeNovo').onclick=telaInicio;return}
+ const vendas=vd.data.filter(v=>!v.teste),testes=vd.data.filter(v=>v.teste&&new Date(v.finalizada_em)>=ini).length;
+ const hoje=vendas.filter(v=>new Date(v.finalizada_em)>=ini),antes=vendas.filter(v=>{const t=new Date(v.finalizada_em);return t>=semAnt&&t<=ateSemAnt&&t<new Date(semAnt.getTime()+864e5)});
+ const tot=a=>a.reduce((s,v)=>s+v.total,0),tH=tot(hoje),tA=tot(antes);
+ const wd=semAnt.toLocaleDateString('pt-BR',{weekday:'long'});
+ let cmp='';if(tA>0){const d=Math.round((tH-tA)/tA*100);cmp=`<span class="cmp ${d>0?'up':d<0?'down':'eq'}">${d>0?'+':''}${d}% em relação à ${wd} passada, mesmo horário</span>`}else if(tH>0)cmp=`<span class="cmp eq">Sem vendas na ${wd} passada até este horário</span>`;
+ // alertas: cada um com um botão que leva ao lugar de resolver
+ const al=[];const nomeL=id=>S.locais.find(l=>l.id===id)?.nome||'Loja';
+ const semSinal=dp.data.filter(d=>lojaIds.has(d.local_id)&&(!d.ultimo_sinal||agora-new Date(d.ultimo_sinal)>15*6e4));
+ if(semSinal.length)al.push({c:'bad',q:semSinal.length,t:semSinal.length===1?'Caixa sem sinal':'Caixas sem sinal',d:semSinal.slice(0,3).map(d=>`${nomeL(d.local_id)} (${d.nome}) há ${d.ultimo_sinal?haQuanto(agora-new Date(d.ultimo_sinal)):'muito tempo'}`).join(' · ')+(semSinal.length>3?' · e mais '+(semSinal.length-3):'')+'. Confira a internet e se o app está aberto.',b:'Ver caixas',go:'cx'});
+ const recus=nf.data.filter(n=>n.status==='rejeitada'),presas=nf.data.filter(n=>n.status!=='rejeitada'&&agora-new Date(n.criado_em)>30*6e4);
+ if(recus.length)al.push({c:'bad',q:recus.length,t:recus.length===1?'Nota fiscal recusada pela SEFAZ':'Notas fiscais recusadas pela SEFAZ',d:'A venda foi paga, mas a nota não saiu. Abra a venda para ver o motivo e emitir de novo.',b:'Ver vendas',go:'vend'});
+ if(presas.length)al.push({c:'',q:presas.length,t:'Notas fiscais esperando a SEFAZ há mais de 30 min',d:'O sistema continua tentando sozinho. Se passar de algumas horas, avise o suporte.',b:'Ver vendas',go:'vend'});
+ const diverg=vendas.filter(v=>v.observacao&&/diferente do total/.test(v.observacao));
+ if(diverg.length)al.push({c:'bad',q:diverg.length,t:'Valor da maquininha diferente do total da venda',d:'Nos últimos 7 dias. Confira se o cliente pagou o valor certo.',b:'Ver vendas',go:'vend'});
+ if(nr.count)al.push({c:'info',q:nr.count,t:nr.count===1?'Nota de compra para conferir':'Notas de compra para conferir',d:'Chegaram da SEFAZ. Confira e dê entrada no estoque, ou marque para ignorar.',b:'Conferir notas',go:'nf'});
+ const sal=new Map(sl.data.map(r=>[r.local_id+'|'+r.produto_id,+r.saldo]));const abaixo={};
+ S.precos.forEach(p=>{if(!lojaIds.has(p.local_id)||!p.ativo_no_mix||!(p.estoque_min>0))return;const s=sal.get(p.local_id+'|'+p.produto_id)??0;if(s<p.estoque_min)abaixo[p.local_id]=(abaixo[p.local_id]||0)+1});
+ const nAb=Object.values(abaixo).reduce((a,b)=>a+b,0);
+ if(nAb){const top=Object.entries(abaixo).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([l,n])=>`${nomeL(l)}: ${n}`).join(' · ');al.push({c:'',q:nAb,t:'Produtos abaixo do mínimo na prateleira',d:top+(Object.keys(abaixo).length>3?' · e outras lojas':''),b:'Abastecer',go:'est'})}
+ if(tv.count)al.push({c:'info',q:tv.count,t:tv.count===1?'Venda travada esperando o cliente pagar':'Vendas travadas esperando o cliente pagar',d:'Compras registradas para clientes do app que ainda não foram pagas.',b:'Ver vendas travadas',go:'app'});
+ // lojas
+ const caixaDe=id=>{const ds=dp.data.filter(d=>d.local_id===id);if(!ds.length)return ['','Sem caixa ativado'];const ok=ds.some(d=>d.ultimo_sinal&&agora-new Date(d.ultimo_sinal)<=15*6e4);return ok?['ok','Caixa com sinal']:['bad','Caixa sem sinal']};
+ const cards=lojas().map(l=>{const vs=hoje.filter(v=>v.local_id===l.id),ult=vendas.find(v=>v.local_id===l.id),[cc,ct]=caixaDe(l.id);return {l,t:tot(vs),n:vs.length,ult,cc,ct}}).sort((a,b)=>b.t-a.t||a.l.nome.localeCompare(b.l.nome));
+ // primeiros passos: some quando tudo estiver feito
+ const passos=[[S.produtos.length>0,'Cadastrar os produtos','prod'],[dp.data.some(d=>lojaIds.has(d.local_id)),'Ativar o caixa em uma loja','cx'],[dp.data.some(d=>d.mp_terminal_id),'Ligar a maquininha ao caixa','cfg'],[vd.data.some(v=>!v.teste),'Fazer a primeira venda real','cx']];
+ const faltam=passos.filter(p=>!p[0]).length;
+ C.innerHTML=`<div class="ini-hoje"><div class="kpi big"><span>Vendido hoje</span><b class="num">${brl(tH)}</b>${cmp}</div><div class="kpi"><span>Vendas</span><b class="num">${hoje.length}</b></div><div class="kpi"><span>Ticket médio</span><b class="num">${brl(hoje.length?Math.round(tH/hoje.length):0)}</b></div><div class="kpi"><span>Lojas vendendo</span><b class="num">${new Set(hoje.map(v=>v.local_id)).size} de ${lojas().length}</b></div></div>
+  ${testes?`<p class="mu sm" style="margin:-14px 0 22px">Fora destes números: ${testes} venda${testes>1?'s':''} de teste hoje.</p>`:''}
+  <div class="ini-sec"><h2>Precisa de você</h2>${al.length?`<span class="mu sm">${al.length} ${al.length===1?'assunto':'assuntos'}</span>`:''}</div>
+  ${al.length?`<div class="ini-alertas">${al.map((a,i)=>`<div class="alerta ${a.c}"><span class="qt num">${a.q}</span><div class="tx"><b>${esc(a.t)}</b><span>${esc(a.d)}</span></div><button class="btn sm" data-go="${a.go}">${esc(a.b)}</button></div>`).join('')}</div>`:`<div class="tudo-ok"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Tudo certo: caixas com sinal, notas emitidas e nada para conferir.</div>`}
+  <div class="ini-sec"><h2>Lojas hoje</h2><button class="btn sm" data-go="vend">Ver todas as vendas</button></div>
+  ${cards.length?`<div class="ini-lojas">${cards.map(c=>`<button class="lojac" data-go="vend"><h3 title="${esc(c.l.nome)}">${esc(c.l.nome)}</h3><span class="v num">${brl(c.t)}</span><span class="mu">${c.n} venda${c.n===1?'':'s'}${c.ult?' · última há '+haQuanto(agora-new Date(c.ult.finalizada_em)):' · sem vendas em 7 dias'}</span><span><span class="pill ${c.cc}">${c.ct}</span></span></button>`).join('')}</div>`:'<p class="vazio">Nenhuma loja cadastrada.</p>'}
+  ${faltam?`<div class="ini-sec"><h2>Primeiros passos</h2><span class="mu sm">Faltam ${faltam} de ${passos.length}</span></div><div class="passos">${passos.map(([ok,t,go])=>`<div class="passo ${ok?'ok':''}"><span class="ck">${ok?'✓':''}</span><span class="t">${esc(t)}</span>${ok?'':`<button class="btn sm" data-go="${go}">Fazer agora</button>`}</div>`).join('')}</div>`:''}`;
+ C.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>ir(b.dataset.go))}
 
 // ---------- tela: vendas ----------
 const hojeISO=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
