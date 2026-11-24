@@ -1,4 +1,4 @@
-// Cobrança no cartão pela maquininha Mercado Pago Point (API Orders).
+// Cobrança no cartão pela maquininha Mercado Pago Point e no Pix com QR na tela (API Orders).
 // - O token do Mercado Pago de cada empresa fica só no servidor (cadastrado pelo dono no Painel); o tablet nunca o vê.
 // - O valor cobrado é sempre o total calculado aqui, com os preços da loja.
 // - A venda só é gravada quando o Mercado Pago confirma o pagamento (pela consulta ou pelo aviso/webhook),
@@ -6,7 +6,7 @@
 // - Toda chamada que cria ou muda algo no Mercado Pago leva uma chave de idempotência fixa por cobrança:
 //   repetir a chamada (rede caiu, toque duplo) nunca cria uma segunda cobrança na maquininha.
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { ABERTOS, FINAIS, assinaturaValida, cobrancaDaReferencia, dataOk, lerOrdem, motivo, reais, referencia } from "../_shared/mp.ts";
+import { ABERTOS, FINAIS, assinaturaValida, cobrancaDaReferencia, dataOk, lerOrdem, lerPix, motivo, reais, referencia } from "../_shared/mp.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const MP = "https://api.mercadopago.com";
@@ -16,6 +16,11 @@ const TESTE = () => Deno.env.get("MP_POINT_TEST_MODE") === "true";
 const GLOBAL = () => Deno.env.get("MP_PERMITIR_CREDENCIAL_GLOBAL") === "true";
 const TERMINAL_VIRTUAL = "NEWLAND_N950__SBX0000001";
 const EXPIRA = "PT3M"; // a maquininha desiste sozinha depois de 3 minutos
+// Pix: o Mercado Pago exige no mínimo 30 minutos de validade. O caixa desiste antes (5 min) e cancela o pedido,
+// e um pedido cancelado não aceita mais pagamento.
+const EXPIRA_PIX = "PT30M";
+// O Mercado Pago pede um e-mail de pagador no Pix. O cliente do caixa é anônimo: vai um e-mail fixo da operação.
+const EMAIL_PIX = () => (Deno.env.get("MP_PIX_EMAIL_PAGADOR") ?? "").trim() || "cliente.caixa@beepsmart.com.br";
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
 const erro = (m: string, s = 400, extra: Record<string, unknown> = {}) => json({ erro: m, ...extra }, s);
@@ -65,7 +70,7 @@ async function mp(tk: string, path: string, init: RequestInit = {}, idem?: strin
 const msgMp = (r: { status: number; corpo: any }) => String(r.corpo?.errors?.[0]?.message ?? r.corpo?.message ?? `erro ${r.status}`).slice(0, 300);
 
 // preços sempre do servidor
-async function calcular(d: any, itensIn: any[]) {
+async function calcular(d: any, itensIn: any[], forma: string) {
   const itens = Array.isArray(itensIn) ? itensIn.slice(0, 100) : [];
   if (!itens.length) return { erro: "Carrinho vazio" };
   const ids = itens.map((i: any) => i.produto_id).filter(uuidOk);
@@ -81,7 +86,7 @@ async function calcular(d: any, itensIn: any[]) {
     total += p.preco * q;
     linhas.push({ seq: k + 1, produto_id: i.produto_id, quantidade: q, preco_unit: p.preco, custo_unit: p.produtos.custo });
   }
-  if (total < 100) return { erro: "Valor mínimo no cartão: R$ 1,00" };
+  if (forma !== "pix" && total < 100) return { erro: "Valor mínimo no cartão: R$ 1,00" };
   return { total, linhas };
 }
 
@@ -144,6 +149,17 @@ async function atualizar(c: any, tk: string, forcar = false) {
 
 // cria (ou reencontra) o pedido na maquininha. Mesmo corpo + mesma chave = mesmo pedido.
 function corpoOrdem(c: any) {
+  if (c.forma === "pix") {
+    return JSON.stringify({
+      type: "online",
+      processing_mode: "automatic",
+      external_reference: referencia(c.id),
+      description: "Compra Beep",
+      total_amount: reais(c.valor),
+      payer: { email: EMAIL_PIX() },
+      transactions: { payments: [{ amount: reais(c.valor), payment_method: { id: "pix", type: "bank_transfer" }, expiration_time: EXPIRA_PIX }] },
+    });
+  }
   return JSON.stringify({
     type: "point",
     external_reference: referencia(c.id),
@@ -160,7 +176,8 @@ async function enviarOrdem(c: any, tk: string) {
 }
 
 async function cancelarNoMp(c: any, tk: string) {
-  return await mp(tk, `/v1/orders/${encodeURIComponent(c.mp_order_id)}/cancel`, { method: "POST", headers: { "x-allow-cancelable-status": "at_terminal" } }, `beep-cancelar-${c.id}`);
+  const headers: Record<string, string> = c.forma === "pix" ? {} : { "x-allow-cancelable-status": "at_terminal" };
+  return await mp(tk, `/v1/orders/${encodeURIComponent(c.mp_order_id)}/cancel`, { method: "POST", headers }, `beep-cancelar-${c.id}`);
 }
 
 const resposta = (c: any) => ({ cobranca: c.id, status: c.status, detalhe: c.status_detail, mensagem: motivo(c.status_detail, c.status), total: c.valor, bandeira: c.bandeira, venda_gravada: !!c.venda_gravada, venda_id: c.venda_id });
@@ -234,7 +251,7 @@ Deno.serve(async (req) => {
   const terminal = d.mp_terminal_id || (TESTE() ? TERMINAL_VIRTUAL : null);
 
   // o caixa pergunta se já pode cobrar no cartão
-  if (acao === "config") return json({ provedor: "mercadopago", pronto: temToken && !!terminal, credencial: temToken, terminal, teste: TESTE() || terminal === TERMINAL_VIRTUAL });
+  if (acao === "config") return json({ provedor: "mercadopago", pronto: temToken && !!terminal, pix: temToken && Deno.env.get("MP_PIX_DESLIGADO") !== "true", credencial: temToken, terminal, teste: TESTE() || terminal === TERMINAL_VIRTUAL });
 
   if (!temToken) return erro("Credencial do Mercado Pago ainda não cadastrada. O dono cadastra no Painel, em Configurações.", 503);
 
@@ -263,10 +280,11 @@ Deno.serve(async (req) => {
 
   // 1) inicia a cobrança: calcula o total e manda para a maquininha
   if (acao === "iniciar") {
-    if (!terminal) return erro("Nenhuma maquininha ligada a este caixa", 409);
     if (!uuidOk(b.venda_id)) return erro("id da venda inválido");
-    const forma = b.forma === "debito" ? "debito" : b.forma === "credito" ? "credito" : null;
+    const forma = b.forma === "debito" ? "debito" : b.forma === "credito" ? "credito" : b.forma === "pix" ? "pix" : null;
     if (!forma) return erro("Forma de pagamento inválida");
+    if (forma === "pix" && Deno.env.get("MP_PIX_DESLIGADO") === "true") return erro("Pix desligado no momento", 409);
+    if (forma !== "pix" && !terminal) return erro("Nenhuma maquininha ligada a este caixa", 409);
     const { data: vendida } = await db.from("vendas").select("id").eq("id", b.venda_id).maybeSingle();
     if (vendida) return erro("Esta venda já foi paga", 409);
     const { data: aprovada } = await db.from("cobrancas_cartao").select("*").eq("venda_id", b.venda_id).eq("status", "aprovado").maybeSingle();
@@ -283,11 +301,11 @@ Deno.serve(async (req) => {
       if (!FINAIS.has(a.status)) return erro("A maquininha ainda está com a cobrança anterior. Cancele na maquininha e tente de novo.", 409, { cobranca: a.id });
     }
 
-    const c0: any = await calcular(d, b.itens);
+    const c0: any = await calcular(d, b.itens, forma);
     if (c0.erro) return erro(c0.erro);
     const { data: cob, error } = await db.from("cobrancas_cartao").insert({
       empresa_id: d.empresa_id, local_id: d.local_id, dispositivo_id: d.id, venda_id: b.venda_id, forma, valor: c0.total, itens: c0.linhas,
-      iniciada_em: dataOk(b.iniciada_em), maior18_em: dataOk(b.maior18_em), terminal_id: terminal, status: "criando",
+      iniciada_em: dataOk(b.iniciada_em), maior18_em: dataOk(b.maior18_em), terminal_id: forma === "pix" ? null : terminal, status: "criando",
     }).select("*").single();
     if (error?.code === "23505") return erro("Já há um pagamento em andamento neste caixa", 409);
     if (error || !cob) return erro("Não foi possível registrar a cobrança", 500);
@@ -301,10 +319,19 @@ Deno.serve(async (req) => {
     if (!r.ok || !r.corpo?.id) {
       const m = msgMp(r);
       await db.from("cobrancas_cartao").update({ status: "falhou", erro: m, atualizado_em: agora() }).eq("id", cob.id);
-      return erro("A maquininha não recebeu a cobrança: " + m, 502);
+      return erro((forma === "pix" ? "O Mercado Pago não gerou o Pix: " : "A maquininha não recebeu a cobrança: ") + m, 502);
     }
     const { data: c1 } = await db.from("cobrancas_cartao").update({ mp_order_id: String(r.corpo.id), erro: null, atualizado_em: agora() }).eq("id", cob.id).select("*").single();
-    return json(resposta(await aplicarOrdem(c1 ?? { ...cob, mp_order_id: String(r.corpo.id) }, r.corpo)));
+    const fim = await aplicarOrdem(c1 ?? { ...cob, mp_order_id: String(r.corpo.id) }, r.corpo);
+    if (forma !== "pix") return json(resposta(fim));
+    const pix = lerPix(r.corpo);
+    if (!pix.img && !pix.qr && !FINAIS.has(fim.status)) {
+      // sem QR não há como pagar: cancela para não deixar um Pix aberto
+      await cancelarNoMp(fim, tk);
+      await atualizar(fim, tk, true);
+      return erro("O Mercado Pago não devolveu o QR do Pix. Tente de novo.", 502);
+    }
+    return json({ ...resposta(fim), pix_qr: pix.qr, pix_qr_img: pix.img });
   }
 
   // 2) o caixa acompanha o pagamento

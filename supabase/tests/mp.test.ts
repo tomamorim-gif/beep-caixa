@@ -1,7 +1,7 @@
 // Testes das regras do Mercado Pago. Rodar: node --experimental-strip-types --test supabase/tests/mp.test.ts
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { assinaturaValida, cobrancaDaReferencia, dataOk, hmacHex, iguais, lerAssinatura, lerOrdem, manifesto, motivo, reais, referencia } from "../functions/_shared/mp.ts";
+import { assinaturaValida, cobrancaDaReferencia, dataOk, hmacHex, iguais, lerAssinatura, lerOrdem, lerPix, manifesto, motivo, reais, referencia } from "../functions/_shared/mp.ts";
 
 test("lerOrdem: pedido aprovado com dados do cartão", () => {
   const o = lerOrdem({ id: "ORD01", status: "processed", external_reference: "beepabc", transactions: { payments: [{ id: "PAY01", status: "processed", status_detail: "accredited", amount: "12.50", paid_amount: "12.50", payment_method: { id: "master" }, reference: { id: "123" } }] } });
@@ -70,4 +70,26 @@ test("datas do tablet", () => {
   assert.equal(dataOk("lixo", agora), null);
   assert.equal(dataOk("2030-01-01T00:00:00Z", agora), null);
   assert.equal(dataOk(123, agora), null);
+});
+
+test("Pix: esperando pagamento é espera, vencido é tempo esgotado", () => {
+  assert.equal(lerOrdem({ status: "action_required", transactions: { payments: [{ status_detail: "waiting_transfer" }] } }).status, "aguardando");
+  assert.equal(lerOrdem({ status: "action_required", status_detail: "waiting_payment" }).status, "aguardando");
+  assert.equal(lerOrdem({ status: "action_required", status_detail: "outra_coisa" }).status, "verificar");
+  assert.equal(lerOrdem({ status: "failed", status_detail: "expired" }).status, "expirado");
+  assert.equal(lerOrdem({ status: "canceled", status_detail: "expired" }).status, "expirado");
+  assert.equal(lerOrdem({ status: "failed", status_detail: "rejected_by_bank" }).status, "recusado");
+  const pago = lerOrdem({ status: "processed", transactions: { payments: [{ id: "PAY9", status_detail: "accredited", amount: "3.50", payment_method: { id: "pix", type: "bank_transfer" } }] } });
+  assert.equal(pago.status, "aprovado");
+  assert.equal(pago.valor_centavos, 350);
+  assert.equal(motivo("waiting_transfer", "aguardando"), "Aguardando o Pix");
+});
+
+test("lerPix: pega o QR e recusa imagem estranha", () => {
+  const img = "iVBORw0KGgo" + "A".repeat(200);
+  const p = lerPix({ transactions: { payments: [{ payment_method: { qr_code: "00020101021226", qr_code_base64: img } }] } });
+  assert.equal(p.qr, "00020101021226");
+  assert.equal(p.img, img);
+  assert.equal(lerPix({ transactions: { payments: [{ payment_method: { qr_code_base64: "<script>" } }] } }).img, null);
+  assert.deepEqual(lerPix({}), { qr: null, img: null });
 });

@@ -334,7 +334,7 @@ h2{font-size:22px;font-weight:800}
     <button class="btn g" id="admMaq">Maquininha de cartão (Mercado Pago)</button>
     <button class="btn bad" id="admSair">Desativar este aparelho</button>
   </div>
-  <p class="mu" style="margin-top:14px;font-size:13px">Vendas no cartão pela maquininha Mercado Pago são reais. Pix ainda simulado (vendas Pix ficam marcadas como teste). Falta a NFC-e.</p>
+  <p class="mu" style="margin-top:14px;font-size:13px">Vendas no cartão pela maquininha Mercado Pago e no Pix com QR do Mercado Pago são reais. Sem a credencial do Mercado Pago, o pagamento é simulado e a venda fica marcada como teste. Falta a NFC-e.</p>
 </section>
 
 <!-- maquininha Mercado Pago (pelo admin) -->
@@ -504,7 +504,7 @@ $('#idadeSim').onclick=()=>fecharIdade(true);$('#idadeNao').onclick=()=>fecharId
 // ---------- pagamento (simulado) ----------
 $('#btnPagar').onclick=()=>{clearTimeout(vozT);ajustarFormas();vozPend.clear();forma=null;document.querySelectorAll('.forma').forEach(f=>f.classList.remove('on'));$('#cobranca').innerHTML='<p class="mu">Escolha a forma de pagamento</p>';$('#totalPag').textContent=brl(totalC());mostrar('pagamento');falar(resumoFalado()+' Total: '+valorFalado(totalC())+'. Escolha como quer pagar.')};
 $('#voltarCarrinho').onclick=()=>{if(pagReal){toast('Aguarde: pagamento em andamento na maquininha');return}mostrar('carrinho')};
-$('#formas').onclick=e=>{const b=e.target.closest('.forma');if(!b||pagReal)return;forma=b.dataset.f;if(cartaoReal()&&(forma==='credito'||forma==='debito')){document.querySelectorAll('.forma').forEach(f=>f.classList.toggle('on',f===b));cobrarCartao(forma);return}document.querySelectorAll('.forma').forEach(f=>f.classList.toggle('on',f===b));const txt={pix:'Abra o app do seu banco e leia o QR',debito:'Insira ou aproxime o cartão na maquininha',credito:'Insira ou aproxime o cartão na maquininha',tapon:'Encoste o cartão na parte de trás do aparelho'}[forma];
+$('#formas').onclick=e=>{const b=e.target.closest('.forma');if(!b||pagReal)return;forma=b.dataset.f;if(forma==='pix'&&pixReal()){document.querySelectorAll('.forma').forEach(f=>f.classList.toggle('on',f===b));cobrarMP('pix');return}if(cartaoReal()&&(forma==='credito'||forma==='debito')){document.querySelectorAll('.forma').forEach(f=>f.classList.toggle('on',f===b));cobrarCartao(forma);return}document.querySelectorAll('.forma').forEach(f=>f.classList.toggle('on',f===b));const txt={pix:'Abra o app do seu banco e leia o QR',debito:'Insira ou aproxime o cartão na maquininha',credito:'Insira ou aproxime o cartão na maquininha',tapon:'Encoste o cartão na parte de trás do aparelho'}[forma];
  $('#cobranca').innerHTML=(forma==='pix'?`<div class="qr" aria-label="QR do Pix (simulado)">${qrFake()}</div>`:'')+`<p style="font-size:18px">${txt}</p><p class="mu" style="font-size:13px">Teste: nada será cobrado. Escolha o resultado:</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%"><button class="btn bad" id="simNeg">Recusado</button><button class="btn ok" id="simOk">Aprovado</button></div>`;falar(txt);
  $('#simOk').onclick=aprovar;requestAnimationFrame(()=>$('#simOk').scrollIntoView({block:'end',behavior:'smooth'}));$('#simNeg').onclick=()=>{api('evento',{tipo:'pagamento_negado',venda_id:vendaId,itens:carrinho}).catch(()=>{});falar('Pagamento recusado. Tente outra forma.');toast('Pagamento recusado')}};
 function qrFake(){let s='<svg viewBox="0 0 29 29" width="172" height="172" shape-rendering="crispEdges">';const r=crypto.getRandomValues(new Uint8Array(841));for(let y=0;y<29;y++)for(let x=0;x<29;x++){const f=(x<8&&y<8)||(x>20&&y<8)||(x<8&&y>20);const on=f?((x%7===0||y%7===0||x%7===6||y%7===6||(x%7>1&&x%7<5&&y%7>1&&y%7<5))&&!(x===7||y===7||x===21||y===21)):r[y*29+x]>140;if(on)s+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}return s+'</svg>'}
@@ -532,21 +532,29 @@ async function cobrarMP(f){if(pagReal)return;clearTimeout(inativo);
  catch(e){pagReal=null;telaCobranca('Não foi possível iniciar o pagamento',navigator.onLine?e.message:'Sem internet no caixa.',btnsFalha());ligarFalha(f);falar('Não foi possível iniciar o pagamento.');return}
  pagReal.cobranca=r.cobranca;pagReal.total=r.total;$('#totalPag').textContent=brl(r.total);
  if(mpTratar(r))return;
+ if(f==='pix'){telaPix(r);mpAcompanhar();return}
  telaCobranca('Pague na maquininha ao lado',(f==='debito'?'Débito':'Crédito à vista')+' · '+brl(r.total),`<button class="btn bad" id="pagCancelar" style="margin-top:12px">Cancelar</button>`);
  falar('Pague na maquininha ao lado. Aproxime ou insira o cartão.');
  $('#pagCancelar').onclick=async()=>{if(!pagReal||pagReal.cancelando)return;pagReal.cancelando=true;$('#pagMsg').textContent='Cancelando…';$('#pagCancelar').disabled=true;try{const c=await apiCartao('cancelar',{cobranca:pagReal.cobranca});if(!mpTratar(c)&&c.pedido==='nao_cancelou')cancelVolta('Não consegui cancelar. Cancele na maquininha.')}catch(e){cancelVolta(navigator.onLine?'Não consegui cancelar agora. Tente de novo.':'Sem internet. Cancele na maquininha.')}};
  mpAcompanhar()}
+// Pix de verdade: QR gerado pelo Mercado Pago; a venda só fecha quando o Mercado Pago confirma o pagamento
+function pixReal(){return !!(mpCfg&&mpCfg.pix)}
+function telaPix(r){const img=typeof r.pix_qr_img==='string'&&/^[A-Za-z0-9+/=]+$/.test(r.pix_qr_img)?r.pix_qr_img:'';
+ $('#cobranca').innerHTML=`<div class="pag-real"><div class="qr" style="width:240px;height:240px;padding:10px">${img?`<img alt="QR do Pix" src="data:image/png;base64,${img}" style="width:100%;height:100%;image-rendering:pixelated">`:''}</div><p style="font-size:20px;font-weight:600" id="pagMsg">Pague com Pix</p><p class="mu" style="font-size:14px" id="pagSub">Abra o app do seu banco, escolha Pix e leia o QR · ${brl(r.total)}</p><button class="btn bad" id="pagCancelar" style="margin-top:12px">Cancelar</button></div>`;
+ falar('Abra o app do seu banco, escolha Pix e leia o código na tela.');
+ requestAnimationFrame(()=>$('#pagCancelar')?.scrollIntoView({block:'end',behavior:'smooth'}));
+ $('#pagCancelar').onclick=async()=>{if(!pagReal||pagReal.cancelando)return;pagReal.cancelando=true;$('#pagMsg').textContent='Cancelando…';$('#pagCancelar').disabled=true;try{const c=await apiCartao('cancelar',{cobranca:pagReal.cobranca});if(!mpTratar(c)&&c.pedido==='nao_cancelou')cancelVolta('Não consegui cancelar. Tente de novo.')}catch(e){cancelVolta(navigator.onLine?'Não consegui cancelar agora. Tente de novo.':'Sem internet no caixa.')}}}
 async function mpAcompanhar(){const p=pagReal;if(!p||!p.mp)return;let falhasRede=0;
  while(pagReal===p){await new Promise(z=>setTimeout(z,2000));if(pagReal!==p)return;
   try{const c=await apiCartao('status',{cobranca:p.cobranca});falhasRede=0;if(mpTratar(c))return}
-  catch(e){falhasRede++;const m=$('#pagSub');if(m&&falhasRede>2)m.textContent='Sem internet no caixa. Se o cartão for aprovado, a venda é registrada mesmo assim.'}
-  if(Date.now()-p.inicio>4*60*1000){await mpDesistir(p);return}}}
+  catch(e){falhasRede++;const m=$('#pagSub');if(m&&falhasRede>2)m.textContent=p.forma==='pix'?'Sem internet no caixa. Se o Pix for pago, a venda é registrada mesmo assim.':'Sem internet no caixa. Se o cartão for aprovado, a venda é registrada mesmo assim.'}
+  if(Date.now()-p.inicio>(p.forma==='pix'?5:4)*60*1000){await mpDesistir(p);return}}}
 // passou do tempo (a maquininha desiste em 3 min): cancela no servidor antes de liberar outra forma,
 // para o cliente nunca pagar duas vezes a mesma compra
 async function mpDesistir(p){let c=null;try{c=await apiCartao('cancelar',{cobranca:p.cobranca})}catch(e){}
  if(pagReal!==p)return;if(c&&mpTratar(c))return;
  pagReal={...p,parado:true};
- telaCobranca('Não deu para confirmar o pagamento','Confira a tela da maquininha. Se aprovou, a venda é registrada sozinha. Chame o responsável se precisar.',`<button class="btn ok" id="pagDeNovo" style="margin-top:12px">Consultar de novo</button>`);
+ telaCobranca('Não deu para confirmar o pagamento',p.forma==='pix'?'Se você já pagou o Pix, a venda é registrada sozinha. Chame o responsável se precisar.':'Confira a tela da maquininha. Se aprovou, a venda é registrada sozinha. Chame o responsável se precisar.',`<button class="btn ok" id="pagDeNovo" style="margin-top:12px">Consultar de novo</button>`);
  $('#pagDeNovo').onclick=()=>{pagReal={...p,inicio:Date.now()};$('#pagMsg').textContent='Consultando…';mpAcompanhar()};armarInatividade('pagamento')}
 function cancelVolta(msg){const p=pagReal;if(!p)return;p.cancelando=false;const m=$('#pagMsg'),b=$('#pagCancelar');if(m)m.textContent=msg;if(b)b.disabled=false}
 function mpTratar(c){const p=pagReal;if(!p)return true;const st=c.status;
@@ -566,7 +574,7 @@ function mpTratar(c){const p=pagReal;if(!p)return true;const st=c.status;
 let pagReal=null;
 function statusNativo(){try{return NATIVO?JSON.parse(NATIVO.status()):null}catch(e){return null}}
 function cartaoReal(){if(mpCfg&&mpCfg.pronto)return true;const s=statusNativo();return !!(s&&s.cartao)}
-function ajustarFormas(){const real=cartaoReal();const av=$('#avisoSimulado');if(av)av.style.display=real?'none':'';const t=document.querySelector('.forma[data-f="tapon"]');if(t)t.style.display=real?'none':'';document.querySelectorAll('.forma[data-f="debito"] small,.forma[data-f="credito"] small').forEach(x=>x.textContent=real?'Na maquininha ao lado':'Na maquininha')}
+function ajustarFormas(){const real=cartaoReal();const px=document.querySelector('.forma[data-f="pix"]');if(px)px.style.display=real&&!pixReal()?'none':''; /* caixa real nunca mostra Pix simulado */const av=$('#avisoSimulado');if(av)av.style.display=real?'none':'';const t=document.querySelector('.forma[data-f="tapon"]');if(t)t.style.display=real?'none':'';document.querySelectorAll('.forma[data-f="debito"] small,.forma[data-f="credito"] small').forEach(x=>x.textContent=real?'Na maquininha ao lado':'Na maquininha')}
 function telaCobranca(msg,sub,botoes){$('#cobranca').innerHTML=`<div class="pag-real"><div class="pag-anel" aria-hidden="true"></div><p style="font-size:20px;font-weight:600" id="pagMsg">${msg}</p><p class="mu" style="font-size:14px" id="pagSub">${sub||''}</p>${botoes||''}</div>`}
 async function cobrarCartao(f){if(mpCfg&&mpCfg.pronto)return cobrarMP(f);if(pagReal)return;clearTimeout(inativo);const nome=f==='debito'?'débito':'crédito';
  const itens=carrinho.map(i=>({produto_id:i.id,quantidade:i.q}));let total=totalC();
@@ -580,7 +588,7 @@ async function cobrarCartao(f){if(mpCfg&&mpCfg.pronto)return cobrarMP(f);if(pagR
 window.beepPagEvento=(id,m)=>{if(!pagReal||id!==pagReal.id)return;const e=$('#pagMsg');if(e&&m)e.textContent=m;if(/senha/i.test(m||''))falar('Digite a senha na maquininha.')};
 window.beepPagResultado=(id,r)=>pagResultado(id,r);
 function btnsFalha(){return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-top:12px"><button class="btn" id="pagOutra">Outra forma</button><button class="btn ok" id="pagDeNovo">Tentar de novo</button></div>`}
-function ligarFalha(f){const a=$('#pagDeNovo'),b=$('#pagOutra');if(a)a.onclick=()=>cobrarCartao(f||forma);if(b)b.onclick=()=>{forma=null;document.querySelectorAll('.forma').forEach(x=>x.classList.remove('on'));$('#cobranca').innerHTML='<p class="mu">Escolha a forma de pagamento</p>'};armarInatividade('pagamento')}
+function ligarFalha(f){const a=$('#pagDeNovo'),b=$('#pagOutra');if(a)a.onclick=()=>{const x=f||forma;if(x==='pix'&&pixReal())cobrarMP('pix');else cobrarCartao(x)};if(b)b.onclick=()=>{forma=null;document.querySelectorAll('.forma').forEach(x=>x.classList.remove('on'));$('#cobranca').innerHTML='<p class="mu">Escolha a forma de pagamento</p>'};armarInatividade('pagamento')}
 async function pagResultado(id,r){if(!pagReal||id!==pagReal.id)return;const p=pagReal;pagReal=null;
  if(r&&r.ok){await registrarCartao(p,r);return}
  const msg=p.cancelado?'Pagamento cancelado':(r&&r.mensagem)||'Pagamento não aprovado';

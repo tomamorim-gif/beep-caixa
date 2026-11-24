@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     if (!c) {
       const { count } = await db.from("cobrancas_cartao").select("id", { count: "exact", head: true }).eq("empresa_id", emp).eq("venda_id", vendaId).eq("status", "estornado");
       if (count) return json({ ok: true, status: "estornado" });
-      return erro("Esta venda não foi paga na maquininha Mercado Pago", 404);
+      return erro("Esta venda não foi paga pelo Mercado Pago (maquininha ou Pix)", 404);
     }
     const cred = await atual();
     if (!cred?.access_token) return erro("Credencial do Mercado Pago não cadastrada", 409);

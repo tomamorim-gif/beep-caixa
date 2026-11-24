@@ -37,7 +37,9 @@ export function lerOrdem(o: any): Ordem {
   const det = String(p.status_detail ?? o?.status_detail ?? "");
   const valor = p.paid_amount ?? p.amount ?? o?.total_paid_amount ?? o?.total_amount;
   return {
-    status: STATUS_MP[st] ?? "aguardando",
+    // Pix: o pedido fica em "action_required / waiting_transfer" enquanto o cliente não paga. Isso é espera, não problema.
+    // Pix vencido pode vir como "failed / expired" ou "canceled / expired": é tempo esgotado, não recusa.
+    status: st === "action_required" && /^waiting_/.test(det) ? "aguardando" : det === "expired" && (st === "failed" || st === "canceled") ? "expirado" : STATUS_MP[st] ?? "aguardando",
     mp_status: st,
     status_detail: det || null,
     mp_payment_id: p.id ? String(p.id) : null,
@@ -59,10 +61,20 @@ export const MOTIVOS: Record<string, string> = {
   canceled_by_api: "Cancelado",
   canceled_on_terminal: "Cancelado na maquininha",
   expired: "Tempo esgotado",
+  waiting_transfer: "Aguardando o Pix",
+  waiting_payment: "Aguardando o Pix",
 };
 export function motivo(det: string | null, st: string) {
   return (det && MOTIVOS[det]) ||
     ({ recusado: "Pagamento recusado", cancelado: "Pagamento cancelado", expirado: "Tempo esgotado na maquininha", verificar: "Confira a maquininha", estornado: "Pagamento estornado", falhou: "A maquininha não recebeu a cobrança" } as Record<string, string>)[st] || "";
+}
+
+// QR do Pix devolvido pelo Mercado Pago (texto "copia e cola" e imagem PNG em base64)
+export function lerPix(o: any): { qr: string | null; img: string | null } {
+  const pm = o?.transactions?.payments?.[0]?.payment_method ?? {};
+  const qr = typeof pm.qr_code === "string" && pm.qr_code.length < 2000 ? pm.qr_code : null;
+  const img = typeof pm.qr_code_base64 === "string" && /^[A-Za-z0-9+/=]{100,200000}$/.test(pm.qr_code_base64) ? pm.qr_code_base64 : null;
+  return { qr, img };
 }
 
 export const reais = (centavos: number) => (centavos / 100).toFixed(2);
