@@ -3,23 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Beep Smart Pay · Sistema de autoatendimento para mercadinhos autônomos</title>
+<title>PagNow · Sistema de autoatendimento para mercadinhos autônomos</title>
 <meta name="description" content="Caixa de autoatendimento no tablet, cartão e Pix Mercado Pago, NFC-e automática, entrada de NF-e pela SEFAZ e painel de gestão para várias lojas. A partir de R$ 149 por loja.">
-<meta name="theme-color" content="#f3f1ea">
+<meta name="theme-color" content="#090a0d">
 <link rel="icon" href="marca/simbolo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="marca/icone-192.png">
-<meta property="og:title" content="Beep Smart Pay">
+<meta property="og:title" content="PagNow">
 <meta property="og:description" content="O sistema que opera o seu mercadinho autônomo: caixa, pagamento, nota fiscal e estoque.">
 <meta property="og:image" content="marca/og.png">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#f3f1ea;--paper2:#ebe8de;--line:#d9d5c8;--ink:#111;--ink2:#4a4a46;--ink3:#7b7a73;
-  --k:#0b0b0b;--k2:#161616;--kline:#2a2a2a;--y:#FFD60A;--ok:#0fa958;--bad:#e5262d;
+  /* base clara fria, blocos escuros com grade técnica, amarelo da marca como único acento */
+  --paper:#f4f5f7;--paper2:#eceef2;--line:#dcdfe6;--ink:#0b0c0f;--ink2:#454a54;--ink3:#6c717d;
+  --k:#090a0d;--k2:#12141a;--kline:#232630;--kt:#a4a9b6;--y:#FFD60A;--ok:#0fa958;--bad:#e5262d;--card:#fff;
   --max:1200px;--g:24px;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--disp:Manrope,Inter,sans-serif
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--disp:Sora,Inter,system-ui,sans-serif
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
@@ -43,11 +44,11 @@ h2{font-size:clamp(32px,4.4vw,54px)}
 /* topo */
 .topo{position:sticky;top:0;z-index:40;background:rgba(243,241,234,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .topo .wrap{display:flex;align-items:center;height:68px;gap:32px}
-.topo .logo img{height:36px;width:auto}
+.topo .logo{display:flex;align-items:center;flex:none}.topo .logo img{height:44px;width:auto}
 .topo nav{display:flex;gap:28px;margin-left:auto;font:600 15px Inter}
 .topo nav a{text-decoration:none;color:var(--ink2)}
 .topo nav a:hover{color:var(--ink)}
-.topo .btn{min-height:42px;padding:0 18px;font-size:15px}
+.topo .btn{min-height:44px;padding:0 18px;font-size:15px}
 @media(max-width:920px){.topo nav{display:none}.topo .btn{margin-left:auto}}
 
 /* abertura */
@@ -225,21 +226,194 @@ form small{color:var(--ink3);font-size:13px;text-align:center}
 @media(max-width:900px){.contato .wrap{grid-template-columns:1fr;gap:40px}}
 @media(max-width:480px){.duas{grid-template-columns:1fr}}
 
-footer{background:var(--paper);padding:40px 0 56px}
+footer{background:var(--paper);padding:48px 0}
 footer .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;color:var(--ink3);font-size:14.5px}
-footer img{height:30px;width:auto}
+footer img{height:36px;width:auto}
 footer nav{display:flex;gap:24px}
 footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* ===== visual tecnológico (sobrepõe as regras acima) ===== */
+h1,h2,h3{font-weight:700;letter-spacing:-.04em}
+.mono{letter-spacing:.06em}
+.btn{border-radius:12px;transition:background .15s,color .15s,border-color .15s,transform .15s}
+.btn:active{transform:translateY(1px)}
+.topo :focus-visible,.abre :focus-visible,.log :focus-visible,.kit :focus-visible,footer :focus-visible{outline-color:var(--y)}
+
+/* topo escuro */
+.topo{background:rgba(9,10,13,.78);border-bottom:1px solid rgba(255,255,255,.08)}
+.topo nav a{color:var(--kt)}
+.topo nav a:hover{color:#fff}
+.topo .btn.pri{background:var(--y);border-color:var(--y);color:#111}
+.topo .btn.pri:hover{background:#ffe14d}
+
+/* abertura: grade técnica e brilho da marca */
+.abre{color:#fff;background:
+  radial-gradient(52% 58% at 80% 38%,rgba(255,214,10,.17),transparent 70%),
+  linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px) 0 0/100% 56px,
+  linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px) 0 0/56px 100%,
+  var(--k)}
+.abre p.mono{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(255,255,255,.04);color:#d5d8e0!important;font-size:12px}
+.abre p.mono::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--y);box-shadow:0 0 0 4px rgba(255,214,10,.18);flex:none}
+.abre .lede{color:var(--kt)}
+.abre .btn.pri{background:var(--y);border-color:var(--y);color:#111}
+.abre .btn.pri:hover{background:#ffe14d}
+.abre .btn.sec{border-color:rgba(255,255,255,.28);color:#fff}
+.abre .btn.sec:hover{background:#fff;border-color:#fff;color:#111}
+.fatos,.fatos div+div{border-color:rgba(255,255,255,.12)}
+.fatos span{color:var(--kt)}
+.abre .leg{color:var(--kt)}
+.abre .tablet{position:relative;overflow:hidden;background:#15171d;box-shadow:0 0 0 1px #2c303b,0 50px 130px -30px rgba(255,214,10,.28),0 30px 60px -30px #000}
+.abre .tablet::after{content:"";position:absolute;left:16px;right:16px;top:16px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--y) 20%,var(--y) 80%,transparent);box-shadow:0 0 18px 3px rgba(255,214,10,.55);animation:varre 4.2s cubic-bezier(.6,0,.4,1) infinite}
+@keyframes varre{0%{top:16px;opacity:0}12%{opacity:1}50%{top:calc(100% - 18px);opacity:1}62%,100%{top:calc(100% - 18px);opacity:0}}
+
+/* registro ao vivo */
+.log{background:var(--k)}
+.log h2{display:flex;align-items:center;gap:10px}
+.log h2::before{content:"";width:8px;height:8px;border-radius:50%;background:#3ddc84;flex:none;animation:pulso 1.8s ease-out infinite}
+@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(61,220,132,.55)}100%{box-shadow:0 0 0 10px rgba(61,220,132,0)}}
+.log p.sub{color:var(--kt)}
+.linhas{border:1px solid var(--kline);border-radius:16px;background:var(--k2);padding:4px 20px}
+.linhas li:last-child{border-bottom:0}
+.linhas time{color:#7d8290}
+.linhas .d{color:var(--kt)}
+
+/* cabeçalhos de seção */
+.cab .mono{display:flex;align-items:center;gap:10px;align-self:start}
+.cab .mono::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--y);box-shadow:0 0 0 1px var(--ink);flex:none}
+.kit .cab .mono::before{box-shadow:none}
+
+/* passos */
+.passos figcaption{border-top:1px solid var(--line)}
+.passos figcaption .mono span:first-child{color:var(--ink);font-weight:600}
+.passos .tablet,.seg .tablet{box-shadow:0 0 0 1px #000,0 28px 50px -28px rgba(11,12,15,.5)}
+
+/* diferenciais em cartões */
+.difs{border-top:0;gap:16px}
+.difs li,.difs li:nth-child(2n){padding:24px!important;border:1px solid var(--line)!important;border-radius:16px;background:var(--card);transition:border-color .15s,transform .15s,box-shadow .15s}
+.difs li:hover{border-color:var(--ink)!important;transform:translateY(-2px);box-shadow:0 18px 30px -22px rgba(11,12,15,.35)}
+.difs .mono{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:24px;padding:0 8px;border-radius:6px;background:var(--ink);color:var(--y)}
+.difs b{font-weight:700;font-size:21px}
+.difs .tag{border-radius:999px;padding:4px 10px}
+.dif .app{border-top:1px solid var(--line)}
+.app-txt .mono{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:24px;padding:0 8px;border-radius:6px;background:var(--ink);color:var(--y)}
+.tel{background:#0b0c0f;box-shadow:0 0 0 1px #000,0 30px 60px -30px rgba(11,12,15,.5)}
+
+/* painel */
+.painel{background:radial-gradient(rgba(11,12,15,.07) 1px,transparent 1.4px) 0 0/22px 22px,var(--paper2)}
+.abas{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:4px;gap:4px}
+.abas button,.abas button+button,.abas button:nth-child(n+3){border:0!important;border-radius:8px;color:var(--ink2);transition:background .15s,color .15s}
+.abas button:hover{color:var(--ink)}
+.abas button[aria-selected="true"]{background:var(--ink);color:#fff}
+.janela{border-radius:16px;box-shadow:0 0 0 1px #000,0 40px 80px -40px rgba(11,12,15,.6)}
+.notas p,.extra p{border-top:0;padding:20px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+
+/* módulos */
+.ficha thead th{border-bottom:1px solid var(--ink)}
+.st{padding:5px 10px;border-radius:999px;background:rgba(15,169,88,.12);color:#0a6b3a;font-size:11.5px}
+.st.br{background:rgba(201,163,0,.16);color:#6b5600}
+
+/* implantação */
+.kit{background:
+  linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px) 0 0/100% 56px,
+  linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px) 0 0/56px 100%,
+  var(--k)}
+.kit .cab .mono{color:var(--kt)}
+.kit .cab p{color:var(--kt)}
+.etapas{gap:16px}
+.etapas li{border:1px solid var(--kline);border-top:2px solid var(--y);border-radius:16px;background:var(--k2);padding:20px}
+.etapas li p{color:var(--kt)}
+
+/* planos */
+.tabela thead th{border-bottom:1px solid var(--ink)}
+.tabela .dest{background:rgba(255,214,10,.16)}
+.tabela thead th.dest{border-radius:14px 14px 0 0;box-shadow:inset 0 2px 0 var(--y)}
+.tabela tfoot td.dest{border-radius:0 0 14px 14px;padding-bottom:22px}
+.pc{border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.pc.dest{border-color:var(--ink);background:#fff7c2}
+
+/* dúvidas e contato */
+.duv dt{font-weight:600}
+form{border:1px solid var(--ink);border-radius:18px;box-shadow:0 30px 60px -36px rgba(11,12,15,.55)}
+input,select{border-radius:10px;border-color:var(--line)}
+
+/* rodapé escuro */
+footer{background:var(--k);padding:48px 0}
+footer .wrap{color:var(--kt)}
+footer a:hover{color:#fff}
+
+@media(prefers-reduced-motion:reduce){.abre .tablet::after{display:none}.log h2::before{animation:none}.btn,.difs li{transition:none}.difs li:hover{transform:none}}
+
+/* destaques na abertura */
+.chips{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
+.chips a{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#e6e8ee;font:600 14px Inter,system-ui,sans-serif;text-decoration:none;transition:border-color .15s,background .15s}
+.chips a::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--y);flex:none}
+.chips a:hover{border-color:var(--y);background:rgba(255,214,10,.1)}
+.abre .acoes{margin-top:28px}
+
+/* ícones dos diferenciais */
+.ico{display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:14px;background:var(--ink);color:var(--y)}
+.ico svg{width:24px;height:24px}
+.difs b{margin-top:18px}
+
+/* chamadas */
+.cta{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-top:56px;padding:28px 32px;border-radius:20px;background:var(--k);color:#fff;box-shadow:inset 0 2px 0 var(--y)}
+.cta>div:first-child{min-width:0;flex:1 1 320px}
+.cta b{display:block;font:700 24px/1.15 var(--disp);letter-spacing:-.03em;text-wrap:balance}
+.cta .t{display:block;margin-top:6px;color:var(--kt);font-size:16px}
+.cta .bts{display:flex;gap:12px;flex-wrap:wrap}
+.cta .btn.pri{background:var(--y);border-color:var(--y);color:#111}
+.cta .btn.pri:hover{background:#ffe14d}
+.cta .btn.sec{border-color:rgba(255,255,255,.28);color:#fff}
+.cta .btn.sec:hover{background:#fff;border-color:#fff;color:#111}
+.cta :focus-visible{outline-color:var(--y)}
+.kit .cta{background:var(--y);color:#111;box-shadow:none}
+.kit .cta .t{color:#3d3500}
+.kit .cta .btn.pri{background:#111;border-color:#111;color:#fff}
+.kit .cta .btn.pri:hover{background:#2a2a2a}
+.kit .cta .btn.sec{border-color:#111;color:#111}
+.kit .cta .btn.sec:hover{background:#111;color:#fff}
+.kit .cta :focus-visible{outline-color:#111}
+@media(max-width:560px){.cta{padding:24px 20px;margin-top:40px}.cta .bts{width:100%}.cta .bts .btn{width:100%}}
+@media(prefers-reduced-motion:reduce){.chips a{transition:none}}
+
+/* publicidade: cartão em destaque, largura inteira */
+.difs li.pub{grid-column:1/-1;display:flex;align-items:center;gap:24px;flex-wrap:wrap;background:var(--y);border-color:var(--y)!important}
+.difs li.pub:hover{border-color:var(--ink)!important}
+.difs li.pub>div{flex:1 1 320px;min-width:0}
+.difs li.pub b{margin:0 0 8px;font-size:24px}
+.difs li.pub p{color:#2b2600;max-width:62ch}
+.difs li.pub .btn{flex:none}
+@media(max-width:560px){.difs li.pub .btn{width:100%}}
+
+/* marca PagNow: símbolo + nome em texto, centrados na mesma linha */
+.logo{display:inline-flex;align-items:center;gap:10px;flex:none;text-decoration:none;color:#fff}
+.logo .sim{display:block;width:44px;height:44px;flex:none}
+.logo .nome{font:700 25px/1 var(--disp);letter-spacing:-.045em}
+.logo .nome b{font-weight:700;color:var(--y)}
+footer .logo .sim{width:36px;height:36px}
+footer .logo .nome{font-size:21px}
+@media(max-width:400px){.topo .wrap{gap:16px}}
+/* topo: tablet alinhado ao topo do texto, tela inicial com toque piscando igual ao caixa */
+.abre .wrap{align-items:start}
+.abre .disp{margin-bottom:0}
+.abre{padding-bottom:72px!important}
+.log{padding-top:96px}
+.scr{position:relative;container-type:inline-size}
+.toque{position:absolute;left:42.5%;top:45.117%;width:15%;aspect-ratio:1;border-radius:50%;background:var(--y);color:#111;display:grid;place-items:center;animation:toque 2.2s ease-in-out infinite}
+.toque svg{width:46.7%;height:46.7%}
+@keyframes toque{0%,100%{box-shadow:0 0 0 0 rgba(255,214,10,.45)}50%{box-shadow:0 0 0 3.25cqw rgba(255,214,10,0)}}
+@media(prefers-reduced-motion:reduce){.toque{animation:none}}
+@media(max-width:980px){.abre .disp{margin-top:8px}}
 </style>
 </head>
 <body>
 
 <header class="topo">
   <div class="wrap">
-    <a href="#" class="logo" aria-label="Beep Smart Pay, início"><img src="marca/logo-fundo-claro.svg" alt="Beep Smart Pay" width="181" height="64"></a>
-    <nav aria-label="Seções"><a href="#compra">A compra</a><a href="#diferenciais">Diferenciais</a><a href="#painel">Painel</a><a href="#seguranca">Segurança</a><a href="#modulos">Módulos</a><a href="#planos">Planos</a></nav>
-    <a class="btn pri" href="#contato">Falar com a Beep</a>
+    <a class="logo" href="#" aria-label="PagNow, início"><svg class="sim" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#FFD60A"/><g transform="translate(32 32) scale(.9) translate(-33.5 -35)" fill="none" stroke="#0b0b0b" stroke-linecap="round"><path d="M15 23v32" stroke-width="8"/><circle cx="25" cy="31" r="8.5" stroke-width="7.5"/><path d="M40.5 19.2a17 17 0 0 1 0 23.6" stroke-width="4.6"/><path d="M46.6 13.3a25.5 25.5 0 0 1 0 35.4" stroke-width="4.6"/></g></svg><span class="nome">Pag<b>Now</b></span></a>
+    <nav aria-label="Seções"><a href="#diferenciais">Diferenciais</a><a href="#compra">A compra</a><a href="#painel">Painel</a><a href="#seguranca">Segurança</a><a href="#modulos">Módulos</a><a href="#planos">Planos</a></nav>
+    <a class="btn pri" href="#contato">Fale conosco</a>
   </div>
 </header>
 
@@ -250,6 +424,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
       <p class="mono" style="color:var(--ink3)">Sistema de autoatendimento · mercadinhos autônomos</p>
       <h1>O sistema que opera o seu mercadinho autônomo.</h1>
       <p class="lede">Caixa no tablet, cartão e Pix Mercado Pago, nota fiscal automática e estoque por loja. Feito e usado dentro da rede Beep Smart Mercadinhos, no Ceará.</p>
+      <ul class="chips" aria-label="Diferenciais do sistema"><li><a href="#diferenciais">Câmera no caixa</a></li><li><a href="#diferenciais">Estoque pela nota</a></li><li><a href="#diferenciais">Comandos de voz</a></li><li><a href="#diferenciais">App do cliente</a></li><li><a href="#diferenciais">Abastecimento simples</a></li><li><a href="#diferenciais">Nota fiscal no automático</a></li><li><a href="#diferenciais">Espaço para publicidade</a></li></ul>
       <div class="acoes">
         <a class="btn pri" href="#contato">Quero na minha loja</a>
         <a class="btn sec" href="#compra">Ver uma compra completa</a>
@@ -261,7 +436,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
       </div>
     </div>
     <figure class="disp">
-      <div class="tablet"><img src="telas/caixa-carrinho.webp" alt="Tela do caixa Beep Smart Pay com cinco produtos no carrinho, total de R$ 28,70 e botão Pagar" width="1000" height="1600" fetchpriority="high"></div>
+      <div class="tablet"><div class="scr"><img src="telas/caixa-hero.webp" alt="Tela inicial do caixa: espaço para a logo da sua loja, ícone de toque e a frase Toque para começar" width="1000" height="1600" fetchpriority="high"><span class="toque" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg></span></div></div>
       <figcaption class="leg mono"><span>Tela real do caixa</span><span>Tablet 10″</span></figcaption>
     </figure>
   </div>
@@ -271,7 +446,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
   <div class="wrap">
     <div>
       <h2 id="log-t">Enquanto isso, no sistema</h2>
-      <p class="sub">O que o Beep Smart Pay registra sozinho em um fim de tarde de três lojas. Dados de exemplo.</p>
+      <p class="sub">O que o PagNow registra sozinho em um fim de tarde de três lojas. Dados de exemplo.</p>
     </div>
     <ol class="linhas">
       <li><time>19:50</time><span class="t">Venda paga</span><span class="d">Loja Empresarial Aldeota · débito</span><span class="v">R$ 24,40</span></li>
@@ -284,10 +459,48 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
   </div>
 </section>
 
+<section class="dif" id="diferenciais">
+  <div class="wrap">
+    <div class="cab">
+      <p class="mono">01 · Diferenciais</p>
+      <div>
+        <h2>O que a loja deixa de fazer na mão, e o que passa a ganhar.</h2>
+        <p class="lede">Cada item abaixo funciona dentro do mesmo sistema, sem planilha e sem programa à parte.</p>
+      </div>
+    </div>
+    <ol class="difs">
+      <li><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span><b>Estoque que entra pela nota</b><p>As notas de compra do seu CNPJ chegam da SEFAZ. Você confere e o estoque entra sozinho, com alerta quando o custo sobe.</p></li>
+      <li><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 15l2 2 4-4"/></svg></span><b>Nota fiscal emitida sozinha</b><p>Cada venda gera a NFC-e na hora. Se a SEFAZ cair, a nota fica na fila e sai quando ela voltar.</p></li>
+      <li><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span><b>Abastecimento simples</b><p>Mínimo e máximo por produto em cada loja. O sistema diz o que levar do depósito e marca a perda na hora da reposição.</p><em class="tag">Em implantação</em></li>
+      <li><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span><b>Gravação do caixa</b><p>A câmera do tablet grava as compras, todas ou só as que tiveram problema. O vídeo fica no painel, ligado à venda.</p></li>
+      <li><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg></span><b>Voz no atendimento</b><p>O caixa fala com o cliente em cada passo e atende por áudio quem prefere pedir o produto falando.</p></li>
+      <li><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><b>Financeiro completo</b><p>Vendas, custos e formas de pagamento por loja, com estorno de cartão e Pix pelo painel.</p><em class="tag">Em breve</em></li>
+      <li class="pub"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4h4l6 5V5L7 10z"/><path d="M17 9a4 4 0 0 1 0 6M20 6a8 8 0 0 1 0 12"/></svg></span><div><b>Espaço para vender publicidade</b><p>A tela do caixa e o app do cliente viram mídia da sua loja. Venda anúncios para marcas e fornecedores: eles passam enquanto o caixa espera o próximo cliente, com relatório para o anunciante.</p></div><a class="btn pri" href="#contato">Quero vender anúncios</a></li>
+</ol>
+    <div class="app">
+      <div class="app-txt">
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg></span>
+        <b>App do cliente, do seu jeito</b>
+        <p>O cliente instala pelo QR da loja e vê produtos, preços, estoque e ofertas. Você decide, por loja e por cliente, como ele compra:</p>
+        <ul>
+          <li><strong>Só consulta.</strong> Vê o que tem e quanto custa.</li>
+          <li><strong>Compra no celular.</strong> Paga com Pix ou cartão no app, sem passar no caixa.</li>
+          <li><strong>A pagar.</strong> Paga só as compras que a loja registrar para ele.</li>
+        </ul>
+      </div>
+      <div class="app-tels">
+        <div class="tel"><img src="telas/app-produtos.webp" alt="App do cliente: lista de produtos da loja com foto, preço e botão de adicionar" width="780" height="1688" loading="lazy"></div>
+        <div class="tel"><img src="telas/app-carrinho.webp" alt="App do cliente: carrinho com três produtos, total de R$ 12,30 e pagamento por Pix ou cartão" width="780" height="1688" loading="lazy"></div>
+      </div>
+    </div>
+  <div class="cta"><div><b>Quer esses recursos na sua loja?</b><span class="t">Mostramos o sistema funcionando e montamos a proposta para o seu caso.</span></div><div class="bts"><a class="btn pri" href="#contato">Quero na minha loja</a><a class="btn sec" href="https://wa.me/5585999017203" target="_blank" rel="noopener">Falar no WhatsApp</a></div></div>
+  </div>
+</section>
+
 <section id="compra">
   <div class="wrap">
     <div class="cab">
-      <p class="mono">01 · A compra</p>
+      <p class="mono">02 · A compra</p>
       <div>
         <h2>Do beep à nota fiscal em menos de um minuto.</h2>
         <p class="lede">O cliente faz tudo sozinho, guiado pela tela e por voz. Estas são as telas do caixa, como aparecem na loja.</p>
@@ -314,42 +527,6 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
   </div>
 </section>
 
-<section class="dif" id="diferenciais">
-  <div class="wrap">
-    <div class="cab">
-      <p class="mono">02 · Diferenciais</p>
-      <div>
-        <h2>O que a loja deixa de fazer na mão.</h2>
-        <p class="lede">Cada item abaixo funciona dentro do mesmo sistema, sem planilha e sem programa à parte.</p>
-      </div>
-    </div>
-    <ol class="difs">
-      <li><span class="mono">01</span><b>Estoque que entra pela nota</b><p>As notas de compra do seu CNPJ chegam da SEFAZ. Você confere e o estoque entra sozinho, com alerta quando o custo sobe.</p></li>
-      <li><span class="mono">02</span><b>Nota fiscal emitida sozinha</b><p>Cada venda gera a NFC-e na hora. Se a SEFAZ cair, a nota fica na fila e sai quando ela voltar.</p></li>
-      <li><span class="mono">03</span><b>Abastecimento simples</b><p>Mínimo e máximo por produto em cada loja. O sistema diz o que levar do depósito e marca a perda na hora da reposição.</p><em class="tag">Em implantação</em></li>
-      <li><span class="mono">04</span><b>Gravação do caixa</b><p>A câmera do tablet grava as compras, todas ou só as que tiveram problema. O vídeo fica no painel, ligado à venda.</p></li>
-      <li><span class="mono">05</span><b>Voz no atendimento</b><p>O caixa fala com o cliente em cada passo e atende por áudio quem prefere pedir o produto falando.</p></li>
-      <li><span class="mono">06</span><b>Financeiro completo</b><p>Vendas, custos e formas de pagamento por loja, com estorno de cartão e Pix pelo painel.</p><em class="tag">Em breve</em></li>
-</ol>
-    <div class="app">
-      <div class="app-txt">
-        <span class="mono">07</span>
-        <b>App do cliente, do seu jeito</b>
-        <p>O cliente instala pelo QR da loja e vê produtos, preços, estoque e ofertas. Você decide, por loja e por cliente, como ele compra:</p>
-        <ul>
-          <li><strong>Só consulta.</strong> Vê o que tem e quanto custa.</li>
-          <li><strong>Compra no celular.</strong> Paga com Pix ou cartão no app, sem passar no caixa.</li>
-          <li><strong>A pagar.</strong> Paga só as compras que a loja registrar para ele.</li>
-        </ul>
-      </div>
-      <div class="app-tels">
-        <div class="tel"><img src="telas/app-produtos.webp" alt="App do cliente: lista de produtos da loja com foto, preço e botão de adicionar" width="780" height="1688" loading="lazy"></div>
-        <div class="tel"><img src="telas/app-carrinho.webp" alt="App do cliente: carrinho com três produtos, total de R$ 12,30 e pagamento por Pix ou cartão" width="780" height="1688" loading="lazy"></div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <section class="painel" id="painel">
   <div class="wrap">
     <div class="cab">
@@ -366,7 +543,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
       <button role="tab" aria-selected="false" aria-controls="tela-painel" data-img="painel-caixas" data-alt="Lista de caixas ativos em cada loja e último sinal" tabindex="-1">Caixas</button>
     </div>
     <div class="janela" id="tela-painel" role="tabpanel">
-      <div class="barra" aria-hidden="true"><i></i><i></i><i></i><span class="mono">Painel · Beep Smart Pay</span></div>
+      <div class="barra" aria-hidden="true"><i></i><i></i><i></i><span class="mono">Painel · PagNow</span></div>
       <img id="img-painel" src="telas/painel-vendas.webp" alt="Painel de vendas do dia: faturamento, vendas por loja, formas de pagamento e lista das últimas vendas com nota fiscal autorizada" width="1800" height="1125" loading="lazy">
     </div>
     <div class="notas">
@@ -374,6 +551,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
       <p><b>Notas de compra pela SEFAZ</b>As notas emitidas para o seu CNPJ chegam sozinhas. Você confere e dá entrada no estoque.</p>
       <p><b>Aparelhos sob controle</b>Veja o último sinal de cada caixa e desative um tablet perdido na hora.</p>
     </div>
+    <div class="cta"><div><b>Todas as lojas em uma tela.</b><span class="t">Peça uma demonstração do painel com dados de exemplo.</span></div><div class="bts"><a class="btn pri" href="#contato">Pedir demonstração</a><a class="btn sec" href="https://wa.me/5585999017203" target="_blank" rel="noopener">Falar no WhatsApp</a></div></div>
   </div>
 </section>
 
@@ -394,6 +572,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
       <figure><div class="tablet p"><img src="telas/caixa-nao-finalizada.webp" alt="Tela vermelha de compra não finalizada" width="1000" height="1600" loading="lazy"></div>
         <figcaption><b>Vermelho: não pago</b><p>Pagamento recusado ou compra abandonada. Fica registrado com loja e horário.</p></figcaption></figure>
     </div>
+    <div class="cta"><div><b>Cada compra registrada, com cor e imagem.</b><span class="t">Veja como fica na loja que você já tem ou vai abrir.</span></div><div class="bts"><a class="btn pri" href="#contato">Quero na minha loja</a><a class="btn sec" href="https://wa.me/5585999017203" target="_blank" rel="noopener">Falar no WhatsApp</a></div></div>
   </div>
 </section>
 
@@ -435,6 +614,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
       <li><span class="mono">Dia 5</span><b>Tablet e maquininha</b><p>O tablet é ativado com um código e a maquininha Mercado Pago é ligada ao caixa.</p></li>
       <li><span class="mono">Dia 7</span><b>Primeira venda</b><p>Compra de teste com nota fiscal. A loja está aberta.</p></li>
     </ol>
+    <div class="cta"><div><b>Primeira venda em até 7 dias.</b><span class="t">Servidor, atualizações da SEFAZ e suporte incluídos na mensalidade.</span></div><div class="bts"><a class="btn pri" href="#contato">Começar agora</a><a class="btn sec" href="https://wa.me/5585999017203" target="_blank" rel="noopener">Falar no WhatsApp</a></div></div>
   </div>
 </section>
 
@@ -490,7 +670,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
       <div><dt>Quais equipamentos eu preciso?</dt><dd>Um tablet de 10 polegadas fixo, um leitor de código de barras e uma maquininha Mercado Pago Point.</dd></div>
       <div><dt>E se a internet cair?</dt><dd>O caixa guarda o catálogo e envia as vendas quando a conexão volta. Cartão e Pix precisam de internet, por isso indicamos um chip 4G de reserva.</dd></div>
       <div><dt>A nota fiscal sai sozinha?</dt><dd>Sim, com o certificado digital da sua empresa. Começamos pelo Ceará. Para outros estados, consulte.</dd></div>
-      <div><dt>A tela do caixa mostra a minha marca?</dt><dd>Sim. O comprador vê o nome e a logo da sua loja. Beep Smart Pay é o sistema por trás.</dd></div>
+      <div><dt>A tela do caixa mostra a minha marca?</dt><dd>Sim. O comprador vê o nome e a logo da sua loja. PagNow é o sistema por trás.</dd></div>
       <div><dt>Já uso outro sistema. Perco meus produtos?</dt><dd>Não. Os produtos são importados das suas notas de compra, com código de barras, NCM e custo.</dd></div>
     </dl>
   </div>
@@ -521,7 +701,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 
 <footer>
   <div class="wrap">
-    <img src="marca/logo-fundo-claro.svg" alt="Beep Smart Pay" width="181" height="64">
+    <span class="logo" role="img" aria-label="PagNow"><svg class="sim" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#FFD60A"/><g transform="translate(32 32) scale(.9) translate(-33.5 -35)" fill="none" stroke="#0b0b0b" stroke-linecap="round"><path d="M15 23v32" stroke-width="8"/><circle cx="25" cy="31" r="8.5" stroke-width="7.5"/><path d="M40.5 19.2a17 17 0 0 1 0 23.6" stroke-width="4.6"/><path d="M46.6 13.3a25.5 25.5 0 0 1 0 35.4" stroke-width="4.6"/></g></svg><span class="nome">Pag<b>Now</b></span></span>
     <span>Um sistema da Beep Smart Mercadinhos · Ceará · 2026</span>
     <nav><a href="https://wa.me/5585999017203" target="_blank" rel="noopener">WhatsApp</a><a href="../termos/">Termos e privacidade</a></nav>
   </div>
@@ -538,7 +718,7 @@ document.querySelectorAll('[data-plano]').forEach(a=>a.addEventListener('click',
 document.getElementById('form').addEventListener('submit',e=>{
   e.preventDefault();const f=new FormData(e.target),nome=(f.get('nome')||'').trim();
   if(!nome){e.target.nome.focus();return}
-  const t=[`Olá! Sou ${nome}${f.get('cidade')?', de '+f.get('cidade'):''}.`,`Tenho interesse no Beep Smart Pay${f.get('plano')?' (plano '+f.get('plano')+')':''}.`,`Lojas: ${f.get('lojas')}. Local: ${f.get('onde')}.`].join('\n');
+  const t=[`Olá! Sou ${nome}${f.get('cidade')?', de '+f.get('cidade'):''}.`,`Tenho interesse no PagNow${f.get('plano')?' (plano '+f.get('plano')+')':''}.`,`Lojas: ${f.get('lojas')}. Local: ${f.get('onde')}.`].join('\n');
   location.href=`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(t)}`;
 });
 </script>
