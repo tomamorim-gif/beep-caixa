@@ -46,7 +46,7 @@ main{padding:28px 32px 80px;min-width:0}
 .drop{border:2px dashed #3a3e48;border-radius:20px;padding:48px 24px;text-align:center;display:grid;gap:10px;place-items:center;background:var(--p1);transition:border-color .15s,background .15s}
 .drop.over{border-color:var(--y);background:rgba(255,214,10,.05)}
 .drop .ic{width:64px;height:64px;border-radius:18px;background:rgba(255,214,10,.1);color:var(--y);display:grid;place-items:center}
-.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}
 .fis{display:grid;gap:6px;justify-items:start;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.fis .chk{padding:4px 8px;font-size:12px;line-height:1.35;align-items:flex-start}.fis .chk input{margin-top:2px}
 .kpi{background:var(--p1);border:1px solid var(--line);border-radius:14px;padding:14px 16px}.kpi span{font-size:12px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.04em}.kpi b{display:block;font:800 22px Manrope,Inter,sans-serif;margin-top:4px}
 .tbl{width:100%;border-collapse:collapse}.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mu);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:600;position:sticky;top:0;background:var(--p1)}
@@ -82,7 +82,7 @@ input[type=file]{font-size:13px;color:var(--mu)}input[type=file]::file-selector-
 .vazio{padding:28px;text-align:center;color:var(--mu)}
 @media print{body:has(#modal.on #cartaz) .app,body:has(#modal.on #cartaz) #toast,#mbox .row{display:none!important}body:has(#modal.on #cartaz) #modal{position:static;inset:auto;background:none;display:block;padding:0}body:has(#modal.on #cartaz) #mbox{box-shadow:none;border:0;background:#fff;max-width:none;width:auto;max-height:none;overflow:visible}#cartaz,#cartaz h2{color:#000!important}#cartaz .mu{color:#333!important}}
 @media print{.side,.head .row,.barra{display:none!important}.app{display:block}body,html{background:#fff;color:#000}.tblwrap,.kpi,.card{background:#fff;border-color:#ccc}.tbl th{background:#fff;color:#333}}
-@media(max-width:900px){.app{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;overflow:auto;padding:12px}.side img,.side .quem{display:none}main{padding:20px 16px 80px}.grid4,.grid5{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.app{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;overflow:auto;padding:12px}.side img,.side .quem{display:none}main{padding:20px 16px 80px}.grid4,.grid5{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}}
 
 /* produtos */
 .prbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
@@ -228,12 +228,17 @@ function conferir(n){const porEan=new Map();S.produtos.forEach(p=>{if(p.ean)porE
 
 // ---------- tela: entrada de NF-e ----------
 function telaNF(){const M=$('#main');
- if(!S.nota){M.innerHTML=`<div class="head"><div><h1>Entrada de NF-e</h1><p>Suba o XML da nota do fornecedor. O sistema confere item a item, sugere o preço dos produtos novos e dá entrada no estoque.</p></div></div>
-  <label class="drop" id="drop"><span class="ic">${ICON.up}</span><b style="font-size:18px">Arraste o XML da nota aqui</b><span class="mu">ou clique para escolher o arquivo (.xml)</span><input type="file" accept=".xml,text/xml,application/xml" id="fXml" hidden></label>
-  <div class="aviso info" style="margin-top:16px"><span>ℹ️</span><span><b>Buscar pela chave de acesso</b> (sem ter o XML) precisa do certificado digital A1 da empresa ligado ao sistema para consultar a SEFAZ. Enquanto isso, peça o XML ao fornecedor ou baixe no portal da NF-e.</span></div>
-  <h2 style="font-size:18px;margin:28px 0 12px">Últimas notas</h2><div id="ultimas" class="tblwrap"><p class="vazio">Carregando…</p></div>`;
+ if(!S.nota){M.innerHTML=`<div class="head"><div><h1>Entrada de NF-e</h1><p>As notas emitidas para o CNPJ da empresa chegam sozinhas da SEFAZ. Confira, escolha o destino (CD ou loja) e lance no estoque.</p></div><button class="btn" id="sincr">Buscar notas agora</button></div>
+  <div class="card" style="padding:0;overflow:hidden"><div class="row" style="padding:16px 18px;border-bottom:1px solid var(--line)"><b style="font-size:16px">Notas emitidas para a empresa</b><span class="sp"></span><span class="mu sm" id="sincInfo"></span></div><div id="recebidas" class="tblwrap" style="border:0;border-radius:0"><p class="vazio">Carregando…</p></div></div>
+  <div class="grid2" style="margin-top:16px"><div class="card"><b>Buscar pela chave de acesso</b><p class="mu sm" style="margin:6px 0 12px">Os 44 números do DANFE. O sistema baixa o XML direto da SEFAZ.</p><div class="row"><input id="chaveNf" inputmode="numeric" placeholder="0000 0000 0000 …" style="flex:1;min-width:0" maxlength="60"><button class="btn pri" id="buscarChave">Buscar</button></div></div>
+   <label class="drop" id="drop" style="padding:22px;margin:0"><span class="ic">${ICON.up}</span><b>Ou arraste o XML da nota aqui</b><span class="mu sm">ou clique para escolher o arquivo (.xml)</span><input type="file" accept=".xml,text/xml,application/xml" id="fXml" hidden></label></div>
+  <h2 style="font-size:18px;margin:28px 0 12px">Últimas notas lançadas</h2><div id="ultimas" class="tblwrap"><p class="vazio">Carregando…</p></div>`;
   const d=$('#drop');['dragenter','dragover'].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.classList.add('over')}));['dragleave','drop'].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.classList.remove('over')}));
-  d.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)abrirXml(f)});$('#fXml').onchange=e=>{const f=e.target.files[0];if(f)abrirXml(f)};ultimas();return}
+  d.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)abrirXml(f)});$('#fXml').onchange=e=>{const f=e.target.files[0];if(f)abrirXml(f)};
+  $('#buscarChave').onclick=buscarChave;$('#chaveNf').onkeydown=e=>{if(e.key==='Enter')buscarChave()};
+  $('#sincr').onclick=async()=>{const b=$('#sincr');b.disabled=true;b.textContent='Buscando…';try{const r=await apiEnt('sincronizar');
+    toast(r.pulou?(r.rodando?'Já está buscando, aguarde um instante':'A SEFAZ pede 1 hora entre buscas. Próxima às '+hora(r.proxima_em)):r.erro?'SEFAZ: '+r.erro:(r.novos||r.xmls?`${r.novos} notas novas, ${r.xmls} com XML pronto`:'Nenhuma nota nova na SEFAZ'))}catch(e){toast(e.message)}b.disabled=false;b.textContent='Buscar notas agora';recebidas()};
+  recebidas();ultimas();return}
  const n=S.nota,L=S.linhas,novos=L.filter(l=>!l.prod).length,mudou=L.filter(l=>l.prod&&l.prod.custo!==l.it.custoUn).length,locs=S.locais.filter(l=>l.ativo),fiscal=L.filter(l=>l.prod&&(l.fis.mudaNcm||l.fis.mudaGrupo)).length;
  M.innerHTML=`<div class="head"><div><h1>Conferência da nota ${esc(n.numero)}</h1><p>${esc(bonito(n.fornNome))} · CNPJ ${esc(n.fornCnpj)} · emitida em ${n.emissao?new Date(n.emissao).toLocaleDateString('pt-BR'):'—'}</p></div><button class="btn" id="trocar">Trocar arquivo</button></div>
   ${n.jaLancada?`<div class="aviso" style="margin-bottom:14px"><span>⚠️</span><span><b>Esta nota já foi lançada</b> em ${new Date(n.jaLancada).toLocaleString('pt-BR')}. Lançar de novo duplicaria o estoque.</span></div>`:''}
@@ -254,7 +259,8 @@ function telaNF(){const M=$('#main');
     <td class="n num">${brl(it.custoUn)}</td><td class="n">${precoCel}</td></tr>`}).join('')}</tbody></table></div>
   ${novos&&S.portfolios.length?`<div class="card" style="margin-top:16px"><b>Produtos novos entram nos portfólios:</b><div class="row" style="margin-top:10px">${S.portfolios.map(p=>`<label class="chk"><input type="checkbox" data-pf="${p.id}" ${S.pfNovos.has(p.id)?'checked':''}> ${esc(p.nome)}</label>`).join('')}</div><p class="mu sm" style="margin-top:8px">As lojas que usam esses portfólios passam a vender e repor os produtos novos.</p></div>`:''}
   <div class="barra"><label class="f" style="min-width:240px">Destino do estoque<select id="destino"><option value="">Escolha o CD ou a loja</option>${locs.map(l=>`<option value="${l.id}" ${S.destino===l.id?'selected':''}>${esc(l.nome)}${l.tipo==='cd'?' (CD)':''}</option>`).join('')}</select></label>
-   <span class="sp"></span><span class="mu sm">Preço de produto já cadastrado só muda se você digitar um novo.</span><button class="btn pri" id="lancar" ${S.destino&&!n.jaLancada?'':'disabled'}>Lançar nota</button></div>`;
+   <span class="sp"></span><span class="mu sm">Preço de produto já cadastrado só muda se você digitar um novo.</span><button class="btn pri" id="lancar" ${S.destino&&!n.jaLancada?'':'disabled'}>Lançar nota</button></div>
+  ${n.destinoLembrado?`<p class="mu sm" style="margin-top:8px">Destino sugerido: <b style="color:var(--ink)">${esc(n.destinoLembrado)}</b>, como na última nota deste fornecedor. Entrega direto na loja entra no estoque e no custo dela, sem passar pelo CD.</p>`:''}`;
  $('#trocar').onclick=()=>{S.nota=null;S.linhas=[];render()};
  $('#destino').onchange=e=>{S.destino=e.target.value||null;$('#lancar').disabled=!S.destino||!!n.jaLancada};
  M.querySelectorAll('input[data-f]').forEach(inp=>inp.onchange=()=>{const l=S.linhas[+inp.dataset.k],f=inp.dataset.f,v=inp.value.trim();
@@ -272,13 +278,35 @@ function celFiscal(l,k){const it=l.it,f=l.fis,st=it.st?'<span class="pill ok" ti
  if(!l.prod)return `<div class="fis">${st}<span class="mu sm">Entra como ${esc(grupoNome(f.grupo))}</span>${!it.st?'<span class="pill warn">CSOSN 201 aguarda o contador: NFC-e deste item fica bloqueada</span>':''}</div>`;
  const muda=[];if(f.mudaNcm)muda.push(`NCM ${esc(l.prod.ncm||'vazio')} → <b>${esc(f.ncm)}</b>`);if(f.mudaGrupo)muda.push(`${esc(grupoNome(l.prod.grupo_fiscal_id))} → <b>Com ST</b>`);
  return `<div class="fis">${st}${muda.length?`<label class="chk sm"><input type="checkbox" data-fis="${k}" ${f.aplicar?'checked':''}> Corrigir cadastro: ${muda.join(' · ')}</label>`:'<span class="mu sm">Fiscal confere com o cadastro</span>'}${f.stSemCadastro?'<span class="mu sm">Cadastro está Com ST e a nota veio sem ST. Mantido até o contador confirmar.</span>':''}</div>`}
+const fmtCnpj=c=>{const d=String(c||'').replace(/\D/g,'');return d.length===14?d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5'):d};
+const hora=iso=>iso?new Date(iso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
+async function apiEnt(acao,corpo={}){const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Entre no painel de novo');const r=await fetch(SB_URL+'/functions/v1/nfe-entrada',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+session.access_token},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(!r.ok)throw new Error(j.erro||'Erro');return j}
+const REC_ST={resumo:['new','Nova'],ciencia:['','Aguardando XML'],xml:['ok','Pronta para conferir'],cancelada:['bad','Cancelada pelo fornecedor'],ignorada:['','Ignorada']};
+async function recebidas(){const el=$('#recebidas');if(!el)return;
+ const [{data,error},{data:ctl}]=await Promise.all([sb.from('nfe_recebidas').select('id,chave,emitente_nome,emitente_cnpj,emissao,valor,status,ultimo_erro').eq('empresa_id',S.emp.id).in('status',['resumo','ciencia','xml','cancelada']).order('emissao',{ascending:false}).limit(100),sb.from('dfe_controle').select('ultima_em,proxima_em,ultimo_erro').eq('empresa_id',S.emp.id).maybeSingle()]);
+ const inf=$('#sincInfo');if(inf)inf.textContent=ctl?.ultima_em?`Última busca ${new Date(ctl.ultima_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} · próxima às ${hora(ctl.proxima_em)}${ctl.ultimo_erro?' · '+ctl.ultimo_erro:''}`:'Busca automática a cada hora';
+ if(error){el.innerHTML='<p class="vazio">Lista indisponível até o banco ser atualizado.</p>';return}
+ if(!data?.length){el.innerHTML='<p class="vazio">Nenhuma nota pendente. As notas novas aparecem aqui sozinhas.</p>';return}
+ el.innerHTML=`<table class="tbl"><thead><tr><th>Emissão</th><th>Fornecedor</th><th>Nota</th><th class="n">Valor</th><th>Situação</th><th></th></tr></thead><tbody>${data.map(r=>{const [c,t]=REC_ST[r.status]||['',r.status];
+  return `<tr><td class="mu">${r.emissao?new Date(r.emissao).toLocaleDateString('pt-BR'):'—'}</td><td>${esc(bonito(r.emitente_nome||'Fornecedor'))}<br><span class="mu sm">${esc(fmtCnpj(r.emitente_cnpj))}</span></td><td class="num">${+r.chave.slice(25,34)}<span class="mu sm"> · série ${+r.chave.slice(22,25)}</span></td><td class="n num">${r.valor!=null?brl(r.valor):'—'}</td>
+  <td><span class="pill ${c}" title="${esc(r.ultimo_erro||'')}">${t}</span>${r.ultimo_erro&&r.status!=='xml'?`<div class="mu sm" style="max-width:260px;margin-top:4px">${esc(r.ultimo_erro)}</div>`:''}</td>
+  <td class="n"><div class="row" style="justify-content:flex-end;gap:6px">${r.status==='xml'?`<button class="btn sm pri" data-conf="${r.chave}">Conferir</button>`:r.status!=='cancelada'?`<button class="btn sm" data-chv="${r.chave}">Buscar XML</button>`:''}<button class="btn sm" data-ign="${r.id}">Ignorar</button></div></td></tr>`}).join('')}</tbody></table>`;
+ el.querySelectorAll('[data-conf]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{const {data:f,error}=await sb.storage.from('notas').download(`${S.emp.id}/${b.dataset.conf}.xml`);if(error)throw new Error('XML não encontrado');await abrirTexto(await f.text())}catch(e){toast(e.message);b.disabled=false}});
+ el.querySelectorAll('[data-chv]').forEach(b=>b.onclick=()=>{$('#chaveNf').value=b.dataset.chv;buscarChave()});
+ el.querySelectorAll('[data-ign]').forEach(b=>b.onclick=async()=>{if(!confirmar('Ignorar esta nota? Ela sai da lista (dá para lançar depois pela chave).'))return;const r=await sb.rpc('nfe_recebida_ignorar',{p_id:b.dataset.ign,p_ignorar:true});if(r.error)toast(r.error.message);else recebidas()})}
+async function buscarChave(){const i=$('#chaveNf'),b=$('#buscarChave'),ch=(i.value||'').replace(/\D/g,'');if(ch.length!==44){toast('A chave tem 44 números');return}
+ b.disabled=true;b.textContent='Buscando na SEFAZ…';try{const r=await apiEnt('buscar_chave',{chave:ch});if(r.xml){await abrirTexto(r.xml);return}toast(r.mensagem||'Nota ainda não disponível');recebidas()}catch(e){toast(e.message)}b.disabled=false;b.textContent='Buscar'}
 async function ultimas(){const {data,error}=await sb.from('notas_entrada').select('numero,fornecedor_nome,valor_total,status,lancada_em,criado_em').eq('empresa_id',S.emp.id).order('criado_em',{ascending:false}).limit(8);const el=$('#ultimas');if(!el)return;
  if(error||!data?.length){el.innerHTML='<p class="vazio">Nenhuma nota lançada ainda.</p>';return}
  el.innerHTML=`<table class="tbl"><thead><tr><th>Nota</th><th>Fornecedor</th><th class="n">Valor</th><th>Situação</th><th>Data</th></tr></thead><tbody>${data.map(r=>`<tr><td class="num">${esc(r.numero)}</td><td>${esc(bonito(r.fornecedor_nome))}</td><td class="n num">${brl(r.valor_total)}</td><td><span class="pill ${r.status==='lancada'?'ok':'warn'}">${r.status==='lancada'?'Lançada':r.status==='conferencia'?'Em conferência':'Descartada'}</span></td><td class="mu">${new Date(r.lancada_em||r.criado_em).toLocaleDateString('pt-BR')}</td></tr>`).join('')}</tbody></table>`}
-async function abrirXml(f){try{if(!/\.xml$/i.test(f.name)&&!/xml/.test(f.type))throw new Error('Escolha o arquivo .xml da nota');const n=lerNFe(await f.text());
+async function abrirXml(f){try{if(!/\.xml$/i.test(f.name)&&!/xml/.test(f.type))throw new Error('Escolha o arquivo .xml da nota');await abrirTexto(await f.text())}catch(e){toast(e.message)}}
+async function abrirTexto(xml){try{const n=lerNFe(xml);
   const {data:ja}=await sb.from('notas_entrada').select('id,status,lancada_em').eq('empresa_id',S.emp.id).eq('chave',n.chave).maybeSingle();
   n.notaId=ja?.id||null;n.jaLancada=ja?.status==='lancada'?ja.lancada_em:null;S.nota=n;S.linhas=conferir(n);S.pfNovos=new Set(S.portfolios.map(p=>p.id));
-  const cd=S.locais.find(l=>l.tipo==='cd'&&l.ativo);S.destino=S.destino||cd?.id||null;render()}catch(e){toast(e.message)}}
+  // destino: o mesmo da última nota deste fornecedor (ex.: sorvete entregue direto na loja); senão o CD
+  const {data:ult}=await sb.from('notas_entrada').select('local_destino_id').eq('empresa_id',S.emp.id).eq('fornecedor_cnpj',n.fornCnpj).eq('status','lancada').order('lancada_em',{ascending:false}).limit(1);
+  const cd=S.locais.find(l=>l.tipo==='cd'&&l.ativo),antes=ult?.[0]?.local_destino_id&&S.locais.find(l=>l.id===ult[0].local_destino_id&&l.ativo);
+  S.destino=antes?.id||cd?.id||null;n.destinoLembrado=antes&&antes.tipo!=='cd'?antes.nome:null;render()}catch(e){toast(e.message)}}
 function vincular(k){const l=S.linhas[k];let q='';$('#modal').classList.add('wide');
  const desenha=()=>{const t=q.trim().toLowerCase(),lista=S.produtos.filter(p=>p.ativo&&(!t||p.nome.toLowerCase().includes(t)||(p.ean||'').includes(t))).slice(0,40);
   modal(`<h2>Vincular ao cadastro</h2><p class="mu">Item da nota: <b style="color:var(--ink)">${esc(bonito(l.it.desc))}</b> · cód. ${esc(l.it.codigo)}. Da próxima vez, esse código do fornecedor já vem vinculado.</p>
