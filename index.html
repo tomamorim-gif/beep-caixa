@@ -188,6 +188,18 @@ h2{font-size:22px;font-weight:800}
 #descanso .barra{position:absolute;left:0;right:0;bottom:0;padding:18px 5vw calc(18px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:16px;background:rgba(10,10,10,.92);border-top:1px solid #2a2a2a}
 #descanso .barra img{height:38px;border-radius:8px}#descanso .barra b{flex:1;font:800 clamp(18px,3vw,26px) Manrope,Inter,sans-serif;color:var(--y)}
 #descanso .prog{display:flex;gap:6px}#descanso .prog i{width:8px;height:8px;border-radius:4px;background:#3f3f46;transition:.3s}#descanso .prog i.on{width:24px;background:var(--y)}
+/* contingência: caixa sem internet, a compra segue pelo celular do cliente */
+#contT{justify-content:space-between;background:radial-gradient(120% 70% at 50% 0%,#2a2400 0%,var(--k) 62%)}
+.cont-corpo{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px;width:100%;max-width:560px;margin:0 auto}
+.cont-selo{font:700 13px Inter;letter-spacing:.08em;text-transform:uppercase;color:var(--y);border:1px solid rgba(255,214,10,.45);padding:7px 14px;border-radius:999px}
+.cont-corpo h1{font-size:clamp(28px,4.4vh,40px);line-height:1.1}
+.cont-corpo h1 span{color:var(--y)}
+.cont-qr{width:min(60vw,360px);aspect-ratio:1;background:#fff;border-radius:24px;padding:16px;display:grid;place-items:center;box-shadow:0 30px 80px rgba(255,214,10,.16)}
+.cont-qr svg{width:100%;height:100%;display:block}.cont-qr p{color:#111;font:600 15px/1.35 Inter;word-break:break-all}
+.cont-passos{list-style:none;padding:0;display:grid;gap:10px;width:100%;text-align:left}
+.cont-passos li{display:grid;grid-template-columns:40px 1fr;gap:14px;align-items:center;background:var(--k2);border:1px solid var(--line);border-radius:18px;padding:14px 16px;font-size:17px;line-height:1.35}
+.cont-passos b{width:40px;height:40px;border-radius:12px;background:var(--y);color:#111;display:grid;place-items:center;font:800 19px Manrope,Inter,sans-serif}
+@media (max-height:760px){.cont-qr{width:min(52vw,230px)}.cont-corpo{gap:14px}.cont-passos li{padding:10px 14px;font-size:15px}}
 .toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);background:#fff;color:#111;padding:12px 18px;border-radius:14px;font-weight:600;z-index:20;display:none;max-width:90vw;text-align:center}
 </style>
 </head>
@@ -276,6 +288,22 @@ h2{font-size:22px;font-weight:800}
   <div class="cobranca" id="cobranca"></div>
 </section>
 
+<!-- contingência: sem internet no caixa -->
+<section class="tela" id="contT" aria-live="polite">
+  <div class="topo"><img class="logo" src="logo.png" alt="Beep Smart Mercadinhos"><span class="pill on">Caixa sem internet</span></div>
+  <div class="cont-corpo" id="contToque">
+    <span class="cont-selo">Pague com Pix pelo app</span>
+    <h1>O caixa está sem internet.<br><span>Compre pelo seu celular.</span></h1>
+    <div class="cont-qr" id="contQr"></div>
+    <ol class="cont-passos">
+      <li><b>1</b><span>Aponte a câmera do celular para o QR e abra o app da loja</span></li>
+      <li><b>2</b><span>No app, toque em <strong>Ler código</strong> e leia o código de barras de cada produto</span></li>
+      <li><b>3</b><span>Pague no Pix pelo app. A tela fica verde quando o pagamento é aprovado</span></li>
+    </ol>
+  </div>
+  <p class="mu" style="text-align:center;font-size:12px">Ambiente monitorado por câmeras · o caixa volta sozinho quando a internet voltar</p>
+</section>
+
 <!-- resultados -->
 <section class="tela" id="ok"><div class="marca"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h1 class="big">Compra finalizada</h1><p style="font-size:20px" id="okTxt">Obrigado!</p><p style="opacity:.85">Pode levar seus produtos</p></section>
 <section class="tela" id="ruim"><div class="marca"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></div><h1 class="big">Compra não finalizada</h1><p style="font-size:20px" id="ruimTxt">Os produtos devem voltar à prateleira</p></section>
@@ -353,6 +381,7 @@ h2{font-size:22px;font-weight:800}
 <input id="leitor" inputmode="none" autocomplete="off" aria-hidden="true" tabindex="-1">
 <div class="toast" id="toast"></div>
 
+<script src="vendor/qrcode.js"></script>
 <script>
 {
 const API='https://gdnvjpmpfgautrmtkjmx.supabase.co/functions/v1/pdv';
@@ -360,6 +389,7 @@ const $=s=>document.querySelector(s);
 const brl=c=>'R$ '+(c/100).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
 let token=ls.get('bp-token',null),loja=ls.get('bp-loja',null),cat=ls.get('bp-cat',null),fila=ls.get('bp-fila',[]),voz=ls.get('bp-voz',true);
+let contUsa=ls.get('bp-cont',false),semRede=!navigator.onLine,falhasSinal=0;
 let maior18Em=null,carrinho=[],forma=null,vendaId=null,iniciada=null,stream=null,frontStream=null,detector=null,lendo=false,ultimoCod='',ultimoT=0,inativo=null;
 
 const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2600)};
@@ -370,7 +400,7 @@ const valorFalado=c=>{const r=Math.floor(c/100),cc=c%100;return (r?r+(r===1?' re
 async function api(acao,corpo={}){const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(r.status===401){desativar(true);throw new Error(j.erro)}if(!r.ok)throw new Error(j.erro||'Erro');return j}
 const uuid=()=>crypto.randomUUID?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
 
-function mostrar(id){document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on',t.id===id));const comRosto=['carrinho','pagamento','buscaT','vozT'].includes(id);mostrarRosto();if(comRosto)reviverRosto();desligarCamera();if(id==='carrinho'&&!carrinho.length)vitrine(null);if(['carrinho','pagamento','buscaT','vozT'].includes(id))iniciarGravacao();else if(id==='espera'&&!carrinho.length)pararGravacao(null);if(['espera','carrinho','pagamento'].includes(id))setTimeout(()=>$('#leitor').focus({preventScroll:true}),60);armarInatividade(id);armarDescanso(id)}
+function mostrar(id){if(id==='espera'&&emContingencia())id='contT';document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on',t.id===id));const comRosto=['carrinho','pagamento','buscaT','vozT'].includes(id);mostrarRosto();if(comRosto)reviverRosto();desligarCamera();if(id==='carrinho'&&!carrinho.length)vitrine(null);if(['carrinho','pagamento','buscaT','vozT'].includes(id))iniciarGravacao();else if((id==='espera'||id==='contT')&&!carrinho.length)pararGravacao(null);if(['espera','carrinho','pagamento'].includes(id))setTimeout(()=>$('#leitor').focus({preventScroll:true}),60);armarInatividade(id);armarDescanso(id)}
 // ---------- tela de descanso: anúncios em tela cheia quando o caixa está parado ----------
 let dsTimer=null,dsRoda=null,dsIdx=0,dsEv=ls.get('bp-midia-ev',[]),dsDesde=0;
 const DS_ESPERA=30000;
@@ -407,8 +437,8 @@ async function sincronizar(silencioso){carregarMp();try{const r=await api('catal
 const nz=c=>String(c).replace(/\D/g,'').replace(/^0+/,'');
 function porCodigo(c){if(!cat)return null;const k=nz(c);return cat.produtos.find(p=>p.codigos.some(x=>nz(x)===k))||null}
 async function enviarFila(){if(!fila.length)return;const resto=[];for(const v of fila){try{await api('venda',v)}catch(e){if(!/inválid|sem preço|vazio/i.test(e.message))resto.push(v)}}fila=resto;ls.set('bp-fila',fila);atualizarRede()}
-function atualizarRede(){const on=navigator.onLine;$('#rede').textContent=on?(fila.length?fila.length+' venda(s) na fila':'online'):'sem internet';$('#rede').classList.toggle('on',!on||fila.length>0)}
-addEventListener('online',()=>{atualizarRede();enviarFila()});addEventListener('offline',atualizarRede);
+function atualizarRede(){const on=navigator.onLine&&!semRede;$('#rede').textContent=on?(fila.length?fila.length+' venda(s) na fila':'online'):'sem internet';$('#rede').classList.toggle('on',!on||fila.length>0)}
+addEventListener('online',()=>{sinal();atualizarRede();enviarFila()});addEventListener('offline',()=>marcarRede(false));
 
 // ---------- câmera e leitor ----------
 async function ligarCamera(){if(stream)return;try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});const v=$('#video');v.srcObject=stream;await v.play();if('BarcodeDetector' in window){detector=detector||new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});loopLeitura()}else $('#camAviso').textContent='Use o leitor ou "Produtos"'}catch(e){$('#camAviso').textContent='Câmera bloqueada: use o leitor ou "Produtos"'}}
@@ -430,7 +460,7 @@ async function ligarRosto(){let st=null;try{st=await navigator.mediaDevices.getU
 // leitor Bluetooth/USB funciona como teclado: digita o código e Enter
 const leitor=$('#leitor');let buf='';leitor.addEventListener('keydown',e=>{if(e.key==='Enter'){if(buf.length>=6)lido(buf);buf='';leitor.value='';e.preventDefault()}else if(/^\d$/.test(e.key))buf+=e.key});
 document.addEventListener('keydown',e=>{if(document.activeElement===leitor||/INPUT/.test(document.activeElement?.tagName||''))return;if(/^\d$/.test(e.key)){buf+=e.key}else if(e.key==='Enter'&&buf.length>=6){lido(buf);buf=''}});
-function lido(cod){cod=String(cod).replace(/\D/g,'');const t=Date.now();if(cod===ultimoCod&&t-ultimoT<1500)return;ultimoCod=cod;ultimoT=t;const p=porCodigo(cod);if(!p){navigator.vibrate?.(200);toast('Produto não encontrado: '+cod);falar('Produto não encontrado');return}adicionar(p)}
+function lido(cod){if(document.querySelector('.tela.on')?.id==='contT'){avisoCont();return}cod=String(cod).replace(/\D/g,'');const t=Date.now();if(cod===ultimoCod&&t-ultimoT<1500)return;ultimoCod=cod;ultimoT=t;const p=porCodigo(cod);if(!p){navigator.vibrate?.(200);toast('Produto não encontrado: '+cod);falar('Produto não encontrado');return}adicionar(p)}
 
 // ---------- carrinho ----------
 // ---------- gravação da câmera frontal: um vídeo por compra, guardado 7 dias no sistema ----------
@@ -745,7 +775,27 @@ let liberarNav=false;
 setInterval(travaNav,1500);
 
 // ---------- início ----------
-function iniciar(){$('#lojaNome').textContent=cat?.loja||loja?.nome||'—';atualizarRede();mostrar('espera');ligarRosto();enviarFila();setInterval(()=>{sincronizar(true);enviarFila();enviarDs()},10*60*1000)}
+// ---------- contingência: sem internet, o cliente compra pelo celular ----------
+// O caixa avisa o servidor a cada 30 s. Sem sinal por 90 s, o servidor libera a compra no app do cliente desta loja
+// (só nas lojas com "Aceita pagamento com sistema offline"). Aqui, ao perder a rede, o caixa mostra o QR do app.
+const SB_URL='https://gdnvjpmpfgautrmtkjmx.supabase.co',SB_PUB='sb_publishable_z-GGao9BiSTEUgMi1xAHCQ_5Vh5e3FY';
+const emContingencia=()=>semRede&&contUsa&&!carrinho.length&&!!loja?.id;
+const linkApp=()=>loja?.id?'https://tomamorim-gif.github.io/beep-caixa/cliente/#l='+loja.id:'';
+async function sinal(){if(!token)return;if(!navigator.onLine){marcarRede(false);return}
+ const ac=new AbortController(),t=setTimeout(()=>ac.abort(),8000);
+ try{const r=await fetch(SB_URL+'/rest/v1/rpc/caixa_sinal',{method:'POST',headers:{'content-type':'application/json',apikey:SB_PUB,authorization:'Bearer '+SB_PUB},body:JSON.stringify({p_token:token}),signal:ac.signal});
+  falhasSinal=0;if(r.ok){const j=await r.json().catch(()=>null);if(j&&j.ok&&!!j.contingencia!==contUsa){contUsa=!!j.contingencia;ls.set('bp-cont',contUsa)}}
+  marcarRede(true);prepararQr()}
+ catch(e){if(++falhasSinal>=2)marcarRede(false)}finally{clearTimeout(t)}}
+function marcarRede(on){semRede=!on;atualizarRede();const t=document.querySelector('.tela.on')?.id;
+ if(!on&&t==='espera'&&emContingencia()){fecharDescanso();mostrar('contT');falar('O caixa está sem internet. Para comprar, leia o QR code com o seu celular.')}
+ else if(on&&t==='contT')mostrar('espera')}
+async function prepararQr(){const link=linkApp();if(!link)return;const q=ls.get('bp-qr-app',null);if(q?.link===link){desenharQr(q.svg);return}
+ try{const Q=window.qrcode;if(!Q)throw 0;const g=Q(0,'M');g.addData(link);g.make();const svg=g.createSvgTag({cellSize:8,margin:0,scalable:true});ls.set('bp-qr-app',{link,svg});desenharQr(svg)}catch(e){desenharQr(null)}}
+function desenharQr(svg){const el=$('#contQr');if(!el)return;if(svg&&svg.startsWith('<svg'))el.innerHTML=svg;else el.innerHTML='<p>'+esc(linkApp())+'</p>'}
+function avisoCont(){navigator.vibrate?.(120);toast('Sem internet no caixa: compre pelo celular');falar('O caixa está sem internet. Leia o QR code com o seu celular e use o app da loja.')}
+$('#contToque').addEventListener('pointerdown',avisoCont);
+function iniciar(){$('#lojaNome').textContent=cat?.loja||loja?.nome||'—';const q=ls.get('bp-qr-app',null);desenharQr(q?.link===linkApp()?q.svg:null);atualizarRede();mostrar('espera');sinal();setInterval(sinal,30000);ligarRosto();enviarFila();setInterval(()=>{sincronizar(true);enviarFila();enviarDs()},10*60*1000)}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{setInterval(()=>r.update().catch(()=>{}),10*60000)}).catch(()=>{});
  // versão nova chegou: recarrega sozinho, mas nunca no meio de uma compra
  let recarregar=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(recarregar)return;recarregar=true;const tenta=()=>{if(typeof carrinho!=='undefined'&&carrinho.length){setTimeout(tenta,5000);return}location.reload()};tenta()})}

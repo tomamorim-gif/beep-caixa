@@ -236,6 +236,139 @@ async function encerrarAnterior(a: any, tk: string) {
   return a;
 }
 
+// ---------- app do cliente: Pix no próprio celular ----------
+// Vale quando a loja libera a compra no app, para clientes selecionados, para vendas travadas
+// e na contingência (caixa da loja sem internet). A regra de quem pode comprar fica no banco (app_perm).
+async function clienteSessao(req: Request) {
+  const tok = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (tok.length < 30) return null;
+  const { data: s } = await db.from("sessoes_cliente").select("cliente_id, expira_em").eq("token_hash", await sha256(tok)).maybeSingle();
+  if (!s || new Date(s.expira_em) < new Date()) return null;
+  const { data: c } = await db.from("clientes_app").select("id, empresa_id, local_id, ativo").eq("id", s.cliente_id).maybeSingle();
+  if (!c || !c.ativo) return null;
+  const { data: perm, error } = await db.rpc("app_perm", { p_cliente: c.id });
+  if (error || !perm) return null;
+  return { c, perm: perm as { compra: boolean; pendente: boolean; contingencia: boolean } };
+}
+
+// preços sempre do servidor, só produtos à venda nesta loja
+async function calcularApp(c: any, itensIn: any[]) {
+  const itens = Array.isArray(itensIn) ? itensIn.slice(0, 60) : [];
+  if (!itens.length) return { erro: "Carrinho vazio" };
+  const ids = itens.map((i: any) => i.produto_id).filter(uuidOk);
+  const { data: precos } = await db.from("precos_local").select("produto_id, preco, ativo_no_mix, produtos!inner(custo, empresa_id, ativo, idade_minima)").eq("local_id", c.local_id).in("produto_id", ids);
+  const mapa = new Map((precos ?? []).map((p: any) => [p.produto_id, p]));
+  let total = 0, maior18 = false;
+  const linhas: any[] = [];
+  for (const [k, i] of itens.entries()) {
+    const p: any = mapa.get(i.produto_id);
+    const q = Number(i.quantidade);
+    if (!p || !p.ativo_no_mix || !p.produtos.ativo || p.produtos.empresa_id !== c.empresa_id) return { erro: "Um produto do carrinho não está à venda nesta loja" };
+    if (!Number.isInteger(q) || q <= 0 || q > 99) return { erro: "Quantidade inválida" };
+    if ((p.produtos.idade_minima ?? 0) >= 18) maior18 = true;
+    total += p.preco * q;
+    linhas.push({ seq: k + 1, produto_id: i.produto_id, quantidade: q, preco_unit: p.preco, custo_unit: p.produtos.custo });
+  }
+  if (total <= 0) return { erro: "Valor inválido" };
+  return { total, linhas, maior18 };
+}
+
+async function appCliente(req: Request, b: Record<string, any>) {
+  const s = await clienteSessao(req);
+  if (!s) return erro("Entre de novo no app", 401);
+  const tk = (await credencial(s.c.empresa_id)).token;
+  if (tk.length <= 20) return erro("O Pix pelo app ainda não está disponível nesta loja. Pague no caixa.", 503);
+  const minha = async (id: unknown) => uuidOk(id) ? (await db.from("cobrancas_cartao").select("*").eq("id", id).eq("cliente_app_id", s.c.id).maybeSingle()).data : null;
+
+  if (b.acao === "app_pix") {
+    if (Deno.env.get("MP_PIX_DESLIGADO") === "true") return erro("Pix desligado no momento", 409);
+    const travada = uuidOk(b.venda_id);
+    const vendaId = travada ? b.venda_id : b.pedido;
+    if (!uuidOk(vendaId)) return erro("Pedido inválido");
+    let calc: any;
+    if (travada) {
+      if (!s.perm.pendente) return erro("Venda não encontrada", 404);
+      const { data: v } = await db.from("vendas").select("id, total, status").eq("id", vendaId).eq("cliente_app_id", s.c.id).eq("origem", "pendente_app").maybeSingle();
+      if (!v) return erro("Venda não encontrada", 404);
+      if (v.status === "paga") return json({ status: "aprovado", venda_gravada: true, total: v.total, repetida: true });
+      if (v.status !== "aberta") return erro("Esta venda foi cancelada pela loja");
+      const { data: its } = await db.from("venda_itens").select("seq, produto_id, quantidade, preco_unit, custo_unit, produtos(idade_minima)").eq("venda_id", v.id).order("seq");
+      calc = { total: v.total, maior18: (its ?? []).some((i: any) => (i.produtos?.idade_minima ?? 0) >= 18),
+        linhas: (its ?? []).map((i: any) => ({ seq: i.seq, produto_id: i.produto_id, quantidade: Number(i.quantidade), preco_unit: i.preco_unit, custo_unit: i.custo_unit })) };
+    } else {
+      if (!s.perm.compra) return erro("A compra pelo celular não está liberada agora. Pague no caixa da loja.", 403);
+      const { data: ja } = await db.from("vendas").select("id, total, cliente_app_id").eq("id", vendaId).maybeSingle();
+      if (ja) return ja.cliente_app_id === s.c.id ? json({ status: "aprovado", venda_gravada: true, total: ja.total, repetida: true }) : erro("Pedido inválido");
+      calc = await calcularApp(s.c, b.itens);
+      if (calc.erro) return erro(calc.erro);
+    }
+    // bebida alcoólica: no celular vale a declaração de 18 anos ou mais, feita na hora da compra
+    const maior18 = dataOk(b.maior18_em);
+    if (calc.maior18 && !maior18) return erro("Confirme que você tem 18 anos ou mais para comprar este produto.", 428, { maior18: true });
+
+    const { data: aprovada } = await db.from("cobrancas_cartao").select("*").eq("venda_id", vendaId).eq("status", "aprovado").maybeSingle();
+    if (aprovada) return json(resposta(await atualizar(aprovada, tk)));
+    // um Pix aberto por cliente: encerra o anterior antes de gerar outro
+    const { data: abertas } = await db.from("cobrancas_cartao").select("*").eq("cliente_app_id", s.c.id).in("status", ABERTOS);
+    for (const a0 of abertas ?? []) {
+      const a = await encerrarAnterior(a0, tk);
+      if (a.status === "aprovado") {
+        if (a.venda_id === vendaId) return json(resposta(a));
+        return erro("Seu Pix anterior foi aprovado e já está registrado. Confira o histórico de compras.", 409);
+      }
+      if (!FINAIS.has(a.status)) return erro("Ainda há um Pix seu em andamento. Aguarde um instante e tente de novo.", 409);
+    }
+
+    const { data: cob, error } = await db.from("cobrancas_cartao").insert({
+      empresa_id: s.c.empresa_id, local_id: s.c.local_id, dispositivo_id: null, cliente_app_id: s.c.id, venda_id: vendaId, forma: "pix",
+      valor: calc.total, itens: calc.linhas, iniciada_em: agora(), maior18_em: maior18, terminal_id: null, status: "criando", contingencia: !!s.perm.contingencia,
+    }).select("*").single();
+    if (error?.code === "23505") return erro("Ainda há um Pix seu em andamento. Aguarde um instante e tente de novo.", 409);
+    if (error || !cob) return erro("Não foi possível registrar o pagamento", 500);
+    const r = await enviarOrdem(cob, tk);
+    if (r.status === 0) {
+      await db.from("cobrancas_cartao").update({ erro: msgMp(r), atualizado_em: agora() }).eq("id", cob.id);
+      return erro("Sem resposta do Mercado Pago. Tente de novo.", 504);
+    }
+    if (!r.ok || !r.corpo?.id) {
+      await db.from("cobrancas_cartao").update({ status: "falhou", erro: msgMp(r), atualizado_em: agora() }).eq("id", cob.id);
+      return erro("O Mercado Pago não gerou o Pix. Tente de novo.", 502);
+    }
+    const { data: c1 } = await db.from("cobrancas_cartao").update({ mp_order_id: String(r.corpo.id), erro: null, atualizado_em: agora() }).eq("id", cob.id).select("*").single();
+    const fim = await aplicarOrdem(c1 ?? { ...cob, mp_order_id: String(r.corpo.id) }, r.corpo);
+    const pix = lerPix(r.corpo);
+    if (!pix.qr && !pix.img && !FINAIS.has(fim.status)) {
+      await cancelarNoMp(fim, tk);
+      await atualizar(fim, tk, true);
+      return erro("O Mercado Pago não devolveu o código do Pix. Tente de novo.", 502);
+    }
+    return json({ ...resposta(fim), pix_qr: pix.qr, pix_qr_img: pix.img });
+  }
+
+  if (b.acao === "app_status") {
+    const c = await minha(b.cobranca);
+    if (!c) return erro("Pagamento não encontrado", 404);
+    return json(resposta(await atualizar(c, tk)));
+  }
+
+  if (b.acao === "app_cancelar") {
+    const c0 = await minha(b.cobranca);
+    if (!c0) return erro("Pagamento não encontrado", 404);
+    let c = await atualizar(c0, tk);
+    if (FINAIS.has(c.status)) return json(resposta(c));
+    if (!c.mp_order_id) {
+      const { data } = await db.from("cobrancas_cartao").update({ status: "cancelado", status_detail: "canceled_by_api", atualizado_em: agora() }).eq("id", c.id).eq("status", "criando").is("mp_order_id", null).select("*").maybeSingle();
+      return json(resposta(data ?? c));
+    }
+    const r = await cancelarNoMp(c, tk);
+    if (r.ok && r.corpo?.status) c = await aplicarOrdem(c, r.corpo);
+    if (!FINAIS.has(c.status)) c = await atualizar(c, tk);
+    return json(resposta(c));
+  }
+
+  return erro("Ação desconhecida");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
   if (req.method !== "POST") return erro("use POST", 405);
@@ -243,6 +376,7 @@ Deno.serve(async (req) => {
 
   let b: Record<string, any>;
   try { b = await req.json(); } catch { return erro("JSON inválido"); }
+  if (typeof b.acao === "string" && b.acao.startsWith("app_")) return appCliente(req, b);
   const d = await aparelho(req);
   if (!d) return erro("Aparelho não autorizado. Ative de novo.", 401);
   const acao = b.acao;
