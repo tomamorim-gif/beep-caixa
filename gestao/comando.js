@@ -44,6 +44,7 @@ function tirarLoja(t) {
 // ---------- intenções ----------
 const TELAS = [
   [/configurar (minha )?loja|importar|planilha|xml|dicionario|organizar categorias|classificar|kit/, 'ag', 'Configurar minha loja'],
+  [/financeiro|lucro|margem|taxa|fechamento|líquido|liquido/, 'fin', 'Financeiro'],
   [/venda|faturamento|faturei|vendi|estorn/, 'vend', 'Vendas'],
   [/estoque|repor|reposicao|abastec|saldo/, 'est', 'Estoque e reposição'],
   [/nota|nf-?e|xml de compra|lancar|entrada|fornecedor/, 'nf', 'Entrada de NF-e'],

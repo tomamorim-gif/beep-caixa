@@ -129,6 +129,25 @@ input[type=file]{font-size:13px;color:var(--mu)}input[type=file]::file-selector-
 .lnk{color:var(--y);font-weight:600;font-size:13px;padding:2px 0}.lnk:hover{text-decoration:underline}
 @media(max-width:900px){.mmin{width:56px!important}.so-m{display:block}.mmtbl td,.mmtbl th{padding-left:8px;padding-right:8px}}
 .lnk{white-space:nowrap}
+/* financeiro */
+:root{--fn-custo:#4b5263;--fn-taxa:#f59e0b;--fn-lucro:#22c55e}
+.fnbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.fnseg{display:inline-flex;background:var(--p2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px;flex-wrap:wrap}
+.fnseg button{min-height:34px;padding:0 14px;border-radius:9px;font-weight:600;font-size:13px;color:var(--mu)}.fnseg button:hover{color:var(--ink)}.fnseg button.on{background:var(--p3);color:var(--ink);box-shadow:inset 0 -2px 0 var(--y)}
+.fndatas{display:inline-flex;gap:8px;align-items:center}.fndatas[hidden]{display:none}.fndatas input{width:160px!important}
+.fnkpi .kpi small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fnluc{border-color:rgba(34,197,94,.35);background:linear-gradient(180deg,rgba(34,197,94,.07),var(--p1) 70%)}.fnluc b{color:#4ade80}
+.fncard{margin-top:16px}.fnch{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}.fnch h2{font-size:17px}
+.fnleg{display:flex;gap:16px;font-size:12.5px;color:var(--mu);font-weight:600}.fnleg span{display:inline-flex;align-items:center;gap:6px}.fnleg i{width:10px;height:10px;border-radius:3px}
+.fnsvg{width:100%;height:auto;display:block}.fngl{stroke:var(--line);stroke-width:1}.fnax{fill:var(--mu);font:500 11px Inter,sans-serif}
+.fn-c{fill:var(--fn-custo)}.fn-t{fill:var(--fn-taxa)}.fn-l{fill:var(--fn-lucro)}.fnbarra:hover rect:not([fill]){filter:brightness(1.15)}.fnbarra:hover>rect[fill]{fill:rgba(255,255,255,.03)}
+.tbl tfoot td{padding:12px;border-top:1px solid var(--line);font-weight:700;background:var(--p2)}
+.fnres{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--p1)}
+.fnres>div{padding:14px 16px;border-left:1px solid var(--line)}.fnres>div:first-child{border-left:0}.fnres span{display:block;font-size:12px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.04em}.fnres b{display:block;font:800 18px Manrope,Inter,sans-serif;margin-top:2px}.fnres small{color:var(--mu);font-size:12.5px}
+.fntab td:first-child{white-space:nowrap}.fntab tr.fnzero td{color:#5d6370}.fntab tr.fnzero td b{color:#7a808c}.fnd{color:#5d6370}.fn2>*{min-width:0}
+.fntx{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.fnpct{position:relative;display:block}.fnpct input{padding-right:30px!important;text-align:right;font-weight:700}.fnpct i{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-style:normal;color:var(--mu)}
+@media(max-width:1100px){.fnres{grid-template-columns:repeat(3,minmax(0,1fr))}.fnres>div:nth-child(4){border-left:0}.fnres>div:nth-child(n+4){border-top:1px solid var(--line)}}
+@media(max-width:900px){.fnkpi{grid-template-columns:repeat(2,minmax(0,1fr))}.fnkpi .fnluc{grid-column:1/-1}.fn2{grid-template-columns:minmax(0,1fr)}.fnseg{flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}.fnseg button{flex:none}.fnch .fnleg{width:100%}.hc{display:none}.fn2 .tbl td,.fn2 .tbl th,.fntab td,.fntab th{padding-left:8px;padding-right:8px;font-size:14px}.fn2 .tbl th,.fntab th{font-size:11px}.fnbar .sp{display:none}.fnbar select{width:auto!important;flex:1}.fnres{grid-template-columns:1fr 1fr}.fnres>div{border-left:0!important;border-top:1px solid var(--line)}.fnres>div:nth-child(-n+2){border-top:0}.fnres>div:nth-child(even){border-left:1px solid var(--line)!important}.fnres>div:last-child{grid-column:1/-1;border-left:0!important}.fntx{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -154,7 +173,7 @@ const ICON={nf:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stro
  up:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>'};
 
 // ---------- estado ----------
-const TELAS=['ini','ag','vend','prod','est','abs','nf','pf','cx','app','ads','vid','cfg'];
+const TELAS=['ini','ag','vend','fin','prod','est','abs','nf','pf','cx','app','ads','vid','cfg'];
 // troca de tela pelo menu ou pelos atalhos do Início; o endereço (#vend…) deixa o botão Voltar funcionar
 function ir(t){if(!TELAS.includes(t))t='ini';if(S.tela===t&&location.hash==='#'+t){render();return}S.tela=t;history.pushState(null,'','#'+t);render();window.scrollTo(0,0)}
 addEventListener('popstate',()=>{const t=location.hash.slice(1);S.tela=TELAS.includes(t)?t:'ini';if($('#main'))render()});
@@ -206,6 +225,7 @@ function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img
   <button class="nav" data-t="ag"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4z"/><path d="M19 15l.9 2.1 2.1.9-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg>Configurar minha loja</button>
   <div class="navsec">Dia a dia</div>
   <button class="nav" data-t="vend"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Vendas</button>
+  <button class="nav" data-t="fin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>Financeiro</button>
   <button class="nav" data-t="est"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Estoque e reposição</button>
   <button class="nav" data-t="abs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Abastecimento</button>
   <button class="nav" data-t="nf">${ICON.nf}Entrada de NF-e</button>
@@ -221,7 +241,7 @@ function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img
   <button class="nav" data-t="cfg">${ICON.cfg}Configurações</button>
   <div class="quem"><b style="color:var(--ink)">${esc(S.emp.nome_exibicao||S.emp.razao_social)}</b><br>${esc(S.user.email)} · ${S.papel==='dono'?'Dono':'Gerente'}<br><button class="btn sm" id="sair" style="margin-top:10px">Sair</button></div></aside><main id="main"></main></div>`;
  document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{if(S.tela==='abs'&&b.dataset.t!=='abs'&&AB.ed.size){if(!confirmar('Há alterações de mínimo e máximo não salvas. Descartar?'))return;AB.ed.clear()}ir(b.dataset.t)});$('#navCmd').onclick=()=>abrirCmd();talvezAssistente();$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
-function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({ini:telaIni,ag:telaAg,vend:telaVend,prod:telaProd,est:telaEst,abs:telaAbs,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
+function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({ini:telaIni,ag:telaAg,vend:telaVend,fin:telaFin,prod:telaProd,est:telaEst,abs:telaAbs,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
 
 // ---------- agente "Configurar minha loja" (arquivo próprio, carregado só quando abre a tela) ----------
 const ctxBeep=()=>({sb,S,$,esc,brl,toast,modal,fechar,bonito,lerNFe,grupoDe,precoSugerido,regra,lojas,carregar,render,
@@ -722,6 +742,9 @@ async function telaVend(){const M=$('#main');VD.dia=VD.dia||hojeISO();
  notasVendas(data.slice(0,50));
  C.onclick=async e=>{const nr=e.target.closest('[data-nfre]'),nx=e.target.closest('[data-nfxml]');if(nr||nx)return acaoNota(nr,nx);const b=e.target.closest('[data-estornar]');if(!b)return;if(!confirmar('Estornar '+brl(+b.dataset.total)+' para o cliente (cartão ou Pix)? O dinheiro volta para ele e os produtos voltam ao estoque.'))return;b.disabled=true;b.textContent='Estornando…';
   try{const r=await apiPag('estornar',{venda_id:b.dataset.estornar});toast(r.status==='estornado'?'Estorno feito':'Estorno pedido ao Mercado Pago. Confirma em instantes.');telaVend()}catch(err){toast(err.message);b.disabled=false;b.textContent='Estornar'}}}
+
+// ---------- tela: financeiro (arquivo próprio, carregado só quando abre a tela) ----------
+async function telaFin(){try{const m=await import('./financeiro.js?v=1');await m.telaFinanceiro(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
 
 // ---------- tela: estoque e reposição ----------
 let EST_LOCAL=null;
