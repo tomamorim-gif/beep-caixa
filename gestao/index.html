@@ -157,6 +157,8 @@ input[type=file]{font-size:13px;color:var(--mu)}input[type=file]::file-selector-
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const SB_URL='https://gdnvjpmpfgautrmtkjmx.supabase.co', SB_KEY='sb_publishable_z-GGao9BiSTEUgMi1xAHCQ_5Vh5e3FY';
+// endereço do sistema (raiz do site), seja qual for o domínio: github.io/beep-caixa/ hoje, app.pagnow.com.br/ depois
+const BASE=location.origin+location.pathname.replace(/gestao\/?.*$/,'');
 const sb=createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
 const $=s=>document.querySelector(s);
 const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -860,7 +862,7 @@ async function listaContingencias(){const C=$('#cCont');if(!C)return;const {data
  C.innerHTML=`<table class="tbl"><thead><tr><th>Loja</th><th>Caiu</th><th>Voltou</th><th class="n">Duração</th><th class="n">Vendas no app</th></tr></thead><tbody>${data.map(c=>{const vs=vendas.filter(v=>v.local_id===c.local_id&&v.finalizada_em>=c.inicio&&(!c.fim||v.finalizada_em<=c.fim)),t=vs.reduce((a,v)=>a+v.total,0);
   return `<tr><td><b>${esc(nome(c.local_id))}</b></td><td class="num">${hm(c.inicio)}</td><td>${c.fim?`<span class="num">${hm(c.fim)}</span>`:'<span class="pill warn">Ainda sem internet</span>'}</td><td class="n num">${duracao(c.inicio,c.fim)}</td><td class="n num">${vs.length?`${vs.length} · <b>${brl(t)}</b>`:'<span class="mu">0</span>'}</td></tr>`}).join('')||'<tr><td colspan="5" class="vazio">Nenhuma queda registrada.</td></tr>'}</tbody></table>`}
 async function gerarCodigo(){const {data:{session}}=await sb.auth.getSession();const r=await fetch(SB_URL+'/functions/v1/gestao',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+session.access_token},body:JSON.stringify({acao:'gerar_ativacao'})});const j=await r.json();if(!r.ok)return toast(j.erro||'Não foi possível gerar');
- const link=`https://tomamorim-gif.github.io/beep-caixa/#c=${j.codigo}`;let qr='';try{const {default:Q}=await import('https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/+esm');const q=Q(0,'M');q.addData(link);q.make();qr=q.createSvgTag({cellSize:6,margin:2,scalable:true})}catch(e){}
+ const link=`${BASE}#c=${j.codigo}`;let qr='';try{const {default:Q}=await import('https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/+esm');const q=Q(0,'M');q.addData(link);q.make();qr=q.createSvgTag({cellSize:6,margin:2,scalable:true})}catch(e){}
  modal(`<h2>Código para ativar um caixa</h2><p class="mu">Leia o QR com a câmera do tablet ou do celular: ele abre o caixa com o código preenchido. Vale uma vez, até ${new Date(j.expira_em).toLocaleString('pt-BR')}.</p>
   ${qr?`<div style="background:#fff;border-radius:16px;padding:12px;width:240px;margin:0 auto">${qr}</div>`:''}
   <div style="text-align:center;font:800 34px Manrope,Inter,sans-serif;letter-spacing:.12em" class="num">${esc(j.codigo)}</div>
@@ -882,7 +884,7 @@ async function telaVid(){const M=$('#main');
   $('#modal').classList.add('wide');modal(`<h2>${esc(nome(v.local_id))} · ${new Date(v.inicio).toLocaleString('pt-BR')}</h2><video src="${esc(u.signedUrl)}" controls autoplay playsinline style="width:100%;max-height:70vh;border-radius:12px;background:#000"></video><div class="row"><span class="pill warn">${esc(MOTIVO[v.motivo]||v.motivo)}</span><span class="sp"></span><a class="btn" href="${esc(u.signedUrl)}" download>Baixar</a><button class="btn pri" data-close>Fechar</button></div>`)})}
 
 // ---------- tela: app do cliente ----------
-const LINK_CLI=id=>`https://tomamorim-gif.github.io/beep-caixa/cliente/#l=${id}`;
+const LINK_CLI=id=>`${BASE}cliente/#l=${id}`;
 let APP={loja:''};
 async function qrSvg(txt,cell=6){try{const {default:Q}=await import('https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/+esm');const q=Q(0,'M');q.addData(txt);q.make();return q.createSvgTag({cellSize:cell,margin:2,scalable:true})}catch(e){return ''}}
 const modoPag=l=>l.app_compra?'todos':l.app_selecionados===false?'consulta':'selecionados';
