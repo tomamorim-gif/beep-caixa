@@ -410,7 +410,7 @@ const prCent=v=>{const s=String(v??'').trim().replace(/\s|R\$/g,'');if(!s)return
 async function prCarregarExtras(force){
  const e=S.emp.id;
  const pag=async(t,sel,f)=>{const out=[];for(let de=0;;de+=1000){let c=sb.from(t).select(sel).eq('empresa_id',e);if(f)c=f(c);const r=await c.order('id').range(de,de+999);if(r.error)throw r.error;out.push(...r.data);if(r.data.length<1000)return out}};
- if(force||!PR.det){const data=await pag('produtos','id,ncm,cest,cfop_saida,origem,grupo_fiscal_id,custo,unidade,ativo');PR.det=new Map(data.map(x=>[x.id,x]))}
+ if(force||!PR.det){const data=await pag('produtos','id,ncm,cest,cfop_saida,origem,grupo_fiscal_id,custo,unidade,ativo,idade_minima');PR.det=new Map(data.map(x=>[x.id,x]))}
  if(force||!PR.fotos){const data=await pag('produto_fotos','produto_id,path',c=>c.eq('principal',true));PR.fotos=new Map(data.map(x=>[x.produto_id,x.path]))}
  if(force||!PR.grupos){const {data}=await sb.from('grupos_fiscais').select('id,nome,cfop_saida,csosn,cst_pis_cofins').eq('empresa_id',e).order('nome');PR.grupos=data||[]}}
 async function prUrls(paths){const falta=paths.filter(p=>p&&!PR.urls[p]);if(!falta.length)return;const {data}=await sb.storage.from('produtos').createSignedUrls(falta,3600);(data||[]).forEach(u=>{if(u.signedUrl)PR.urls[u.path]=u.signedUrl})}
@@ -477,7 +477,8 @@ function prEditar(pid){
     <label class="f">Nome do produto<input name="nome" required maxlength="120" value="${esc(p?.nome||'')}" placeholder="Ex.: Coca-Cola Lata 350ml"></label>
     <div class="g2"><label class="f">Código de barras principal<input name="ean" inputmode="numeric" maxlength="14" value="${esc(p?.ean||'')}" placeholder="789..."></label>
     <label class="f">Unidade<select name="unidade">${['UN','KG','CX','PCT'].map(u=>`<option ${(d.unidade||p?.unidade||'UN')===u?'selected':''}>${u}</option>`).join('')}</select></label></div>
-    <label class="f">Outros códigos de barras <span class="mu" style="font-weight:400">(caixa, embalagem antiga; separe por vírgula)</span><input name="extras" value="${esc(extras.join(', '))}" inputmode="numeric"></label></section>
+    <label class="f">Outros códigos de barras <span class="mu" style="font-weight:400">(caixa, embalagem antiga; separe por vírgula)</span><input name="extras" value="${esc(extras.join(', '))}" inputmode="numeric"></label>
+    <label class="chk" style="justify-self:start"><input type="checkbox" name="maior18" ${(d.idade_minima??0)>=18?'checked':''}> Proibido para menores de 18 anos <span class="mu">· o caixa mostra o aviso e pede confirmação de idade</span></label></section>
    <section class="prsec"><h3>Fiscal</h3>
     <div class="g3"><label class="f">NCM<input name="ncm" inputmode="numeric" maxlength="10" value="${esc(d.ncm||'')}" placeholder="8 dígitos"></label>
     <label class="f">CEST<input name="cest" inputmode="numeric" maxlength="9" value="${esc(d.cest||'')}" placeholder="opcional"></label>
@@ -492,6 +493,8 @@ function prEditar(pid){
   </div></form>
  <div class="row">${novo?'':`<button class="btn dang" id="prAtv">${(d.ativo??p.ativo)?'Inativar produto':'Reativar produto'}</button>`}<span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="prSalvar">${novo?'Cadastrar produto':'Salvar alterações'}</button></div>`);
  let arquivo=null;
+ // NCM de bebida alcoólica (22.03 a 22.06 e 22.08) marca o 18+ sozinho; 22.07 é álcool etílico, fica de fora
+ $('#prF').ncm.addEventListener('input',e=>{if(/^220[34568]/.test(e.target.value.replace(/\D/g,'')))$('#prF').maior18.checked=true});
  $('#prArq').onchange=e=>{const f=e.target.files[0];if(!f)return;if(!['image/jpeg','image/png','image/webp'].includes(f.type))return toast('Use JPG, PNG ou WebP');if(f.size>3e6)return toast('A imagem passa de 3 MB');arquivo=f;$('#prFbox').innerHTML=`<img src="${URL.createObjectURL(f)}" alt="">`};
  $('#prAplicar').onclick=()=>{const v=$('#prTodos').value.trim();if(Number.isNaN(prCent(v))||!v)return toast('Digite um preço, ex.: 12,90');document.querySelectorAll('[data-pl]').forEach(i=>i.value=v)};
  if(!novo)$('#prAtv').onclick=async()=>{const at=!(d.ativo??p.ativo);const r=await sb.from('produtos').update({ativo:at,atualizado_em:new Date().toISOString()}).eq('id',pid).eq('empresa_id',S.emp.id);if(r.error)return toast('Erro: '+r.error.message);toast(at?'Produto reativado':'Produto inativado. Sai dos caixas em até 10 minutos.');fechar();await carregar();await prCarregarExtras(true);telaProd()};
@@ -513,7 +516,7 @@ async function prSalvar(pid,arquivo){
  if(dono)return err(`Esse código de barras já está em "${dono.nome}".`);
  const precos=[];for(const i of document.querySelectorAll('[data-pl]')){const v=prCent(i.value);if(Number.isNaN(v))return err('Preço inválido em uma das lojas. Use o formato 12,90.');if(v===0)return err('Preço zero não vale. Deixe em branco a loja que não vende o produto.');if(v!=null)precos.push({local_id:i.dataset.pl,preco:v,ativo_no_mix:document.querySelector(`[data-mx="${i.dataset.pl}"]`).checked})}
  const g=(PR.grupos||[]).find(x=>x.id===F.grupo.value);
- const dados={nome,ean:ean||null,unidade:F.unidade.value,custo,ncm:ncm||null,cest:cest||null,origem:+F.origem.value,grupo_fiscal_id:g?.id||null,cfop_saida:g?.cfop_saida||null,atualizado_em:new Date().toISOString()};
+ const dados={nome,ean:ean||null,unidade:F.unidade.value,custo,idade_minima:F.maior18.checked?18:null,ncm:ncm||null,cest:cest||null,origem:+F.origem.value,grupo_fiscal_id:g?.id||null,cfop_saida:g?.cfop_saida||null,atualizado_em:new Date().toISOString()};
  if(ncm&&ncm!==(PR.det?.get(pid)?.ncm||'')){dados.ncm_sugerido=ncm;dados.ncm_fonte='Painel de gestão'}
  bt.disabled=true;bt.textContent='Salvando…';
  try{const e=S.emp.id;let id=pid;
