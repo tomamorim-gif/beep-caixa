@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0b0b0b">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
-<title>Beep · Caixa</title>
+<link rel="icon" href="site/marca/simbolo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="site/marca/icone-192.png">
+<title>PagNow · Caixa</title>
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -191,6 +191,18 @@ h2{font-size:22px;font-weight:800}
 #descanso .barra{position:absolute;left:0;right:0;bottom:0;padding:18px 5vw calc(18px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:16px;background:rgba(10,10,10,.92);border-top:1px solid #2a2a2a}
 #descanso .barra img{height:38px;border-radius:8px}#descanso .barra b{flex:1;font:800 clamp(18px,3vw,26px) Manrope,Inter,sans-serif;color:var(--y)}
 #descanso .prog{display:flex;gap:6px}#descanso .prog i{width:8px;height:8px;border-radius:4px;background:#3f3f46;transition:.3s}#descanso .prog i.on{width:24px;background:var(--y)}
+/* contingência: caixa sem internet, a compra segue pelo celular do cliente */
+#contT{justify-content:space-between;background:radial-gradient(120% 70% at 50% 0%,#2a2400 0%,var(--k) 62%)}
+.cont-corpo{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px;width:100%;max-width:560px;margin:0 auto}
+.cont-selo{font:700 13px Inter;letter-spacing:.08em;text-transform:uppercase;color:var(--y);border:1px solid rgba(255,214,10,.45);padding:7px 14px;border-radius:999px}
+.cont-corpo h1{font-size:clamp(28px,4.4vh,40px);line-height:1.1}
+.cont-corpo h1 span{color:var(--y)}
+.cont-qr{width:min(60vw,360px);aspect-ratio:1;background:#fff;border-radius:24px;padding:16px;display:grid;place-items:center;box-shadow:0 30px 80px rgba(255,214,10,.16)}
+.cont-qr svg{width:100%;height:100%;display:block}.cont-qr p{color:#111;font:600 15px/1.35 Inter;word-break:break-all}
+.cont-passos{list-style:none;padding:0;display:grid;gap:10px;width:100%;text-align:left}
+.cont-passos li{display:grid;grid-template-columns:40px 1fr;gap:14px;align-items:center;background:var(--k2);border:1px solid var(--line);border-radius:18px;padding:14px 16px;font-size:17px;line-height:1.35}
+.cont-passos b{width:40px;height:40px;border-radius:12px;background:var(--y);color:#111;display:grid;place-items:center;font:800 19px Manrope,Inter,sans-serif}
+@media (max-height:760px){.cont-qr{width:min(52vw,230px)}.cont-corpo{gap:14px}.cont-passos li{padding:10px 14px;font-size:15px}}
 .toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);background:#fff;color:#111;padding:12px 18px;border-radius:14px;font-weight:600;z-index:20;display:none;max-width:90vw;text-align:center}
 </style>
 </head>
@@ -283,6 +295,7 @@ h2{font-size:22px;font-weight:800}
   <div class="topo"><button class="voltar-grande" id="voltarCarrinho" aria-label="Voltar para o carrinho"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Carrinho</button><span class="selo-sim">PAGAMENTO SIMULADO</span></div>
   <h1>Como quer pagar?</h1>
   <div class="total"><span class="mu">Total</span><span class="num" id="totalPag">R$ 0,00</span></div>
+  <p id="semPagamento" class="mu" style="display:none;text-align:center;font-size:18px;margin:18px 0">Pagamento indisponível neste caixa agora. Chame o responsável pela loja.</p>
   <div class="formas" id="formas">
     <button class="forma" data-f="pix"><b>Pix</b><small>QR na tela</small></button>
     <button class="forma" data-f="debito"><b>Débito</b><small>Na maquininha</small></button>
@@ -290,6 +303,22 @@ h2{font-size:22px;font-weight:800}
     <button class="forma" data-f="tapon"><b>Aproximação</b><small>Encoste o cartão</small></button>
   </div>
   <div class="cobranca" id="cobranca"></div>
+</section>
+
+<!-- contingência: sem internet no caixa -->
+<section class="tela" id="contT" aria-live="polite">
+  <div class="topo"><img class="logo" src="logo.png" alt="Beep Smart Mercadinhos"><span class="pill on">Caixa sem internet</span></div>
+  <div class="cont-corpo" id="contToque">
+    <span class="cont-selo">Pague com Pix pelo app</span>
+    <h1>O caixa está sem internet.<br><span>Compre pelo seu celular.</span></h1>
+    <div class="cont-qr" id="contQr"></div>
+    <ol class="cont-passos">
+      <li><b>1</b><span>Aponte a câmera do celular para o QR e abra o app da loja</span></li>
+      <li><b>2</b><span>No app, toque em <strong>Ler código</strong> e leia o código de barras de cada produto</span></li>
+      <li><b>3</b><span>Pague no Pix pelo app. A tela fica verde quando o pagamento é aprovado</span></li>
+    </ol>
+  </div>
+  <p class="mu" style="text-align:center;font-size:12px">Ambiente monitorado por câmeras · o caixa volta sozinho quando a internet voltar</p>
 </section>
 
 <!-- resultados -->
@@ -302,9 +331,9 @@ h2{font-size:22px;font-weight:800}
   <img src="logo.png" alt="Beep" id="logoInst" style="height:44px;width:auto;align-self:flex-start">
   <h2 style="font:800 28px/1.15 Manrope,Inter,sans-serif;margin-top:18px">Instale o caixa para usar</h2>
   <p style="color:var(--mu);font-size:16px;line-height:1.5">Aberto no navegador, a barra do Google fica liberada e qualquer pessoa pode navegar. Instalado, o caixa abre em tela cheia, sem barra.</p>
-  <button class="btn" id="btnInstalar" style="display:none">Instalar o Beep Caixa</button>
+  <button class="btn" id="btnInstalar" style="display:none">Instalar o PagNow</button>
   <div style="background:var(--k2);border-radius:18px;padding:18px;font-size:15px;line-height:1.6">
-    <b>Se o botão não aparecer:</b><br>1. Toque nos três pontinhos (⋮) do Chrome, no canto de cima.<br>2. Toque em <b>Instalar app</b> (ou <b>Adicionar à tela inicial › Instalar</b>).<br>3. Abra o <b>Beep Caixa</b> pelo ícone na tela inicial.<br>4. Depois fixe o app (Recentes ▢ › ícone › Fixar).
+    <b>Se o botão não aparecer:</b><br>1. Toque nos três pontinhos (⋮) do Chrome, no canto de cima.<br>2. Toque em <b>Instalar app</b> (ou <b>Adicionar à tela inicial › Instalar</b>).<br>3. Abra o <b>PagNow</b> pelo ícone na tela inicial.<br>4. Depois fixe o app (Recentes ▢ › ícone › Fixar).
   </div>
 </div>
 
@@ -369,6 +398,7 @@ h2{font-size:22px;font-weight:800}
 <input id="leitor" inputmode="none" autocomplete="off" aria-hidden="true" tabindex="-1">
 <div class="toast" id="toast"></div>
 
+<script src="vendor/qrcode.js"></script>
 <script>
 {
 const API='https://gdnvjpmpfgautrmtkjmx.supabase.co/functions/v1/pdv';
@@ -376,6 +406,7 @@ const $=s=>document.querySelector(s);
 const brl=c=>'R$ '+(c/100).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
 let token=ls.get('bp-token',null),loja=ls.get('bp-loja',null),cat=ls.get('bp-cat',null),fila=ls.get('bp-fila',[]),voz=ls.get('bp-voz',true);
+let contUsa=ls.get('bp-cont',false),semRede=!navigator.onLine,falhasSinal=0;
 let maior18Em=null,carrinho=[],forma=null,vendaId=null,iniciada=null,stream=null,frontStream=null,detector=null,lendo=false,ultimoCod='',ultimoT=0,inativo=null;
 
 const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2600)};
@@ -386,7 +417,7 @@ const valorFalado=c=>{const r=Math.floor(c/100),cc=c%100;return (r?r+(r===1?' re
 async function api(acao,corpo={}){const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(r.status===401){desativar(true);throw new Error(j.erro)}if(!r.ok)throw new Error(j.erro||'Erro');return j}
 const uuid=()=>crypto.randomUUID?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
 
-function mostrar(id){document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on',t.id===id));const comRosto=['carrinho','pagamento','buscaT','vozT'].includes(id);mostrarRosto();if(comRosto)reviverRosto();desligarCamera();if(id==='carrinho'&&!carrinho.length)vitrine(null);if(['carrinho','pagamento','buscaT','vozT'].includes(id))iniciarGravacao();else if(id==='espera'&&!carrinho.length)pararGravacao(null);if(['espera','carrinho','pagamento'].includes(id))setTimeout(()=>$('#leitor').focus({preventScroll:true}),60);armarInatividade(id);armarDescanso(id)}
+function mostrar(id){if(id==='espera'&&emContingencia())id='contT';document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on',t.id===id));const comRosto=['carrinho','pagamento','buscaT','vozT'].includes(id);mostrarRosto();if(comRosto)reviverRosto();desligarCamera();if(id==='carrinho'&&!carrinho.length)vitrine(null);if(['carrinho','pagamento','buscaT','vozT'].includes(id))iniciarGravacao();else if((id==='espera'||id==='contT')&&!carrinho.length)pararGravacao(null);if(['espera','carrinho','pagamento'].includes(id))setTimeout(()=>$('#leitor').focus({preventScroll:true}),60);armarInatividade(id);armarDescanso(id)}
 // ---------- tela de descanso: anúncios em tela cheia quando o caixa está parado ----------
 let dsTimer=null,dsRoda=null,dsIdx=0,dsEv=ls.get('bp-midia-ev',[]),dsDesde=0;
 const DS_ESPERA=30000;
@@ -447,8 +478,8 @@ async function sincronizar(silencioso){carregarMp();try{const r=await api('catal
 const nz=c=>String(c).replace(/\D/g,'').replace(/^0+/,'');
 function porCodigo(c){if(!cat)return null;const k=nz(c);return cat.produtos.find(p=>p.codigos.some(x=>nz(x)===k))||null}
 async function enviarFila(){if(!fila.length)return;const resto=[];for(const v of fila){try{await api('venda',v)}catch(e){if(!/inválid|sem preço|vazio/i.test(e.message))resto.push(v)}}fila=resto;ls.set('bp-fila',fila);atualizarRede()}
-function atualizarRede(){const on=navigator.onLine;$('#rede').textContent=on?(fila.length?fila.length+' venda(s) na fila':'online'):'sem internet';$('#rede').classList.toggle('on',!on||fila.length>0)}
-addEventListener('online',()=>{atualizarRede();enviarFila()});addEventListener('offline',atualizarRede);
+function atualizarRede(){const on=navigator.onLine&&!semRede;$('#rede').textContent=on?(fila.length?fila.length+' venda(s) na fila':'online'):'sem internet';$('#rede').classList.toggle('on',!on||fila.length>0)}
+addEventListener('online',()=>{sinal();atualizarRede();enviarFila()});addEventListener('offline',()=>marcarRede(false));
 
 // ---------- câmera e leitor ----------
 async function ligarCamera(){if(stream)return;try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});const v=$('#video');v.srcObject=stream;await v.play();if('BarcodeDetector' in window){detector=detector||new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});loopLeitura()}else $('#camAviso').textContent='Use o leitor ou "Produtos"'}catch(e){$('#camAviso').textContent='Câmera bloqueada: use o leitor ou "Produtos"'}}
@@ -470,7 +501,7 @@ async function ligarRosto(){let st=null;try{st=await navigator.mediaDevices.getU
 // leitor Bluetooth/USB funciona como teclado: digita o código e Enter
 const leitor=$('#leitor');let buf='';leitor.addEventListener('keydown',e=>{if(e.key==='Enter'){if(buf.length>=6)lido(buf);buf='';leitor.value='';e.preventDefault()}else if(/^\d$/.test(e.key))buf+=e.key});
 document.addEventListener('keydown',e=>{if(document.activeElement===leitor||/INPUT/.test(document.activeElement?.tagName||''))return;if(/^\d$/.test(e.key)){buf+=e.key}else if(e.key==='Enter'&&buf.length>=6){lido(buf);buf=''}});
-function lido(cod){cod=String(cod).replace(/\D/g,'');const t=Date.now();if(cod===ultimoCod&&t-ultimoT<1500)return;ultimoCod=cod;ultimoT=t;const p=porCodigo(cod);if(!p){navigator.vibrate?.(200);toast('Produto não encontrado: '+cod);falar('Produto não encontrado');return}adicionar(p)}
+function lido(cod){if(document.querySelector('.tela.on')?.id==='contT'){avisoCont();return}cod=String(cod).replace(/\D/g,'');const t=Date.now();if(cod===ultimoCod&&t-ultimoT<1500)return;ultimoCod=cod;ultimoT=t;const p=porCodigo(cod);if(!p){navigator.vibrate?.(200);toast('Produto não encontrado: '+cod);falar('Produto não encontrado');return}adicionar(p)}
 
 // ---------- carrinho ----------
 // ---------- gravação da câmera frontal: um vídeo por compra, guardado 7 dias no sistema ----------
@@ -479,8 +510,9 @@ let rec=null,recPartes=[],recInicio=null,recTipo='',recSeg=[];
 function trocarGravacao(){if(!rec)return;const r=rec,partes=recPartes,ini=recInicio,tipo=(recTipo||r.mimeType||'video/webm').split(';')[0];rec=null;recPartes=[];r.onstop=()=>{const b=new Blob(partes,{type:tipo});if(b.size>1000)recSeg.push({b,ini,fim:new Date()})};try{r.stop()}catch(e){}}
 const modoGrav=()=>cat?.gravacao?.modo||'intercorrencias';
 function iniciarGravacao(){if(!frontStream||rec||!('MediaRecorder' in window)||modoGrav()==='desligado')return;try{recTipo=['video/webm;codecs=vp8','video/webm','video/mp4'].find(t=>MediaRecorder.isTypeSupported(t))||'';rec=new MediaRecorder(frontStream,{mimeType:recTipo||undefined,videoBitsPerSecond:300000});const partes=[];recPartes=partes;recInicio=new Date();rec.ondataavailable=e=>{if(e.data&&e.data.size)partes.push(e.data)};rec.start(5000)}catch(e){rec=null}}
-function pararGravacao(motivo){const segs=recSeg;recSeg=[];if(motivo)segs.forEach(x=>enviarVideo(x.b,motivo,x.ini,x.fim,vendaId,0));if(!rec)return;const r=rec,partes=recPartes,ini=recInicio,tipo=recTipo||r.mimeType||'video/webm',venda=vendaId;rec=null;recPartes=[];r.onstop=()=>{if(!motivo||(motivo==='paga'&&modoGrav()!=='tudo'))return;const blob=new Blob(partes,{type:tipo.split(';')[0]});if(blob.size>1000)enviarVideo(blob,motivo,ini,new Date(),venda,0)};try{r.stop()}catch(e){}}
-async function enviarVideo(blob,motivo,ini,fim,venda,tent){try{const v=await api('video_inicio',{motivo,tipo:blob.type,inicio:ini.toISOString(),fim:fim.toISOString(),venda_id:venda});if(v.ignorado||!v.url)return;const up=await fetch(v.url,{method:'PUT',headers:{'content-type':blob.type,'x-upsert':'false'},body:blob});if(!up.ok)throw new Error('envio '+up.status);await api('video_fim',{id:v.id,bytes:blob.size})}catch(e){if(tent<2)setTimeout(()=>enviarVideo(blob,motivo,ini,fim,venda,tent+1),30000)}}
+// compra paga só é guardada no modo "tudo", ou quando teve produto 18+ (prova da confirmação de idade)
+function pararGravacao(motivo){const segs=recSeg;recSeg=[];const m18=!!maior18Em,guardar=!!motivo&&(motivo!=='paga'||modoGrav()==='tudo'||m18);if(guardar)segs.forEach(x=>enviarVideo(x.b,motivo,x.ini,x.fim,vendaId,0,m18));if(!rec)return;const r=rec,partes=recPartes,ini=recInicio,tipo=recTipo||r.mimeType||'video/webm',venda=vendaId;rec=null;recPartes=[];r.onstop=()=>{if(!guardar)return;const blob=new Blob(partes,{type:tipo.split(';')[0]});if(blob.size>1000)enviarVideo(blob,motivo,ini,new Date(),venda,0,m18)};try{r.stop()}catch(e){}}
+async function enviarVideo(blob,motivo,ini,fim,venda,tent,m18){try{const v=await api('video_inicio',{motivo,tipo:blob.type,inicio:ini.toISOString(),fim:fim.toISOString(),venda_id:venda,maior18:!!m18});if(v.ignorado||!v.url)return;const up=await fetch(v.url,{method:'PUT',headers:{'content-type':blob.type,'x-upsert':'false'},body:blob});if(!up.ok)throw new Error('envio '+up.status);await api('video_fim',{id:v.id,bytes:blob.size})}catch(e){if(tent<2)setTimeout(()=>enviarVideo(blob,motivo,ini,fim,venda,tent+1,m18),30000)}}
 function vitrine(p){if(!p){$('#vitVazio').style.display='flex';$('#vitProd').style.display='none';return}$('#vitVazio').style.display='none';const vp=$('#vitProd');vp.style.display='none';void vp.offsetWidth;vp.style.display='flex';const f=$('#vitFoto');f.className='vit-foto'+(p.foto?'':' sem');f.innerHTML='';if(p.foto){const im=new Image();im.crossOrigin='anonymous';im.alt='';im.onerror=()=>{f.className='vit-foto sem';f.innerHTML='<span class="ini"></span>';f.firstChild.textContent=p.nome.trim().charAt(0).toUpperCase()};im.src=p.foto;f.appendChild(im)}else{f.innerHTML='<span class="ini"></span>';f.firstChild.textContent=p.nome.trim().charAt(0).toUpperCase()}$('#vitNome').textContent=p.nome;$('#vitPreco').textContent=(p.preco/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
 // voz das mudanças de quantidade: espera 2 s sem toques e fala o resultado final
 // nome curto para a voz: até 4 palavras, mas sempre mantém a medida (1,5 L, 350ml, 400g)
@@ -614,7 +646,8 @@ function mpTratar(c){const p=pagReal;if(!p)return true;const st=c.status;
 let pagReal=null;
 function statusNativo(){try{return NATIVO?JSON.parse(NATIVO.status()):null}catch(e){return null}}
 function cartaoReal(){if(mpCfg&&mpCfg.pronto)return true;const s=statusNativo();return !!(s&&s.cartao)}
-function ajustarFormas(){const real=cartaoReal();const px=document.querySelector('.forma[data-f="pix"]');if(px)px.style.display=real&&!pixReal()?'none':''; /* caixa real nunca mostra Pix simulado */const av=$('#avisoSimulado');if(av)av.style.display=real?'none':'';const t=document.querySelector('.forma[data-f="tapon"]');if(t)t.style.display=real?'none':'';document.querySelectorAll('.forma[data-f="debito"] small,.forma[data-f="credito"] small').forEach(x=>x.textContent=real?'Na maquininha ao lado':'Na maquininha')}
+// pagamento simulado só existe em loja de teste (o servidor também recusa nas outras)
+function ajustarFormas(){const real=cartaoReal(),sim=!real&&!!cat?.loja_teste,nada=!real&&!sim&&!pixReal();const px=document.querySelector('.forma[data-f="pix"]');if(px)px.style.display=(real||!sim)&&!pixReal()?'none':'';document.querySelectorAll('.forma[data-f="debito"],.forma[data-f="credito"]').forEach(x=>x.style.display=real||sim?'':'none');const sp=$('#semPagamento');if(sp)sp.style.display=nada?'':'none'; /* caixa real nunca mostra Pix simulado */const av=$('#avisoSimulado');if(av)av.style.display=sim?'':'none';const t=document.querySelector('.forma[data-f="tapon"]');if(t)t.style.display=sim?'':'none';document.querySelectorAll('.forma[data-f="debito"] small,.forma[data-f="credito"] small').forEach(x=>x.textContent=real?'Na maquininha ao lado':'Na maquininha')}
 function telaCobranca(msg,sub,botoes){$('#cobranca').innerHTML=`<div class="pag-real"><div class="pag-anel" aria-hidden="true"></div><p style="font-size:20px;font-weight:600" id="pagMsg">${msg}</p><p class="mu" style="font-size:14px" id="pagSub">${sub||''}</p>${botoes||''}</div>`}
 async function cobrarCartao(f){if(mpCfg&&mpCfg.pronto)return cobrarMP(f);if(pagReal)return;clearTimeout(inativo);const nome=f==='debito'?'débito':'crédito';
  const itens=carrinho.map(i=>({produto_id:i.id,quantidade:i.q}));let total=totalC();
@@ -777,7 +810,7 @@ const pedirMic=async()=>{try{const s=await navigator.mediaDevices.getUserMedia({
 const instalado=()=>!!NATIVO||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 let liberadoNav=false,promptInst=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptInst=e;$('#btnInstalar').style.display='block'});
-addEventListener('appinstalled',()=>{$('#btnInstalar').style.display='none';$('#instalar').querySelector('h2').textContent='Instalado! Abra pelo ícone Beep Caixa'});
+addEventListener('appinstalled',()=>{$('#btnInstalar').style.display='none';$('#instalar').querySelector('h2').textContent='Instalado! Abra pelo ícone PagNow'});
 $('#btnInstalar').onclick=async()=>{if(!promptInst)return;promptInst.prompt();await promptInst.userChoice.catch(()=>{});promptInst=null;$('#btnInstalar').style.display='none'};
 function travaNav(){$('#instalar').style.display=(token&&!instalado()&&!liberadoNav)?'flex':'none'}
 let tqi=0,tqiT=null;$('#logoInst').onclick=()=>{tqi++;clearTimeout(tqiT);tqiT=setTimeout(()=>tqi=0,2500);if(tqi>=5){tqi=0;if(!ls.get('bp-pin',''))return;liberarNav=true;$('#instalar').style.display='none';telaPin('entrar')}};
@@ -785,7 +818,27 @@ let liberarNav=false;
 setInterval(travaNav,1500);
 
 // ---------- início ----------
-function iniciar(){$('#lojaNome').textContent=cat?.loja||loja?.nome||'—';atualizarRede();mostrar('espera');ligarRosto();enviarFila();setInterval(()=>{sincronizar(true);enviarFila();enviarDs()},10*60*1000)}
+// ---------- contingência: sem internet, o cliente compra pelo celular ----------
+// O caixa avisa o servidor a cada 30 s. Sem sinal por 90 s, o servidor libera a compra no app do cliente desta loja
+// (só nas lojas com "Aceita pagamento com sistema offline"). Aqui, ao perder a rede, o caixa mostra o QR do app.
+const SB_URL='https://gdnvjpmpfgautrmtkjmx.supabase.co',SB_PUB='sb_publishable_z-GGao9BiSTEUgMi1xAHCQ_5Vh5e3FY';
+const emContingencia=()=>semRede&&contUsa&&!carrinho.length&&!!loja?.id;
+const linkApp=()=>loja?.id?'https://tomamorim-gif.github.io/beep-caixa/cliente/#l='+loja.id:'';
+async function sinal(){if(!token)return;if(!navigator.onLine){marcarRede(false);return}
+ const ac=new AbortController(),t=setTimeout(()=>ac.abort(),8000);
+ try{const r=await fetch(SB_URL+'/rest/v1/rpc/caixa_sinal',{method:'POST',headers:{'content-type':'application/json',apikey:SB_PUB,authorization:'Bearer '+SB_PUB},body:JSON.stringify({p_token:token}),signal:ac.signal});
+  falhasSinal=0;if(r.ok){const j=await r.json().catch(()=>null);if(j&&j.ok&&!!j.contingencia!==contUsa){contUsa=!!j.contingencia;ls.set('bp-cont',contUsa)}}
+  marcarRede(true);prepararQr()}
+ catch(e){if(++falhasSinal>=2)marcarRede(false)}finally{clearTimeout(t)}}
+function marcarRede(on){semRede=!on;atualizarRede();const t=document.querySelector('.tela.on')?.id;
+ if(!on&&t==='espera'&&emContingencia()){fecharDescanso();mostrar('contT');falar('O caixa está sem internet. Para comprar, leia o QR code com o seu celular.')}
+ else if(on&&t==='contT')mostrar('espera')}
+async function prepararQr(){const link=linkApp();if(!link)return;const q=ls.get('bp-qr-app',null);if(q?.link===link){desenharQr(q.svg);return}
+ try{const Q=window.qrcode;if(!Q)throw 0;const g=Q(0,'M');g.addData(link);g.make();const svg=g.createSvgTag({cellSize:8,margin:0,scalable:true});ls.set('bp-qr-app',{link,svg});desenharQr(svg)}catch(e){desenharQr(null)}}
+function desenharQr(svg){const el=$('#contQr');if(!el)return;if(svg&&svg.startsWith('<svg'))el.innerHTML=svg;else el.innerHTML='<p>'+esc(linkApp())+'</p>'}
+function avisoCont(){navigator.vibrate?.(120);toast('Sem internet no caixa: compre pelo celular');falar('O caixa está sem internet. Leia o QR code com o seu celular e use o app da loja.')}
+$('#contToque').addEventListener('pointerdown',avisoCont);
+function iniciar(){$('#lojaNome').textContent=cat?.loja||loja?.nome||'—';const q=ls.get('bp-qr-app',null);desenharQr(q?.link===linkApp()?q.svg:null);atualizarRede();mostrar('espera');sinal();setInterval(sinal,30000);ligarRosto();enviarFila();setInterval(()=>{sincronizar(true);enviarFila();enviarDs()},10*60*1000)}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{setInterval(()=>r.update().catch(()=>{}),10*60000)}).catch(()=>{});
  // versão nova chegou: recarrega sozinho, mas nunca no meio de uma compra
  let recarregar=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(recarregar)return;recarregar=true;const tenta=()=>{if(typeof carrinho!=='undefined'&&carrinho.length){setTimeout(tenta,5000);return}location.reload()};tenta()})}
