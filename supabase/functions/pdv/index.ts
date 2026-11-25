@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     const [{ data: precos }, { data: emp }, { data: loja }] = await Promise.all([
       db.from("precos_local").select("preco, ativo_no_mix, produtos!inner(id, nome, ean, unidade, ativo, idade_minima, produto_codigos(ean, quantidade))").eq("local_id", d.local_id).eq("ativo_no_mix", true),
       db.from("empresas").select("nome_exibicao, cores, gravacao, dias_video").eq("id", d.empresa_id).single(),
-      db.from("locais").select("nome").eq("id", d.local_id).single(),
+      db.from("locais").select("nome, teste").eq("id", d.local_id).single(),
     ]);
     await db.from("dispositivos").update({ ultimo_sinal: new Date().toISOString() }).eq("id", d.id);
     const ativos = (precos ?? []).filter((p: any) => p.produtos.ativo);
@@ -103,22 +103,31 @@ Deno.serve(async (req) => {
     const fotos = new Map<string, string>();
     const ids = ativos.map((p: any) => p.produtos.id);
     if (ids.length) {
-      const { data: fs } = await db.from("produto_fotos").select("produto_id, path, principal, ordem").eq("empresa_id", d.empresa_id).in("produto_id", ids).order("principal", { ascending: false }).order("ordem");
-      const primeira = new Map<string, string>();
-      for (const f of fs ?? []) if (!primeira.has(f.produto_id)) primeira.set(f.produto_id, f.path);
-      if (primeira.size) {
-        const paths = [...primeira.values()];
-        const { data: urls } = await db.storage.from("produtos").createSignedUrls(paths, 60 * 60 * 24 * 7);
-        const porPath = new Map((urls ?? []).filter((u: any) => u.signedUrl).map((u: any) => [u.path, u.signedUrl]));
-        for (const [pid, path] of primeira) if (porPath.has(path)) fotos.set(pid, porPath.get(path)!);
+      // consulta em lotes de 150 produtos: a lista com centenas de ids numa URL só ficava longa demais e a consulta falhava calada (sem nenhuma foto)
+      const fs: any[] = [];
+      for (let i = 0; i < ids.length; i += 150) {
+        const { data, error } = await db.from("produto_fotos").select("produto_id, path, principal, ordem").eq("empresa_id", d.empresa_id).in("produto_id", ids.slice(i, i + 150)).order("principal", { ascending: false }).order("ordem");
+        if (error) console.error("catalogo: fotos", error.message);
+        fs.push(...(data ?? []));
       }
+      const primeira = new Map<string, string>();
+      for (const f of fs) if (!primeira.has(f.produto_id)) primeira.set(f.produto_id, f.path);
+      const paths = [...primeira.values()];
+      const porPath = new Map<string, string>();
+      // links assinados em lotes de 100
+      for (let i = 0; i < paths.length; i += 100) {
+        const { data: urls, error: eUrls } = await db.storage.from("produtos").createSignedUrls(paths.slice(i, i + 100), 60 * 60 * 24 * 7);
+        if (eUrls) console.error("catalogo: links das fotos", eUrls.message);
+        for (const u of urls ?? []) if (u.signedUrl && u.path) porPath.set(u.path, u.signedUrl);
+      }
+      for (const [pid, path] of primeira) if (porPath.has(path)) fotos.set(pid, porPath.get(path)!);
     }
     const produtos = ativos.map((p: any) => ({
       id: p.produtos.id, nome: p.produtos.nome, preco: p.preco, unidade: p.produtos.unidade, maior18: p.produtos.idade_minima === 18, foto: fotos.get(p.produtos.id) ?? null,
       codigos: [...new Set([p.produtos.ean, ...(p.produtos.produto_codigos ?? []).map((c: any) => c.ean)].filter(Boolean))],
     }));
     const gravacao = { modo: emp?.gravacao ?? "intercorrencias", dias: emp?.dias_video ?? 3 };
-    return json({ empresa: { nome_exibicao: emp?.nome_exibicao, cores: emp?.cores }, loja: loja?.nome, aparelho: d.nome, gravacao, produtos, midia: await midiaCaixa(d), atualizado: new Date().toISOString() });
+    return json({ empresa: { nome_exibicao: emp?.nome_exibicao, cores: emp?.cores }, loja: loja?.nome, loja_teste: !!loja?.teste, aparelho: d.nome, gravacao, produtos, midia: await midiaCaixa(d), atualizado: new Date().toISOString() });
   }
 
   // preços sempre daqui: o aparelho nunca define o valor
@@ -153,7 +162,14 @@ Deno.serve(async (req) => {
     const forma = ["pix", "credito", "debito"].includes(b.forma) ? b.forma : null;
     if (!forma) return erro("Forma de pagamento inválida");
     const simulado = b.simulado !== false;
-    // venda real: só cartão aprovado na maquininha (com NSU/código da transação). Pix real ainda não está ligado.
+    // Venda paga de verdade entra só pela função "cartao" (Mercado Pago confirma cartão e Pix no servidor).
+    // Aqui sobram dois caminhos, ambos sem prova de pagamento:
+    //  - simulado: só em loja marcada como teste (locais.teste); grava como venda de teste.
+    //  - maquininha PagBank (o tablet informa o NSU): desligado, a não ser que PDV_PERMITIR_PAGBANK=true.
+    // As mensagens contêm "inválid" para o caixa não mostrar compra finalizada nem guardar na fila.
+    const { data: loc } = await db.from("locais").select("teste").eq("id", d.local_id).maybeSingle();
+    if (simulado && !loc?.teste) return erro("Pagamento simulado inválido nesta loja. Use o cartão na maquininha ou o Pix.", 403);
+    if (!simulado && Deno.env.get("PDV_PERMITIR_PAGBANK") !== "true") return erro("Pagamento inválido: este caixa só aceita cartão e Pix pelo Mercado Pago.", 403);
     const cartao = !simulado ? (b.cartao ?? {}) : null;
     if (!simulado) {
       if (forma === "pix") return erro("Pix real ainda não está ligado neste aparelho", 403);
@@ -191,7 +207,8 @@ Deno.serve(async (req) => {
     // respeita a escolha do cliente: gravar tudo, só intercorrências ou nada
     const { data: cfg } = await db.from("empresas").select("gravacao, dias_video").eq("id", d.empresa_id).single();
     const modo = cfg?.gravacao ?? "intercorrencias", dias = cfg?.dias_video ?? 3;
-    if (modo === "desligado" || (modo === "intercorrencias" && b.motivo === "paga")) return json({ ignorado: true, modo });
+    // compra paga com produto 18+ é guardada também em "só intercorrências" (prova da confirmação de idade)
+    if (modo === "desligado" || (modo === "intercorrencias" && b.motivo === "paga" && b.maior18 !== true)) return json({ ignorado: true, modo });
     const tipo = String(b.tipo ?? "").startsWith("video/mp4") ? "mp4" : "webm";
     const inicio = new Date(b.inicio ?? Date.now()), fim = new Date(b.fim ?? Date.now());
     if (isNaN(+inicio) || isNaN(+fim) || +fim - +inicio > 30 * 60 * 1000) return erro("Horário inválido");
