@@ -87,6 +87,28 @@ h1,h2,h3{font-family:Manrope,Inter,sans-serif;letter-spacing:-.015em}
 .ads-pontos{display:flex;justify-content:center;gap:6px;margin-top:10px}.ads-pontos i{width:6px;height:6px;border-radius:3px;background:var(--k3);transition:.25s}.ads-pontos i.on{width:18px;background:var(--y)}
 .ad-grade{grid-column:1/-1;aspect-ratio:2/1}
 .ad-ok{margin-top:22px;aspect-ratio:16/9;width:100%}
+/* contingência, Pix e 18+ */
+.cont{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(255,214,10,.16),rgba(255,214,10,.05));border:1px solid rgba(255,214,10,.4);margin-bottom:14px}
+.cont .ic{width:36px;height:36px;border-radius:11px;background:var(--y);color:#111;display:grid;place-items:center;flex:none}.cont .ic svg{width:20px;height:20px}
+.cont b{display:block;font-size:15px}.cont span{font-size:13.5px;color:#e7e5d8;line-height:1.4}
+.forma-pix{display:flex;gap:14px;align-items:center;padding:14px 16px;border-radius:16px;border:2px solid var(--y);background:rgba(255,214,10,.07);margin-bottom:12px}
+.forma-pix svg{flex:none;color:var(--y)}.forma-pix b{display:block;font-size:16px}.forma-pix small{color:var(--mu);font-size:13px}
+.pix{display:grid;gap:14px}
+.pix-valor{display:flex;justify-content:space-between;align-items:baseline}.pix-valor b{font:800 30px Manrope,Inter,sans-serif;color:var(--y)}
+.pix-qr{width:min(64vw,240px);aspect-ratio:1;margin:0 auto;background:#fff;border-radius:18px;padding:12px;display:grid;place-items:center}.pix-qr img{width:100%;height:100%;image-rendering:pixelated}
+.pix-passos{list-style:none;padding:0;display:grid;gap:8px}.pix-passos li{display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:center;font-size:14.5px;color:#d4d4d8}
+.pix-passos li i{width:28px;height:28px;border-radius:9px;background:var(--k3);color:var(--y);font:800 14px Manrope,Inter,sans-serif;font-style:normal;display:grid;place-items:center}
+.pix-st{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:600;color:var(--mu);min-height:24px}
+.giro{width:18px;height:18px;border-radius:50%;border:3px solid var(--k3);border-top-color:var(--y);animation:giro 1s linear infinite}@keyframes giro{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.giro{animation-duration:3s}}
+.verde{position:fixed;inset:0;z-index:30;background:var(--ok);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:24px 22px calc(24px + env(safe-area-inset-bottom))}
+.verde .marca{width:104px;height:104px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;margin-bottom:8px}
+.verde h1{font-size:34px}.verde .val{font:800 30px Manrope,Inter,sans-serif}.verde p{opacity:.9}
+.verde .btn{background:#fff;color:#0b0b0b;border-color:#fff;max-width:420px;margin-top:18px}.verde .ad-ok{max-width:420px}
+.m18{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.78);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;padding:16px}
+.m18-box{width:100%;max-width:480px;background:var(--k1);border:1px solid var(--line);border-radius:24px;padding:22px 18px calc(18px + env(safe-area-inset-bottom));display:grid;gap:12px;text-align:center}
+.m18-selo{width:64px;height:64px;border-radius:50%;border:4px solid var(--bad);color:var(--bad);font:800 26px Manrope,Inter,sans-serif;display:grid;place-items:center;margin:0 auto 4px}
+.m18-box h2{font-size:21px}.m18-box .prod18{color:var(--y);font-weight:700}.m18-box .lei{font-size:13px;color:var(--mu);line-height:1.45}
 </style>
 </head>
 <body>
@@ -95,7 +117,7 @@ h1,h2,h3{font-family:Manrope,Inter,sans-serif;letter-spacing:-.015em}
 <div class="toast" id="toast"></div>
 <script>
 (()=>{
-const API='https://gdnvjpmpfgautrmtkjmx.supabase.co/functions/v1/cliente';
+const API='https://gdnvjpmpfgautrmtkjmx.supabase.co/functions/v1/cliente',API_PAG=API.replace(/\/cliente$/,'/cartao');
 const $=s=>document.querySelector(s);
 const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const brl=c=>((c||0)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -108,11 +130,15 @@ let token=ls.get('bc-token',null),loja=ls.get('bc-loja',null),me=null,cat=ls.get
 async function api(acao,dados={}){const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,...dados})});let j={};try{j=await r.json()}catch(e){}
  if(r.status===401&&token&&!['entrar','cadastrar'].includes(acao)){token=null;ls.del('bc-token');telaEntrada('entrar','Sua sessão expirou. Entre de novo.');throw new Error('sessão')}
  if(!r.ok)throw new Error(j.erro||'Não foi possível concluir');return j}
+async function apiPag(acao,dados={}){const r=await fetch(API_PAG,{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+token},body:JSON.stringify({acao,...dados})});let j={};try{j=await r.json()}catch(e){}
+ if(r.status===401){token=null;ls.del('bc-token');telaEntrada('entrar','Sua sessão expirou. Entre de novo.');throw new Error('sessão')}
+ if(!r.ok){const e=new Error(j.erro||'Não foi possível concluir');e.status=r.status;throw e}return j}
 const ICON={coracao:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.1 0 3.6 1.2 5.2 3 1.6-1.8 3.1-3 5.2-3 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>',sino:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>',prod:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>',
  ler:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M14 8v8M17 8v8"/></svg>',
  pend:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6l1 2h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h3z"/><path d="M9 12h6M9 16h4"/></svg>',
  car:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.4a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 2-1.6L22 7H6"/></svg>',
  conta:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+ wifi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 8.8a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16.2a5 5 0 0 1 6 0"/><path d="M3 3l18 18"/></svg>',pix:'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l4.5 4.5L12 11 7.5 6.5zM12 13l4.5 4.5L12 22l-4.5-4.5zM2 12l4.5-4.5L11 12l-4.5 4.5zM13 12l4.5-4.5L22 12l-4.5 4.5z"/></svg>',
  lupa:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>'};
 const foto=(p,cls)=>p.foto?`<span class="${cls}"><img src="${esc(p.foto)}" alt="" loading="lazy" onerror="this.parentNode.classList.add('sem');this.parentNode.textContent='${esc((p.nome||'?').trim().charAt(0).toUpperCase())}'"></span>`:`<span class="${cls} sem">${esc((p.nome||'?').trim().charAt(0).toUpperCase())}</span>`;
 
@@ -123,8 +149,8 @@ const m=location.hash.match(/l=([0-9a-f-]{36})/i);if(m){loja={id:m[1]};ls.set('b
 function cpfFmt(v){v=v.replace(/\D/g,'').slice(0,11);return v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')}
 async function telaEntrada(modo,msg=''){$('#nav').style.display='none';
  if(!loja){$('#app').innerHTML=`<div class="ok-tela"><div><img class="logo" src="../logo.png" alt="Beep" style="height:44px"><h1 style="margin-top:24px;font-size:24px">Leia o QR code da sua loja</h1><p class="mu" style="margin-top:8px">O QR fica colado na loja do seu condomínio. Ele abre o app já na sua unidade.</p></div></div>`;return}
- if(!loja.nome){try{const r=await api('loja',{loja:loja.id});loja={id:loja.id,nome:r.loja.nome,empresa:r.empresa};ls.set('bc-loja',loja)}catch(e){$('#app').innerHTML=`<div class="ok-tela"><div><h1 style="font-size:22px">${esc(e.message)}</h1><p class="mu" style="margin-top:8px">Fale com o responsável pela loja.</p></div></div>`;return}}
- $('#app').innerHTML=`<img class="logo" src="../logo.png" alt="Beep"><div style="margin:22px 0 18px"><h1 style="font-size:26px">${modo==='cadastrar'?'Crie seu acesso':'Bem-vindo de volta'}</h1><p class="mu">Loja ${esc(loja.nome)}</p></div>
+ if(!loja.nome||!telaEntrada.vista){telaEntrada.vista=true;try{const r=await api('loja',{loja:loja.id});loja={id:loja.id,nome:r.loja.nome,empresa:r.empresa};telaEntrada.cont=!!r.contingencia;ls.set('bc-loja',{id:loja.id,nome:loja.nome,empresa:loja.empresa})}catch(e){$('#app').innerHTML=`<div class="ok-tela"><div><h1 style="font-size:22px">${esc(e.message)}</h1><p class="mu" style="margin-top:8px">Fale com o responsável pela loja.</p></div></div>`;return}}
+ $('#app').innerHTML=`<img class="logo" src="../logo.png" alt="Beep"><div style="margin:22px 0 18px"><h1 style="font-size:26px">${modo==='cadastrar'?'Crie seu acesso':'Bem-vindo de volta'}</h1><p class="mu">Loja ${esc(loja.nome)}</p></div>${telaEntrada.cont?`<div class="cont"><span class="ic">${ICON.wifi}</span><span><b>O caixa da loja está sem internet</b><span>Crie seu acesso em menos de um minuto e faça a compra por aqui: leia o código de barras e pague no Pix.</span></span></div>`:''}
   <div class="tabs2" style="margin-bottom:16px"><button class="${modo==='cadastrar'?'on':''}" data-m="cadastrar">Primeiro acesso</button><button class="${modo==='entrar'?'on':''}" data-m="entrar">Já tenho cadastro</button></div>
   <form id="fEnt" class="card" style="display:grid;gap:14px">
    ${modo==='cadastrar'?`<label class="campo">Seu nome<input name="nome" autocomplete="name" required maxlength="80"></label><label class="campo">Casa ou apartamento<input name="unidade" placeholder="Ex.: Apto 302, Bloco B" required maxlength="30"></label>`:''}
@@ -145,7 +171,7 @@ async function telaEntrada(modo,msg=''){$('#nav').style.display='none';
 async function iniciar(){if(!token){telaEntrada(ls.get('bc-ja',false)?'entrar':'cadastrar');return}
  try{me=await api('me');ls.set('bc-ja',true);loja={...loja,id:me.loja.id,nome:me.loja.nome};ls.set('bc-loja',loja)}catch(e){if(e.message!=='sessão')telaErro(e.message);return}
  if(!me.termos_ok){telaTermos();return}
- if(cat)render();await Promise.all([carregarCat(),carregarPend(),carregarAds()]);render()}
+ if(me.perm.contingencia)aba='ler';const px=ls.get('bc-pix',null);if(px){await carregarCat();telaPix(px);return}if(cat)render();await Promise.all([carregarCat(),carregarPend(),carregarAds()]);render()}
 function telaTermos(){$('#nav').style.display='none';$('#app').innerHTML=`<img class="logo" src="../logo.png" alt="Beep"><div class="card" style="margin-top:24px;display:grid;gap:14px"><h1 style="font-size:22px">Atualizamos nossos termos</h1><p class="mu">Para continuar usando o app, confira e aceite os Termos de uso e a Política de privacidade. Em resumo: usamos só o necessário para suas compras, não vendemos seus dados e a câmera do caixa grava apenas para segurança.</p>
   <a class="btn" href="../termos/" target="_blank">Ler os termos completos</a><label class="aceite"><input type="checkbox" id="acT"><span>Li e aceito os Termos de uso e a Política de privacidade.</span></label><button class="btn y" id="okT" disabled>Continuar</button></div>`;
  $('#acT').onchange=e=>$('#okT').disabled=!e.target.checked;$('#okT').onclick=async()=>{$('#okT').disabled=true;try{await api('aceitar_termos');me.termos_ok=true;iniciar()}catch(e){toast(e.message);$('#okT').disabled=false}}}
@@ -177,13 +203,14 @@ const qtdCar=()=>carrinho.reduce((s,i)=>s+i.q,0),totCar=()=>carrinho.reduce((s,i
 function nav(){const it=[['produtos','Produtos',ICON.prod],['ler','Ler código',ICON.ler]];if(me.perm.pendente)it.push(['pendentes','A pagar',ICON.pend,pend.length]);if(me.perm.compra)it.push(['carrinho','Carrinho',ICON.car,qtdCar()]);it.push(['conta','Conta',ICON.conta]);
  const n=$('#nav');n.style.display='flex';n.innerHTML=it.map(([k,t,ic,b])=>`<button class="${aba===k?'on':''}" data-a="${k}">${ic}${t}${b?`<span class="badge">${b}</span>`:''}</button>`).join('');
  n.querySelectorAll('button').forEach(b=>b.onclick=()=>{pararCam();aba=b.dataset.a;render();window.scrollTo(0,0)})}
-function render(){if(!me)return;nav();({produtos:telaProdutos,ler:telaLer,pendentes:telaPend,carrinho:telaCarrinho,conta:telaConta})[aba]()}
+function render(){if(!me)return;emPix=false;clearTimeout(pixLoop);nav();({produtos:telaProdutos,ler:telaLer,pendentes:telaPend,carrinho:telaCarrinho,conta:telaConta})[aba]()}
+function faixaCont(){if(!me?.perm?.contingencia)return '';const t=aba==='ler'?'Leia o código de barras de cada produto aqui e pague no Pix pelo carrinho.':aba==='carrinho'?'Confira os produtos e pague no Pix. A tela fica verde quando o pagamento é aprovado.':'Sua compra continua por aqui: toque em Ler código, leia cada produto e pague no Pix.';return `<div class="cont"><span class="ic">${ICON.wifi}</span><span><b>O caixa da loja está sem internet</b><span>${t}</span></span></div>`}
 function cabeca(t,sub){return `<div class="topo"><div class="ola"><h1>${t}</h1><p>${sub}</p></div><img class="logo" src="../logo.png" alt="Beep"></div>`}
 
 function cardProd(p){const esg=p.estoque==='esgotado';return `<div class="prod ${esg?'esg':''}"><div class="foto${p.foto?'':' sem'}">${p.foto?`<img src="${esc(p.foto)}" alt="" loading="lazy">`:esc(p.nome.trim().charAt(0).toUpperCase())}<span class="est ${p.estoque}">${esg?'Esgotado':p.estoque==='poucos'?'Últimas unidades':'Disponível'}</span><button class="fav ${favs.has(p.id)?'on':''}" data-fav="${p.id}" aria-label="${favs.has(p.id)?'Tirar dos favoritos':'Favoritar'}">${ICON.coracao}</button></div>
  <div class="info"><span class="nome">${esc(bonito(p.nome))}</span><div class="linha"><span class="preco num">${brl(p.preco)}</span>${esg?`<button class="avisar ${avisos.has(p.id)?'on':''}" data-avisar="${p.id}">${ICON.sino}${avisos.has(p.id)?'Vou avisar':'Avise-me'}</button>`:me.perm.compra?`<button class="add" data-add="${p.id}" aria-label="Adicionar ao carrinho">+</button>`:''}</div></div></div>`}
 function telaProdutos(){const pr=(cat||[]).filter(p=>(filtro==='todos'||(filtro==='fav'?favs.has(p.id):filtro==='disp'?p.estoque!=='esgotado':p.estoque==='esgotado'))&&(!busca||semAc(p.nome).includes(semAc(busca))||p.codigos.includes(busca.trim())));
- $('#app').innerHTML=cabeca('Olá, '+esc((me.cliente.nome||'').split(' ')[0]),'Loja '+esc(me.loja.nome)+(me.perm.compra?' · compra pelo celular liberada':''))+(chegaram.length?`<div class="chegou"><span style="font-size:26px">🎉</span><span><b>Chegou na loja!</b><span class="mu sm">${chegaram.map(p=>esc(bonito(p.nome))).join(', ')} ${chegaram.length>1?'voltaram':'voltou'} ao estoque.</span></span><button class="x" id="xCheg" aria-label="Fechar">×</button></div>`:'')+(busca?'':blocoAds())+
+ $('#app').innerHTML=cabeca('Olá, '+esc((me.cliente.nome||'').split(' ')[0]),'Loja '+esc(me.loja.nome)+(me.perm.compra?' · compra pelo celular liberada':''))+faixaCont()+(chegaram.length?`<div class="chegou"><span style="font-size:26px">🎉</span><span><b>Chegou na loja!</b><span class="mu sm">${chegaram.map(p=>esc(bonito(p.nome))).join(', ')} ${chegaram.length>1?'voltaram':'voltou'} ao estoque.</span></span><button class="x" id="xCheg" aria-label="Fechar">×</button></div>`:'')+(busca?'':blocoAds())+
   `<div class="busca">${ICON.lupa}<input type="search" id="q" placeholder="Buscar produto" value="${esc(busca)}"></div>
   <div class="chips"><button class="${filtro==='todos'?'on':''}" data-f="todos">Todos (${(cat||[]).length})</button><button class="${filtro==='disp'?'on':''}" data-f="disp">Disponíveis</button><button class="${filtro==='fav'?'on':''}" data-f="fav">♥ Favoritos${favs.size?` (${favs.size})`:''}</button><button class="${filtro==='esg'?'on':''}" data-f="esg">Esgotados</button></div>
   ${!cat?'<p class="vazio">Carregando produtos…</p>':pr.length?`<div class="grade">${gradeComAd(pr)}</div>`:'<p class="vazio">Nenhum produto encontrado.</p>'}
@@ -195,13 +222,16 @@ function telaProdutos(){const pr=(cat||[]).filter(p=>(filtro==='todos'||(filtro=
  document.querySelectorAll('[data-avisar]').forEach(b=>b.onclick=async()=>{const id=b.dataset.avisar,on=avisos.has(id);b.disabled=true;try{await api('avisar',{produto_id:id,cancelar:on});on?avisos.delete(id):avisos.add(id);toast(on?'Aviso cancelado':'Pronto! Avisamos aqui no app quando chegar');telaProdutos()}catch(e){toast(e.message);b.disabled=false}})}
 function gradeComAd(pr){const h=pr.map(cardProd);const extra=ads[5]?5:ads.length>1?1:-1;if(!busca&&extra>=0&&pr.length>=6)h.splice(6,0,adHtml(ads[extra],extra,'ad-grade'));return h.join('')}
 function ligarAdd(){document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>adicionar(b.dataset.add))}
-function adicionar(id){const p=cat.find(x=>x.id===id);if(!p)return;if(p.maior18&&!ls.get('bc-18',false)){if(!confirm('Este produto é para maiores de 18 anos. Você confirma que tem 18 anos ou mais?'))return;ls.set('bc-18',true)}
+function pedir18(nome){return new Promise(res=>{const d=document.createElement('div');d.className='m18';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');
+ d.innerHTML=`<div class="m18-box"><div class="m18-selo" aria-hidden="true">18</div><h2>Produto para maiores de 18 anos</h2>${nome?`<p class="prod18">${esc(bonito(nome))}</p>`:''}<p class="lei">Vender, fornecer ou entregar bebida alcoólica a menores de 18 anos é crime (art. 243 do Estatuto da Criança e do Adolescente). Ao confirmar, você declara ter 18 anos ou mais.</p><button class="btn y" data-r="1">Confirmo: tenho 18 anos ou mais</button><button class="btn" data-r="0">Não tenho 18 anos</button></div>`;
+ document.body.appendChild(d);d.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{d.remove();const ok=b.dataset.r==='1';if(!ok)toast('Este produto não pode ser vendido para menores de 18 anos');res(ok)})})}
+async function adicionar(id){const p=cat.find(x=>x.id===id);if(!p)return;if(p.maior18&&!ls.get('bc-18em',null)){if(!await pedir18(p.nome))return;ls.set('bc-18em',new Date().toISOString())}
  const x=carrinho.find(i=>i.id===id);if(x)x.q=Math.min(99,x.q+1);else carrinho.push({id,q:1});salvarCar();navigator.vibrate?.(30);toast(bonito(p.nome)+' no carrinho');nav()}
 
 // ---------- ler código ----------
 let camStream=null,camLoop=null;
 function pararCam(){if(camLoop)cancelAnimationFrame(camLoop);camLoop=null;camStream?.getTracks().forEach(t=>t.stop());camStream=null}
-async function telaLer(){$('#app').innerHTML=cabeca('Ler código','Aponte a câmera para o código de barras do produto')+`<div class="cam"><video id="vid" playsinline muted></video><div class="mira"></div></div>
+async function telaLer(){$('#app').innerHTML=cabeca('Ler código','Aponte a câmera para o código de barras do produto')+faixaCont()+`<div class="cam"><video id="vid" playsinline muted></video><div class="mira"></div></div>
   <div class="busca" style="margin-top:14px">${ICON.lupa}<input id="codMan" inputmode="numeric" placeholder="Ou digite o código de barras"></div><div id="res" style="margin-top:12px"></div>`;
  $('#codMan').onchange=e=>mostrarCod(e.target.value.trim());
  if(!('BarcodeDetector' in window)){$('#res').innerHTML='<p class="mu sm">Este celular não lê código pela câmera. Digite o número que fica embaixo das barras.</p>';$('.cam').style.display='none';return}
@@ -214,18 +244,49 @@ function mostrarCod(c){const nz=x=>String(x).replace(/\D/g,'').replace(/^0+/,'')
 // ---------- carrinho e pagamento ----------
 let formaSel='pix';
 function telaCarrinho(){const itens=carrinho.map(i=>({...i,p:cat.find(x=>x.id===i.id)})).filter(i=>i.p);
- $('#app').innerHTML=cabeca('Carrinho','Pague aqui mesmo, antes de sair da loja')+(itens.length?`<div class="lista">${itens.map(i=>`<div class="item">${foto(i.p,'th')}<span class="n">${esc(bonito(i.p.nome))}<small class="num">${brl(i.p.preco*i.q)}</small></span><span class="qtd"><button data-d="-1" data-id="${i.id}" aria-label="Menos">−</button><b class="num">${i.q}</b><button data-d="1" data-id="${i.id}" aria-label="Mais">+</button></span></div>`).join('')}</div>
+ $('#app').innerHTML=cabeca('Carrinho','Pague aqui mesmo, antes de sair da loja')+faixaCont()+(itens.length?`<div class="lista">${itens.map(i=>`<div class="item">${foto(i.p,'th')}<span class="n">${esc(bonito(i.p.nome))}<small class="num">${brl(i.p.preco*i.q)}</small></span><span class="qtd"><button data-d="-1" data-id="${i.id}" aria-label="Menos">−</button><b class="num">${i.q}</b><button data-d="1" data-id="${i.id}" aria-label="Mais">+</button></span></div>`).join('')}</div>
   <div class="total"><span class="mu">Total</span><b class="num">${brl(totCar())}</b></div>${blocoPagar()}<button class="btn y" id="pagar">Pagar ${brl(totCar())}</button>`:'<p class="vazio">Seu carrinho está vazio.<br>Adicione produtos pela lista ou lendo o código.</p>');
- document.querySelectorAll('.qtd button').forEach(b=>b.onclick=()=>{const x=carrinho.find(i=>i.id===b.dataset.id);x.q+= +b.dataset.d;if(x.q<=0)carrinho=carrinho.filter(i=>i!==x);salvarCar();render()});
+ document.querySelectorAll('.qtd button').forEach(b=>b.onclick=()=>{const x=carrinho.find(i=>i.id===b.dataset.id);x.q+= +b.dataset.d;if(x.q<=0)carrinho=carrinho.filter(i=>i!==x);if(!carrinho.some(i=>cat.find(p=>p.id===i.id)?.maior18))ls.del('bc-18em');salvarCar();render()});
  ligarFormas();const bp=$('#pagar');if(bp)bp.onclick=()=>pagar(null)}
-function blocoPagar(){return `<div class="formas"><button class="forma ${formaSel==='pix'?'on':''}" data-forma="pix"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l4.5 4.5L12 11 7.5 6.5zM12 13l4.5 4.5L12 22l-4.5-4.5zM2 12l4.5-4.5L11 12l-4.5 4.5zM13 12l4.5-4.5L22 12l-4.5 4.5z"/></svg>Pix</button><button class="forma ${formaSel==='cartao'?'on':''}" data-forma="cartao"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>Cartão</button></div>${me.pagamento_teste?'<div class="aviso" style="margin-bottom:12px">Modo de teste: nenhum valor é cobrado de verdade.</div>':''}`}
-function ligarFormas(){document.querySelectorAll('[data-forma]').forEach(b=>b.onclick=()=>{formaSel=b.dataset.forma;document.querySelectorAll('[data-forma]').forEach(x=>x.classList.toggle('on',x===b))})}
-async function pagar(vendaId){const bt=vendaId?document.querySelector(`[data-pagar="${vendaId}"]`):$('#pagar');if(bt){bt.disabled=true;bt.textContent='Processando…'}
- try{const r=vendaId?await api('pagar',{venda_id:vendaId,forma:formaSel}):await api('pagar',{id:ls.get('bc-pedido',null)||(ls.set('bc-pedido',uuid()),ls.get('bc-pedido')),forma:formaSel,itens:carrinho.map(i=>({produto_id:i.id,quantidade:i.q}))});
-  if(!vendaId){carrinho=[];salvarCar();ls.del('bc-pedido')}navigator.vibrate?.([60,40,60]);
-  $('#app').innerHTML=`<div class="ok-tela"><div><div class="ok-ic"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></div><h1 style="font-size:28px;margin-top:20px">Pago!</h1><p class="num" style="font:800 26px Manrope,Inter,sans-serif;color:var(--y);margin-top:6px">${brl(r.total)}</p><p class="mu" style="margin-top:6px">${new Date().toLocaleString('pt-BR')} · ${formaSel==='pix'?'Pix':'Cartão'} · Loja ${esc(me.loja.nome)}</p>${r.teste?'<p class="mu sm" style="margin-top:10px">Pagamento de teste: nada foi cobrado.</p>':''}<button class="btn" style="margin-top:24px" id="okVolta">Voltar aos produtos</button>${ads.length?adHtml(ads[0],0,'ad-ok'):''}</div></div>`;
-  $('#okVolta').onclick=()=>{aba='produtos';render()};ligarAds();await Promise.all([carregarCat(),carregarPend()]);nav()}
- catch(e){toast(e.message);if(bt){bt.disabled=false;bt.textContent='Pagar'}}}
+function blocoPagar(){return `<div class="forma-pix">${ICON.pix}<span><b>Pix</b><small>Pague pelo app do seu banco. A confirmação chega aqui na hora.</small></span></div>`}
+function ligarFormas(){}
+let pixLoop=null,emPix=false;
+async function pagar(vendaId){const bt=vendaId?document.querySelector(`[data-pagar="${vendaId}"]`):$('#pagar'),txt=bt?.textContent;
+ const v=vendaId?pend.find(x=>x.id===vendaId):null;
+ if(!vendaId&&!me.perm.compra){toast('A compra pelo celular não está liberada agora. Pague no caixa da loja.');render();return}
+ const tem18=vendaId?!!v?.maior18:carrinho.some(i=>cat.find(p=>p.id===i.id)?.maior18);
+ let m18=vendaId?null:ls.get('bc-18em',null);
+ if(tem18&&!m18){if(!await pedir18(null))return;m18=new Date().toISOString();if(!vendaId)ls.set('bc-18em',m18)}
+ if(bt){bt.disabled=true;bt.textContent='Gerando o Pix…'}
+ try{let pedido=null;if(!vendaId){pedido=ls.get('bc-pedido',null);if(!pedido){pedido=uuid();ls.set('bc-pedido',pedido)}}
+  const r=await apiPag('app_pix',vendaId?{venda_id:vendaId,maior18_em:m18}:{pedido,maior18_em:m18,itens:carrinho.map(i=>({produto_id:i.id,quantidade:i.q}))});
+  if(r.status==='aprovado'){pago(r.total,vendaId);return}
+  const px={cobranca:r.cobranca,qr:r.pix_qr||null,img:r.pix_qr_img||null,total:r.total,venda:vendaId||null,desde:Date.now()};ls.set('bc-pix',px);telaPix(px)}
+ catch(e){if(e.status===428)ls.del('bc-18em');if(e.message!=='sessão')toast(e.message);if(bt){bt.disabled=false;bt.textContent=txt}}}
+function telaPix(px){emPix=true;clearTimeout(pixLoop);$('#nav').style.display='none';window.scrollTo(0,0);
+ $('#app').innerHTML=cabeca('Pague com Pix','Loja '+esc(me.loja.nome))+`<div class="pix"><div class="card pix-valor"><span class="mu">Total</span><b class="num">${brl(px.total)}</b></div>
+  ${px.qr?`<button class="btn y" id="pixCopiar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copiar código Pix</button>`:''}
+  <ol class="pix-passos"><li><i>1</i><span>Copie o código Pix</span></li><li><i>2</i><span>No app do seu banco, escolha <b>Pix copia e cola</b> e cole o código</span></li><li><i>3</i><span>Volte para cá: a confirmação aparece sozinha</span></li></ol>
+  ${px.img?`<div class="pix-qr"><img alt="QR code do Pix" src="data:image/png;base64,${px.img}"></div><p class="mu sm" style="text-align:center">Ou leia este QR com outro celular</p>`:''}
+  <p class="pix-st" id="pixSt"><span class="giro" aria-hidden="true"></span>Aguardando o pagamento…</p>
+  <button class="btn" id="pixCancelar">Cancelar Pix</button></div>`;
+ const cp=$('#pixCopiar');if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(px.qr);toast('Código Pix copiado. Cole no app do seu banco.');cp.lastChild.textContent='Código copiado'}catch(e){prompt('Copie o código Pix:',px.qr)}};
+ $('#pixCancelar').onclick=()=>cancelarPix(px,'Pix cancelado');
+ const passo=async()=>{if(!emPix)return;if(Date.now()-px.desde>15*60000){cancelarPix(px,'Tempo esgotado: o Pix foi cancelado');return}
+  try{const r=await apiPag('app_status',{cobranca:px.cobranca});
+   if(r.status==='aprovado'&&r.venda_gravada){pago(r.total,px.venda);return}
+   if(['recusado','cancelado','expirado','estornado','falhou'].includes(r.status)){fimPix(r.mensagem||'O Pix não foi concluído');return}}
+  catch(e){if(e.status===404){fimPix('Pagamento não encontrado');return}}
+  pixLoop=setTimeout(passo,3000)};
+ pixLoop=setTimeout(passo,2500);pixPasso=passo}
+let pixPasso=null;
+async function cancelarPix(px,msg){const b=$('#pixCancelar');if(b){b.disabled=true;b.textContent='Cancelando…'}
+ try{const r=await apiPag('app_cancelar',{cobranca:px.cobranca});if(r.status==='aprovado'){if(r.venda_gravada)pago(r.total,px.venda);return}}catch(e){if(e.status!==404){toast('Não consegui cancelar agora. Tente de novo.');if(b){b.disabled=false;b.textContent='Cancelar Pix'}return}}
+ fimPix(msg)}
+function fimPix(msg){emPix=false;clearTimeout(pixLoop);ls.del('bc-pix');toast(msg);render()}
+function pago(total,vendaId){emPix=false;clearTimeout(pixLoop);ls.del('bc-pix');if(!vendaId){carrinho=[];salvarCar();ls.del('bc-pedido');ls.del('bc-18em')}navigator.vibrate?.([60,40,60]);$('#nav').style.display='none';
+ $('#app').innerHTML=`<div class="verde" role="status"><div class="marca"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></div><h1>Compra paga</h1><p class="val num">${brl(total)}</p><p>${new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})} · Pix · Loja ${esc(me.loja.nome)}</p><p style="font-weight:600">Pode levar seus produtos</p><button class="btn" id="okVolta">Voltar aos produtos</button>${ads.length?adHtml(ads[0],0,'ad-ok'):''}</div>`;
+ $('#okVolta').onclick=()=>{aba='produtos';render()};ligarAds();Promise.all([carregarCat(),carregarPend()]).catch(()=>{})}
 
 // ---------- vendas travadas ----------
 async function telaPend(){$('#app').innerHTML=cabeca('A pagar','Compras que a loja registrou para você')+(pend.length?`<div class="lista">${pend.map(v=>`<div class="card pend"><div style="display:flex;justify-content:space-between;align-items:baseline"><b>Compra de ${new Date(v.criada_em).toLocaleDateString('pt-BR')}</b><b class="num" style="color:var(--y);font:800 20px Manrope,Inter,sans-serif">${brl(v.total)}</b></div><div class="mu sm" style="margin:8px 0 12px">${v.itens.map(i=>`${i.quantidade}× ${esc(bonito(i.nome))}`).join('<br>')}</div><button class="btn y" data-pagar="${v.id}">Pagar ${brl(v.total)}</button></div>`).join('')}</div><div style="margin-top:14px">${blocoPagar()}</div>`:'<p class="vazio">Nada para pagar. Tudo certo!</p>');
@@ -239,13 +300,20 @@ async function telaConta(){$('#app').innerHTML=cabeca('Minha conta','Loja '+esc(
   <p class="mu sm" style="text-align:center;margin-top:16px"><a class="lnk" href="../termos/" target="_blank">Termos de uso e privacidade</a> · Para excluir seu cadastro, <a class="lnk" href="../termos/#contato" target="_blank">fale com a loja</a></p>`;
  $('#sair').onclick=async()=>{try{await api('sair')}catch(e){}token=null;me=null;ls.del('bc-token');ls.del('bc-cat');ls.del('bc-carrinho');cat=null;carrinho=[];telaEntrada('entrar')};
  document.querySelectorAll('[data-dobra]').forEach(b=>b.onclick=()=>{const k=b.dataset.dobra,c=$('#dc-'+k),abrir=c.hidden;c.hidden=!abrir;b.setAttribute('aria-expanded',abrir);if(!abrir){c.innerHTML='';return}
-  if(k==='dados'){c.innerHTML=`<div class="linha-d"><span>Nome</span><b>${esc(me.cliente.nome)}</b></div><div class="linha-d"><span>Unidade</span><b>${esc(me.cliente.unidade)}</b></div><div class="linha-d"><span>CPF</span><b>${esc(me.cliente.cpf)}</b></div><div class="linha-d"><span>Compra pelo celular</span><b>${me.perm.compra?'Liberada':'No caixa da loja'}</b></div>`;return}
+  if(k==='dados'){c.innerHTML=`<div class="linha-d"><span>Nome</span><b>${esc(me.cliente.nome)}</b></div><div class="linha-d"><span>Unidade</span><b>${esc(me.cliente.unidade)}</b></div><div class="linha-d"><span>CPF</span><b>${esc(me.cliente.cpf)}</b></div><div class="linha-d"><span>Compra pelo celular</span><b>${me.perm.contingencia?'Liberada (caixa sem internet)':me.perm.compra?'Liberada':'No caixa da loja'}</b></div>`;return}
   carregarHist(c)})}
 async function carregarHist(c){c.innerHTML='<p class="vazio" style="padding:20px">Carregando…</p>';
  try{const h=(await api('historico')).vendas;if(c.hidden)return;c.innerHTML=h.length?`<div class="lista">${h.map(v=>`<div class="item"><span class="n">${new Date(v.quando).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}<span class="mu sm" style="display:block;font-weight:400">${esc(v.itens.map(bonito).join(', '))}</span>${me.perm.compra&&v.linhas?.some(l=>cat?.some(p=>p.id===l.id&&p.estoque!=='esgotado'))?`<button class="denovo" data-denovo="${v.id}">↻ Comprar de novo</button>`:''}</span><b class="num">${brl(v.total)}</b></div>`).join('')}</div>`:'<p class="vazio" style="padding:20px">Nenhuma compra pelo app ainda.</p>';
   c.querySelectorAll('[data-denovo]').forEach(b=>b.onclick=()=>{const v=h.find(x=>x.id===b.dataset.denovo);let n=0,fora=0;for(const l of v.linhas){const p=cat.find(x=>x.id===l.id);if(!p||p.estoque==='esgotado'){fora++;continue}const x=carrinho.find(i=>i.id===l.id);if(x)x.q=Math.min(99,x.q+l.q);else carrinho.push({id:l.id,q:l.q});n+=l.q}salvarCar();toast(n+(n>1?' itens':' item')+' no carrinho'+(fora?` · ${fora} esgotado${fora>1?'s':''}`:''));aba='carrinho';render();window.scrollTo(0,0)})}catch(e){c.innerHTML=`<p class="vazio" style="padding:20px">${esc(e.message)}</p>`}}
 
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&me){carregarPend().then(nav);if(aba==='pendentes')telaPend()}else pararCam()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible'){pararCam();return}if(!me)return;if(emPix){clearTimeout(pixLoop);pixPasso&&pixPasso();return}carregarPend().then(()=>{if(!emPix)nav()});if(aba==='pendentes')telaPend();checarStatus()});
+// contingência: o app pergunta a cada 20 s se o caixa da loja caiu ou voltou
+async function checarStatus(){if(!me||document.visibilityState!=='visible')return;try{const r=await api('status');const a=me.perm||{};me.perm=r.perm;
+ if(a.contingencia===r.perm.contingencia&&a.compra===r.perm.compra&&a.pendente===r.perm.pendente)return;
+ if(r.perm.contingencia&&!a.contingencia){navigator.vibrate?.([40,60,40]);toast('O caixa da loja está sem internet: a compra pelo celular foi liberada')}
+ else if(!r.perm.contingencia&&a.contingencia)toast(r.perm.compra?'O caixa da loja voltou a funcionar':'O caixa da loja voltou. Finalize a compra no caixa.');
+ if(!emPix&&!document.querySelector('.verde')){if(!r.perm.compra&&aba==='carrinho')aba='produtos';render()}}catch(e){}}
+setInterval(checarStatus,20000);
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 iniciar();
 })();
