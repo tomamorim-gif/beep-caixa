@@ -116,6 +116,9 @@ h2{font-size:22px;font-weight:800}
 .opcao{min-height:56px;border-radius:14px;background:var(--k);border:2px solid var(--line);display:flex;align-items:center;padding:0 16px;font-weight:600;width:100%}
 .opcao.on{border-color:var(--y)}
 .msg{min-height:22px;font-size:14px;color:#ff8c8c}
+.kit{flex-direction:row;align-items:center;gap:28px;padding:26px}.kitqr{flex:none;width:260px;height:260px;border-radius:20px;background:#fff;display:grid;place-items:center;padding:14px}.kitqr svg{width:100%;height:100%}
+.kittx{display:flex;flex-direction:column;gap:10px;align-items:flex-start}.kittx .btn{width:auto;padding:0 22px}#kitNovo{background:#1f1f1f;border:1px solid #333;color:#fff}#kitSvg span{word-break:break-all;font-size:13px}.kitcod{font-size:15px;color:var(--mu)}.kitcod b{color:#fff;font-size:22px;letter-spacing:.14em;margin-left:6px}
+@media (max-width:640px){.kit{flex-direction:column;text-align:center}.kitqr{width:220px;height:220px}}
 /* grade de produtos (comprar pela tela) */
 #buscaT{padding-bottom:0}
 #buscaT .topo{margin-bottom:10px}
@@ -209,8 +212,21 @@ h2{font-size:22px;font-weight:800}
 <section class="tela" id="ativar">
   <div class="topo"><img class="logo" src="logo.png" alt="Beep"><span class="pill">Ativação do aparelho</span></div>
   <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px">
-    <h1>Ative este aparelho como caixa</h1>
-    <p class="mu">Digite o código de ativação que o dono da loja recebeu. Ele vale uma vez só.</p>
+    <h1 id="atvTit">Ative este aparelho como caixa</h1>
+    <p class="mu" id="atvSub">Digite o código de ativação que o dono da loja recebeu. Ele vale uma vez só.</p>
+    <div class="cartao kit" id="kitQr" style="display:none">
+      <div class="kitqr" id="kitSvg"><span class="mu">Gerando QR…</span></div>
+      <div class="kittx"><h2>Aponte a câmera do celular</h2><p class="mu">Leia o QR com o celular do dono da loja. Lá você cria a conta (ou entra) e este tablet se liga à loja sozinho.</p>
+        <p class="kitcod">Código <b id="kitCod">····-····</b></p><p class="msg" id="kitMsg"></p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="kitNovo" style="min-height:48px">Gerar novo QR</button><button class="btn" id="kitManual" style="min-height:48px;background:none;border:0;text-decoration:underline">Tenho um código de ativação</button></div></div>
+    </div>
+    <div class="cartao" id="kitPin" style="display:none">
+      <h2 id="kitOk">Tablet ligado à loja</h2>
+      <p class="mu">Último passo: crie o PIN do gerente. Ele abre o menu de administração deste tablet.</p>
+      <input class="campo" id="kitPinIn" placeholder="PIN de 4 a 6 números" inputmode="numeric" maxlength="6" type="password" autocomplete="off" style="letter-spacing:.3em;font-size:18px">
+      <div class="msg" id="kitPinMsg"></div>
+      <button class="btn y" id="kitPinOk">Começar a vender</button>
+    </div>
     <div class="cartao" id="passo1">
       <input class="campo" id="codigo" placeholder="XXXX-XXXX" maxlength="9" autocomplete="off" autocapitalize="characters" inputmode="text">
       <div class="msg" id="msg1"></div>
@@ -432,6 +448,30 @@ $('#codigo').addEventListener('input',e=>{let v=e.target.value.toUpperCase().rep
 $('#btnCodigo').onclick=async()=>{const b=$('#btnCodigo');codigoAtual=$('#codigo').value;$('#msg1').textContent='';b.disabled=true;try{const r=await api('lojas',{codigo:codigoAtual});$('#lojas').innerHTML=r.lojas.map(l=>`<button class="opcao" data-id="${l.id}">${l.nome.replace(/</g,'&lt;')}</button>`).join('');$('#passo1').style.display='none';$('#passo2').style.display='flex'}catch(e){$('#msg1').textContent=e.message}b.disabled=false};
 $('#lojas').onclick=e=>{const b=e.target.closest('.opcao');if(!b)return;lojaEscolhida=b.dataset.id;document.querySelectorAll('#lojas .opcao').forEach(x=>x.classList.toggle('on',x===b))};
 $('#btnAtivar').onclick=async()=>{if(!lojaEscolhida){$('#msg2').textContent='Escolha a loja';return}const pinN=$('#pinNovo').value.replace(/\D/g,'');if(pinN.length<4){$('#msg2').textContent='Crie um PIN de 4 a 6 números';return}const b=$('#btnAtivar');b.disabled=true;try{const r=await api('ativar',{codigo:codigoAtual,local_id:lojaEscolhida,nome:$('#nomeAp').value});token=r.token;loja=r.loja;ls.set('bp-token',token);ls.set('bp-loja',loja);ls.set('bp-pin',await hashPin(pinN));pedirMic();await sincronizar();iniciar();toast('Caixa ativado na '+loja.nome)}catch(e){$('#msg2').textContent=e.message}b.disabled=false};
+
+// ---------- kit de fábrica: QR para o dono criar a conta pelo celular ----------
+const API_KIT=API.replace(/\/pdv$/,'/kit');
+(()=>{const m=location.hash.match(/fabrica=([A-Za-z0-9]{16})/);if(!m)return;ls.set('bp-kit',m[1].toUpperCase());history.replaceState(null,'',location.pathname)})();
+let kitSeg=null,kitT=null,kitAte=0;
+async function apiKit(acao,c={}){const r=await fetch(API_KIT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({acao,...c})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(!r.ok){const e=new Error(j.erro||'Erro');e.status=r.status;throw e}return j}
+function kitTopo(k){const lg=$('#ativar .logo');if(k&&!lg.dataset.sp){lg.dataset.sp=1;lg.onerror=()=>{lg.onerror=null;lg.src='logo.png'};lg.src='site/marca/logo-fundo-escuro.png'}else if(!k&&lg.dataset.sp){delete lg.dataset.sp;lg.src='logo.png'}$('#atvTit').textContent=k?'Bem-vindo ao Beep Smart Pay':'Ative este aparelho como caixa';$('#atvSub').textContent=k?'Vamos ligar este tablet à sua loja. Leva uns 3 minutos.':'Digite o código de ativação que o dono da loja recebeu. Ele vale uma vez só.'}
+function kitManual(msg){clearTimeout(kitT);kitSeg=null;kitTopo(false);$('#kitQr').style.display='none';$('#passo1').style.display='flex';if(msg)$('#msg1').textContent=msg}
+async function kitMostrar(){if(token||!ls.get('bp-kit',null))return;clearTimeout(kitT);$('#passo1').style.display='none';$('#passo2').style.display='none';$('#kitQr').style.display='flex';$('#kitMsg').textContent='';kitTopo(true);
+ if(!navigator.onLine){$('#kitSvg').innerHTML='<span class="mu" style="color:#111">Sem internet</span>';$('#kitMsg').textContent='Ligue o tablet ao Wi-Fi da loja. O QR aparece assim que a internet voltar.';kitT=setTimeout(kitMostrar,5000);return}
+ try{const r=await apiKit('iniciar',{serial:ls.get('bp-kit','')});kitSeg=r.segredo;kitAte=new Date(r.expira_em).getTime();$('#kitCod').textContent=r.codigo.slice(0,4)+'-'+r.codigo.slice(4);
+  const url=location.origin+location.pathname.replace(/[^/]*$/,'')+'gestao/#kit='+r.codigo;
+  try{const {default:Q}=await import('https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/+esm');const q=Q(0,'M');q.addData(url);q.make();$('#kitSvg').innerHTML=q.createSvgTag({cellSize:6,margin:0,scalable:true})}catch(e){$('#kitSvg').innerHTML='<span style="color:#111;text-align:center">Abra no celular:<br><b>'+url.replace(/^https?:\/\//,'')+'</b></span>'}
+  kitT=setTimeout(kitEsperar,3000)}
+ catch(e){if(e.status===409||e.status===403){kitManual(e.message);return}$('#kitMsg').textContent=e.message||'Sem conexão. Tentando de novo…';kitT=setTimeout(kitMostrar,8000)}}
+async function kitEsperar(){if(!kitSeg||token)return;if(Date.now()>kitAte){kitMostrar();return}
+ try{const r=await apiKit('status',{segredo:kitSeg,nome:'Tablet do kit'});if(r.pronto){kitSeg=null;token=r.token;loja=r.loja;ls.set('bp-token',token);ls.set('bp-loja',loja);$('#kitQr').style.display='none';$('#kitOk').textContent='Tablet ligado à loja '+(loja?.nome||'');$('#kitPin').style.display='flex';falar('Pronto! Tablet ligado à loja.');return}if(r.expirado){kitMostrar();return}}
+ catch(e){if(e.status===409){kitManual('Este QR já foi usado. Gere um novo.');return}}
+ kitT=setTimeout(kitEsperar,3000)}
+$('#kitNovo').onclick=()=>kitMostrar();$('#kitManual').onclick=()=>kitManual();
+$('#kitPinOk').onclick=async()=>{const p=$('#kitPinIn').value.replace(/\D/g,'');if(p.length<4){$('#kitPinMsg').textContent='Crie um PIN de 4 a 6 números';return}const b=$('#kitPinOk');b.disabled=true;ls.set('bp-pin',await hashPin(p));pedirMic();try{await sincronizar()}catch(e){}$('#kitPin').style.display='none';iniciar();toast('Caixa pronto na '+(loja?.nome||'loja'));b.disabled=false};
+$('#kitPinIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#kitPinOk').click()}});
+// tablet ganhou o token mas ainda não criou o PIN (ex.: reiniciou no meio)
+const kitSemPin=()=>token&&!ls.get('bp-pin',null)&&ls.get('bp-kit',null);
 
 // ---------- catálogo e fila ----------
 async function sincronizar(silencioso){carregarMp();try{const r=await api('catalogo');cat={...r,mapa:null};ls.set('bp-cat',cat);setTimeout(()=>(r.midia||[]).filter(a=>!a.video).forEach(a=>fetch(a.midia,{mode:'cors'}).catch(()=>{})),800);setTimeout(()=>r.produtos.filter(p=>p.foto).forEach((p,i)=>setTimeout(()=>fetch(p.foto,{mode:'cors'}).catch(()=>{}),i*150)),1500);$('#lojaNome').textContent=r.loja||loja?.nome||'—';if(!silencioso)toast(r.produtos.length+' produtos atualizados');return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
@@ -664,7 +704,7 @@ $('#admPin').onclick=()=>telaPin('criar');
 $('#admMic').onclick=async()=>{const ok=await pedirMic();toast(ok?'Microfone liberado neste aparelho':'Microfone bloqueado: libere no cadeado do Chrome › Permissões');};
 $('#admTela').onclick=()=>{$('#admInfo').innerHTML='<b>Para ninguém sair do caixa:</b> no Android, ative <b>Fixar app</b> (Samsung: Configurações › Segurança e privacidade › Mais configurações de segurança › Fixar janelas; outros: Configurações › Segurança › Fixação de app) e ligue "Pedir PIN para soltar". Depois abra o caixa, toque em Recentes (▢), no ícone do app e em Fixar. Para soltar: segure Voltar + Recentes e digite o PIN do celular.'};
 $('#admSair').onclick=()=>{if($('#admSair').dataset.c){desativar();return}$('#admSair').dataset.c=1;$('#admSair').textContent='Toque de novo para confirmar';setTimeout(()=>{delete $('#admSair').dataset.c;$('#admSair').textContent='Desativar este aparelho'},4000)};
-function desativar(expirado){['bp-token','bp-loja','bp-cat','bp-fila','bp-pin'].forEach(ls.del);token=null;loja=null;cat=null;fila=[];$('#passo1').style.display='flex';$('#passo2').style.display='none';mostrar('ativar');if(expirado)toast('Aparelho desativado. Ative de novo.')}
+function desativar(expirado){['bp-token','bp-loja','bp-cat','bp-fila','bp-pin'].forEach(ls.del);token=null;loja=null;cat=null;fila=[];$('#passo1').style.display='flex';$('#passo2').style.display='none';mostrar('ativar');if(expirado)toast('Aparelho desativado. Ative de novo.');kitMostrar()}
 
 // ---------- modo quiosque: dificulta sair do caixa ----------
 document.addEventListener('contextmenu',e=>e.preventDefault());
@@ -802,7 +842,7 @@ function iniciar(){$('#lojaNome').textContent=cat?.loja||loja?.nome||'—';const
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{setInterval(()=>r.update().catch(()=>{}),10*60000)}).catch(()=>{});
  // versão nova chegou: recarrega sozinho, mas nunca no meio de uma compra
  let recarregar=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(recarregar)return;recarregar=true;const tenta=()=>{if(typeof carrinho!=='undefined'&&carrinho.length){setTimeout(tenta,5000);return}location.reload()};tenta()})}
-if(token){iniciar();sincronizar(true)}else mostrar('ativar');
+if(kitSemPin()){mostrar('ativar');kitTopo(true);$('#passo1').style.display='none';$('#kitPin').style.display='flex'}else if(token){iniciar();sincronizar(true)}else{mostrar('ativar');kitMostrar()}
 desenhar();
 }
 </script>
