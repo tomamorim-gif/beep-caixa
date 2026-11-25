@@ -35,7 +35,8 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
     companion object {
         const val URL_CAIXA = "https://tomamorim-gif.github.io/beep-caixa/"
-        private val HOSTS_OK = setOf("tomamorim-gif.github.io")
+        // app.pagnow.com.br: domínio próprio (o endereço antigo do GitHub passa a redirecionar para ele)
+        private val HOSTS_OK = setOf("tomamorim-gif.github.io", "app.pagnow.com.br")
         private const val REQ_PERM = 10
     }
 

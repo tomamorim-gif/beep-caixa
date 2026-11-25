@@ -823,7 +823,7 @@ setInterval(travaNav,1500);
 // (só nas lojas com "Aceita pagamento com sistema offline"). Aqui, ao perder a rede, o caixa mostra o QR do app.
 const SB_URL='https://gdnvjpmpfgautrmtkjmx.supabase.co',SB_PUB='sb_publishable_z-GGao9BiSTEUgMi1xAHCQ_5Vh5e3FY';
 const emContingencia=()=>semRede&&contUsa&&!carrinho.length&&!!loja?.id;
-const linkApp=()=>loja?.id?'https://tomamorim-gif.github.io/beep-caixa/cliente/#l='+loja.id:'';
+const linkApp=()=>loja?.id?location.origin+location.pathname.replace(/[^/]*$/,'')+'cliente/#l='+loja.id:'';
 async function sinal(){if(!token)return;if(!navigator.onLine){marcarRede(false);return}
  const ac=new AbortController(),t=setTimeout(()=>ac.abort(),8000);
  try{const r=await fetch(SB_URL+'/rest/v1/rpc/caixa_sinal',{method:'POST',headers:{'content-type':'application/json',apikey:SB_PUB,authorization:'Bearer '+SB_PUB},body:JSON.stringify({p_token:token}),signal:ac.signal});
