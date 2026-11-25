@@ -492,7 +492,7 @@ const prCent=v=>{const s=String(v??'').trim().replace(/\s|R\$/g,'');if(!s)return
 async function prCarregarExtras(force){
  const e=S.emp.id;
  const pag=async(t,sel,f)=>{const out=[];for(let de=0;;de+=1000){let c=sb.from(t).select(sel).eq('empresa_id',e);if(f)c=f(c);const r=await c.order('id').range(de,de+999);if(r.error)throw r.error;out.push(...r.data);if(r.data.length<1000)return out}};
- if(force||!PR.det){const data=await pag('produtos','id,ncm,cest,cfop_saida,origem,grupo_fiscal_id,custo,unidade,ativo,idade_minima');PR.det=new Map(data.map(x=>[x.id,x]))}
+ if(force||!PR.det){const data=await pag('produtos','id,ncm,cest,cfop_saida,origem,grupo_fiscal_id,custo,unidade,ativo,idade_minima,sem_nfce');PR.det=new Map(data.map(x=>[x.id,x]))}
  if(force||!PR.fotos){const data=await pag('produto_fotos','produto_id,path',c=>c.eq('principal',true));PR.fotos=new Map(data.map(x=>[x.produto_id,x.path]))}
  if(force||!PR.grupos){const {data}=await sb.from('grupos_fiscais').select('id,nome,cfop_saida,csosn,cst_pis_cofins').eq('empresa_id',e).order('nome');PR.grupos=data||[]}}
 async function prUrls(paths){const falta=paths.filter(p=>p&&!PR.urls[p]);if(!falta.length)return;const {data}=await sb.storage.from('produtos').createSignedUrls(falta,3600);(data||[]).forEach(u=>{if(u.signedUrl)PR.urls[u.path]=u.signedUrl})}
@@ -503,7 +503,8 @@ function prLista(){
   if(PR.filtro==='inativos'){if(ativo)return false}else if(!ativo)return false;
   if(PR.filtro==='semfoto'&&PR.fotos?.has(p.id))return false;
   if(PR.filtro==='sempreco'&&ps.some(x=>x.preco>0))return false;
-  if(PR.filtro==='semncm'&&/^\d{8}$/.test(d.ncm||''))return false;
+  if(PR.filtro==='semncm'&&(d.sem_nfce||/^\d{8}$/.test(d.ncm||'')))return false;
+  if(PR.filtro==='semnota'&&!d.sem_nfce)return false;
   if(!q)return true;
   if(p.nome.toLowerCase().includes(q))return true;
   if(qd.length>=3&&((p.ean||'').includes(qd)||(d.ncm||'').startsWith(qd)||S.codigos.some(c=>c.produto_id===p.id&&c.ean.includes(qd))))return true;
@@ -513,11 +514,11 @@ async function telaProd(){const M=$('#main');
  $('#prNovo').onclick=()=>prEditar(null);
  try{await prCarregarExtras()}catch(e){M.querySelector('.vazio').textContent='Não foi possível carregar: '+e.message;return}
  const ativos=S.produtos.filter(p=>(PR.det.get(p.id)?.ativo??p.ativo));
- const cont={todos:ativos.length,semfoto:ativos.filter(p=>!PR.fotos.has(p.id)).length,sempreco:ativos.filter(p=>!prPrecos(p.id).some(x=>x.preco>0)).length,semncm:ativos.filter(p=>!/^\d{8}$/.test(PR.det.get(p.id)?.ncm||'')).length,inativos:S.produtos.length-ativos.length};
+ const cont={todos:ativos.length,semfoto:ativos.filter(p=>!PR.fotos.has(p.id)).length,sempreco:ativos.filter(p=>!prPrecos(p.id).some(x=>x.preco>0)).length,semncm:ativos.filter(p=>!PR.det.get(p.id)?.sem_nfce&&!/^\d{8}$/.test(PR.det.get(p.id)?.ncm||'')).length,semnota:ativos.filter(p=>PR.det.get(p.id)?.sem_nfce).length,inativos:S.produtos.length-ativos.length};
  const chip=(k,t)=>`<button class="prchip${PR.filtro===k?' on':''}" data-f="${k}">${t}<span class="num">${cont[k]}</span></button>`;
  M.innerHTML=`<div class="head"><div><h1>Produtos</h1><p>Cadastro, fotos, dados fiscais e preço de cada loja.</p></div><button class="btn pri" id="prNovo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Novo produto</button></div>
  <div class="prbar"><div class="prbusca"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="prQ" placeholder="Buscar por nome, código de barras ou NCM" value="${esc(PR.q)}" autocomplete="off"></div>
- <div class="row">${chip('todos','Todos')}${chip('semfoto','Sem foto')}${chip('sempreco','Sem preço')}${chip('semncm','Sem NCM')}${chip('inativos','Inativos')}</div></div>
+ <div class="row">${chip('todos','Todos')}${chip('semfoto','Sem foto')}${chip('sempreco','Sem preço')}${chip('semncm','Sem NCM')}${chip('semnota','Fora da nota')}${chip('inativos','Inativos')}</div></div>
  <div class="tblwrap"><table class="tbl prtbl"><thead><tr><th style="width:64px"></th><th>Produto</th><th class="hm">NCM</th><th class="n">Preço</th><th class="hm">Lojas</th><th></th></tr></thead><tbody id="prBody"></tbody></table></div>
  <div class="row" id="prPag" style="margin-top:14px"></div>`;
  $('#prNovo').onclick=()=>prEditar(null);
@@ -533,7 +534,7 @@ async function prDesenhar(){
   const ft=PR.fotos.get(p.id);
   return `<tr data-id="${p.id}"><td><div class="prthumb">${ft?`<img data-path="${esc(ft)}" alt="">`:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>`}</div></td>
   <td><div class="stack"><b>${esc(p.nome)}</b><span class="mu sm num">${esc(p.ean||'sem código de barras')}${(d.ativo??p.ativo)?'':' · <span class="pill bad">Inativo</span>'}</span></div></td>
-  <td class="hm num">${/^\d{8}$/.test(d.ncm||'')?esc(d.ncm.replace(/^(\d{4})(\d{2})(\d{2})$/,'$1.$2.$3')):'<span class="pill warn">Falta</span>'}</td>
+  <td class="hm num">${d.sem_nfce?'<span class="pill">Fora da nota</span>':/^\d{8}$/.test(d.ncm||'')?esc(d.ncm.replace(/^(\d{4})(\d{2})(\d{2})$/,'$1.$2.$3')):'<span class="pill warn">Falta</span>'}</td>
   <td class="n num">${preco}</td><td class="hm"><span class="mu sm">${mix} de ${nLojas}</span></td>
   <td class="n"><button class="btn sm" data-ed="${p.id}">Editar</button></td></tr>`}).join(''):`<tr><td colspan="6"><div class="vazio">Nenhum produto encontrado.</div></td></tr>`;
  B.querySelectorAll('tr[data-id]').forEach(tr=>tr.onclick=()=>prEditar(tr.dataset.id));
@@ -565,7 +566,8 @@ function prEditar(pid){
     <div class="g3"><label class="f">NCM<input name="ncm" inputmode="numeric" maxlength="10" value="${esc(d.ncm||'')}" placeholder="8 dígitos"></label>
     <label class="f">CEST<input name="cest" inputmode="numeric" maxlength="9" value="${esc(d.cest||'')}" placeholder="opcional"></label>
     <label class="f">Origem<select name="origem">${[[0,'0 · Nacional'],[1,'1 · Importação direta'],[2,'2 · Importado no mercado interno'],[3,'3 · Nacional, 40% a 70% importado'],[4,'4 · Nacional, processo básico'],[5,'5 · Nacional, até 40% importado'],[6,'6 · Importação direta, sem similar'],[7,'7 · Importado, sem similar'],[8,'8 · Nacional, mais de 70% importado']].map(([v,t])=>`<option value="${v}" ${(d.origem??0)===v?'selected':''}>${t}</option>`).join('')}</select></label></div>
-    <label class="f">Grupo fiscal <span class="mu" style="font-weight:400">(define CSOSN, CFOP e PIS/COFINS)</span><select name="grupo"><option value="">Sem grupo</option>${(PR.grupos||[]).map(g=>`<option value="${g.id}" ${d.grupo_fiscal_id===g.id?'selected':''}>${esc(g.nome)} · CFOP ${esc(g.cfop_saida)}</option>`).join('')}</select></label></section>
+    <label class="f">Grupo fiscal <span class="mu" style="font-weight:400">(define CSOSN, CFOP e PIS/COFINS)</span><select name="grupo"><option value="">Sem grupo</option>${(PR.grupos||[]).map(g=>`<option value="${g.id}" ${d.grupo_fiscal_id===g.id?'selected':''}>${esc(g.nome)} · CFOP ${esc(g.cfop_saida)}</option>`).join('')}</select></label>
+    <label class="chk" style="justify-self:start"><input type="checkbox" name="semnfce" ${d.sem_nfce?'checked':''}> Não emite nota fiscal <span class="mu">· o produto fica fora da NFC-e da venda</span></label></section>
    <section class="prsec"><div class="row"><h3>Preço e mix</h3><span class="sp"></span><label class="f" style="grid-auto-flow:column;align-items:center;gap:8px">Custo<input name="custo" class="inp-s" value="${reais(d.custo||0)}" inputmode="decimal"></label></div>
     <div class="row"><span class="mu sm">${sugerido?`Pela regra (custo ÷ ${String(regra().divisor).replace('.',',')}) o preço sugerido é <b style="color:var(--ink)">${brl(sugerido)}</b>.`:'Informe o custo para ver o preço sugerido.'}</span><span class="sp"></span><input class="inp-s" id="prTodos" placeholder="0,00" inputmode="decimal"><button type="button" class="btn sm" id="prAplicar">Aplicar a todas</button></div>
     <div class="tblwrap"><table class="tbl"><thead><tr><th>Local</th><th class="n">Preço</th><th class="n">À venda</th></tr></thead><tbody>
@@ -598,7 +600,7 @@ async function prSalvar(pid,arquivo){
  if(dono)return err(`Esse código de barras já está em "${dono.nome}".`);
  const precos=[];for(const i of document.querySelectorAll('[data-pl]')){const v=prCent(i.value);if(Number.isNaN(v))return err('Preço inválido em uma das lojas. Use o formato 12,90.');if(v===0)return err('Preço zero não vale. Deixe em branco a loja que não vende o produto.');if(v!=null)precos.push({local_id:i.dataset.pl,preco:v,ativo_no_mix:document.querySelector(`[data-mx="${i.dataset.pl}"]`).checked})}
  const g=(PR.grupos||[]).find(x=>x.id===F.grupo.value);
- const dados={nome,ean:ean||null,unidade:F.unidade.value,custo,idade_minima:F.maior18.checked?18:null,ncm:ncm||null,cest:cest||null,origem:+F.origem.value,grupo_fiscal_id:g?.id||null,cfop_saida:g?.cfop_saida||null,atualizado_em:new Date().toISOString()};
+ const dados={nome,ean:ean||null,unidade:F.unidade.value,custo,idade_minima:F.maior18.checked?18:null,sem_nfce:F.semnfce.checked,ncm:ncm||null,cest:cest||null,origem:+F.origem.value,grupo_fiscal_id:g?.id||null,cfop_saida:g?.cfop_saida||null,atualizado_em:new Date().toISOString()};
  if(ncm&&ncm!==(PR.det?.get(pid)?.ncm||'')){dados.ncm_sugerido=ncm;dados.ncm_fonte='Painel de gestão'}
  bt.disabled=true;bt.textContent='Salvando…';
  try{const e=S.emp.id;let id=pid;
@@ -1096,7 +1098,7 @@ async function cartaoMp(){const est=$('#mpEstado'),C=$('#mpCorpo');if(!est)retur
  const rem=$('#mpRem');if(rem)rem.onclick=async()=>{if(!confirm('Remover a credencial? Os caixas param de cobrar no cartão.'))return;try{await apiPag('remover');toast('Credencial removida');cartaoMp()}catch(e){toast(e.message)}}}
 // ---------- NFC-e (certificado, senha e CSC ficam só no servidor; aqui só o status) ----------
 async function apiNf(acao,corpo={}){const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Entre no painel de novo');const r=await fetch(SB_URL+'/functions/v1/nfce',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+session.access_token},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(!r.ok)throw new Error(j.erro||'Erro');return j}
-const NF_ST={autorizada:['ok','Autorizada'],fila:['new','Enviando'],contingencia:['warn','Contingência'],rejeitada:['bad','Rejeitada'],cancelada:['','Cancelada']};
+const NF_ST={autorizada:['ok','Autorizada'],fila:['new','Enviando'],contingencia:['warn','Contingência'],rejeitada:['bad','Rejeitada'],cancelada:['','Cancelada'],dispensada:['','Sem nota']};
 function pillNota(n){const [c,t]=NF_ST[n.status]||['',n.status];return `<span class="pill ${c}" title="${esc(n.ultimo_erro||'')}">${t}${n.numero?' · nº '+n.numero:''}${n.ambiente==='homologacao'?' · teste':''}</span>`}
 async function notasVendas(vs){const ids=vs.filter(v=>v.status==='paga').map(v=>v.id);if(!ids.length)return;let r;try{r=await apiNf('notas',{venda_ids:ids})}catch{document.querySelectorAll('[data-nf][data-paga="1"]').forEach(td=>td.innerHTML='<span class="mu sm">—</span>');return}
  const m=new Map(r.notas.map(n=>[n.venda_id,n]));document.querySelectorAll('[data-nf]').forEach(td=>{if(td.dataset.paga!=='1')return;const n=m.get(td.dataset.nf);

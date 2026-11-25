@@ -186,15 +186,18 @@ async function emitir(n: any): Promise<{ status: string; motivo?: string }> {
   if (!itens?.length) return falhaTemporaria("Venda ainda sem itens");
 
   const ids = [...new Set(itens.map((i: any) => i.produto_id))];
-  const { data: prods } = await db.from("produtos").select("id, nome, ean, sku, ncm, cest, unidade, origem, grupo_fiscal_id").in("id", ids);
+  const { data: prods } = await db.from("produtos").select("id, nome, ean, sku, ncm, cest, unidade, origem, grupo_fiscal_id, sem_nfce").in("id", ids);
   const gids = [...new Set((prods ?? []).map((p: any) => p.grupo_fiscal_id).filter(Boolean))];
   const { data: grupos } = gids.length ? await db.from("grupos_fiscais").select("id, csosn, cfop_saida, cst_pis_cofins").in("id", gids) : { data: [] };
   const pm = new Map((prods ?? []).map((p: any) => [p.id, p])), gm = new Map((grupos ?? []).map((g: any) => [g.id, g]));
 
   const linhas: Item[] = [];
+  let foraDaNota = 0;
   for (const i of itens) {
     const p: any = pm.get(i.produto_id), g: any = p && gm.get(p.grupo_fiscal_id);
     if (!p) return rejeitar("Produto da venda não encontrado");
+    // produto marcado no cadastro como "não emite nota": fica fora da NFC-e (nem NCM nem grupo fiscal são cobrados)
+    if (p.sem_nfce) { foraDaNota++; continue; }
     if (!/^\d{8}$/.test(p.ncm ?? "")) return rejeitar(`${p.nome}: falta o NCM no cadastro`);
     if (!g) return rejeitar(`${p.nome}: falta o grupo fiscal (CSOSN/CFOP) no cadastro`);
     if (g.csosn === "201" && f.ambiente === "producao") return rejeitar(`${p.nome}: CSOSN 201 precisa de base e alíquota de ST, que o cadastro não tem. Confirmar com o contador.`);
@@ -204,9 +207,20 @@ async function emitir(n: any): Promise<{ status: string; motivo?: string }> {
       csosn: g.csosn, cst_pis_cofins: g.cst_pis_cofins,
     });
   }
+  // todos os itens da venda estão marcados "não emite nota": nenhuma nota é emitida e nenhum número da série é usado
+  if (!linhas.length) {
+    await atualizar({ status: "dispensada", ultimo_erro: `Sem nota: os ${foraDaNota} itens da venda estão marcados "não emite nota" no cadastro`, processando_ate: null });
+    return { status: "dispensada" };
+  }
   const totalItens = linhas.reduce((a, l) => a + l.quantidade * l.preco_unit, 0);
   let pagamentos: Pagamento[] = (pags ?? []).map((p: any) => ({ forma: p.forma, valor: p.valor, bandeira: p.bandeira, autorizacao: p.autorizacao, nsu: p.nsu, provedor: /^\d{6}$/.test(String(p.nsu ?? "")) ? "pagbank" : "mercadopago" }));
   if (!pagamentos.length) return rejeitar("Venda sem pagamento aprovado");
+  // com itens fora da nota, o pagamento declarado na nota vai só até o valor dos itens que estão nela
+  // (sem isso a diferença viraria "troco" em cartão/Pix, o que a SEFAZ não espera)
+  if (foraDaNota) {
+    let resta = totalItens;
+    pagamentos = pagamentos.map((p) => { const v = Math.min(p.valor, resta); resta -= v; return { ...p, valor: v }; }).filter((p) => p.valor > 0);
+  }
   // a nota fecha com o valor dos itens; diferença de pagamento fica registrada na venda para conferência
   const pagTot = pagamentos.reduce((a, p) => a + p.valor, 0);
   if (pagTot < totalItens) pagamentos = [{ ...pagamentos[0], valor: pagamentos[0].valor + (totalItens - pagTot) }, ...pagamentos.slice(1)];
