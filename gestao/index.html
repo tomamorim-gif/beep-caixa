@@ -690,7 +690,7 @@ async function telaIni(){const M=$('#main'),h=new Date().getHours(),saud=h<12?'B
    <button class="atalho" data-ir="app"><span class="ic">${IC.qr}</span><span><b>QR do app do cliente</b><span>Imprimir para o balcão</span></span></button>
   </div>`;
  $('#iAtualizar').onclick=()=>telaIni();
- import('./financeiro.js?v=2').then(m=>m.dashInicio(ctxBeep(),$('#iDash'))).catch(e=>{const d=$('#iDash');if(d)d.innerHTML=`<p class="vazio">Não foi possível abrir o resultado: ${esc(e.message)}</p>`});
+ import('./financeiro.js?v=3').then(m=>m.dashInicio(ctxBeep(),$('#iDash'))).catch(e=>{const d=$('#iDash');if(d)d.innerHTML=`<p class="vazio">Não foi possível abrir o resultado: ${esc(e.message)}</p>`});
  M.querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>{const t=b.dataset.ir;if(t==='prodnovo'){ir('prod');setTimeout(()=>prEditar(null),0);return}if(t==='cxnovo'){ir('cx');gerarCodigo();return}ir(t)});
  const e=S.emp.id,agora=new Date(),hoje0=inicioDia(agora),semAnt0=new Date(hoje0.getTime()-7*864e5),semAntFim=new Date(semAnt0.getTime()+864e5),mesmaHoraSemAnt=new Date(agora.getTime()-7*864e5);
  // saldos passam de 1.000 linhas (limite do servidor por consulta): busca em páginas
@@ -786,7 +786,7 @@ async function telaVend(){const M=$('#main');VD.dia=VD.dia||hojeISO();
   try{const r=await apiPag('estornar',{venda_id:b.dataset.estornar});toast(r.status==='estornado'?'Estorno feito':'Estorno pedido ao Mercado Pago. Confirma em instantes.');telaVend()}catch(err){toast(err.message);b.disabled=false;b.textContent='Estornar'}}}
 
 // ---------- tela: financeiro (arquivo próprio, carregado só quando abre a tela) ----------
-async function telaFin(){try{const m=await import('./financeiro.js?v=2');await m.telaFinanceiro(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
+async function telaFin(){try{const m=await import('./financeiro.js?v=3');await m.telaFinanceiro(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
 
 // ---------- tela: estoque e reposição ----------
 let EST_LOCAL=null;
