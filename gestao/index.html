@@ -99,6 +99,15 @@ input[type=file]{font-size:13px;color:var(--mu)}input[type=file]::file-selector-
 .prsec{display:grid;gap:12px;padding-bottom:18px;border-bottom:1px solid var(--line)}.prsec h3{font-size:15px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:12px}
 @media(max-width:900px){.prform,.g3{grid-template-columns:1fr}.prfoto{position:static}}
+/* abastecimento: mínimo e máximo */
+.mmtbl td{vertical-align:middle}.mmtbl tr.alt{background:rgba(255,214,10,.04)}.mmtbl tr.alt td:first-child{box-shadow:inset 3px 0 0 var(--y)}
+.mmin{min-height:38px!important;width:76px!important;text-align:center!important;font-weight:700;font-variant-numeric:tabular-nums}.mmin.err{border-color:var(--bad)!important;box-shadow:0 0 0 3px rgba(239,68,68,.15)!important}
+.mmpf{font-variant-numeric:tabular-nums;color:var(--mu);white-space:nowrap}
+.mmsep{color:#4b5060;margin:0 6px}
+.so-m{display:none;margin-top:6px}.so-m .stack{grid-auto-flow:column;gap:10px;align-items:center}
+.lnk{color:var(--y);font-weight:600;font-size:13px;padding:2px 0}.lnk:hover{text-decoration:underline}
+@media(max-width:900px){.mmin{width:56px!important}.so-m{display:block}.mmtbl td,.mmtbl th{padding-left:8px;padding-right:8px}}
+.lnk{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -156,7 +165,7 @@ function telaLogin(modo='entrar',msg=''){
 async function carregar(){const e=S.emp.id;
  // o servidor devolve no máximo 1.000 linhas por consulta: busca em páginas até trazer tudo
  const q=async(t,sel='*',ord)=>{const out=[];for(let de=0;;de+=1000){let c=sb.from(t).select(sel).eq('empresa_id',e);c=ord?c.order(ord).order('id',{ascending:true}):c;const r=await c.range(de,de+999);if(r.error)return r;out.push(...r.data);if(r.data.length<1000)return {data:out,error:null}}};
- const [lc,pr,cd,cf,pc,pf,pi,gf]=await Promise.all([q('locais','id,nome,tipo,ativo,portfolio_id,app_consulta,app_compra,app_pendente,app_selecionados,contingencia_auto'),q('produtos','id,ean,nome,ncm,cest,unidade,custo,ativo,grupo_fiscal_id','nome'),q('produto_codigos','produto_id,ean'),q('produto_codigos_fornecedor','produto_id,fornecedor_cnpj,codigo,fator'),q('precos_local','produto_id,local_id,preco,ativo_no_mix,estoque_min,estoque_max'),q('portfolios','id,nome,descricao,cor','criado_em'),q('portfolio_itens','portfolio_id,produto_id,estoque_min,estoque_max'),q('grupos_fiscais','id,nome,csosn,cfop_saida,cst_pis_cofins','nome')]);
+ const [lc,pr,cd,cf,pc,pf,pi,gf]=await Promise.all([q('locais','id,nome,tipo,ativo,portfolio_id,app_consulta,app_compra,app_pendente,app_selecionados,contingencia_auto'),q('produtos','id,ean,nome,ncm,cest,unidade,custo,ativo,grupo_fiscal_id','nome'),q('produto_codigos','produto_id,ean'),q('produto_codigos_fornecedor','produto_id,fornecedor_cnpj,codigo,fator'),q('precos_local','produto_id,local_id,preco,ativo_no_mix,estoque_min,estoque_max,minmax_ajustado'),q('portfolios','id,nome,descricao,cor','criado_em'),q('portfolio_itens','portfolio_id,produto_id,estoque_min,estoque_max'),q('grupos_fiscais','id,nome,csosn,cfop_saida,cst_pis_cofins','nome')]);
  for(const r of [lc,pr,cd,cf,pc,pf,pi,gf])if(r.error)throw r.error;
  S.locais=lc.data;S.produtos=pr.data;S.codigos=cd.data;S.codForn=cf.data;S.precos=pc.data;S.portfolios=pf.data;S.pitens=pi.data;S.grupos=gf.data}
 async function iniciar(){const {data:{session}}=await sb.auth.getSession();if(!session){telaLogin();return}S.user=session.user;
@@ -169,6 +178,7 @@ function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img
   <button class="nav" data-t="vend"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Vendas</button>
   <button class="nav" data-t="prod"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Produtos</button>
   <button class="nav" data-t="est"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Estoque e reposição</button>
+  <button class="nav" data-t="abs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Abastecimento</button>
   <button class="nav" data-t="nf">${ICON.nf}Entrada de NF-e</button><button class="nav" data-t="pf">${ICON.pf}Portfólios</button>
   <button class="nav" data-t="cx"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>Caixas</button>
   <button class="nav" data-t="app"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>App do cliente</button>
@@ -176,8 +186,8 @@ function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img
   <button class="nav" data-t="vid"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg>Vídeos</button>
   <button class="nav" data-t="cfg">${ICON.cfg}Configurações</button>
   <div class="quem"><b style="color:var(--ink)">${esc(S.emp.nome_exibicao||S.emp.razao_social)}</b><br>${esc(S.user.email)} · ${S.papel==='dono'?'Dono':'Gerente'}<br><button class="btn sm" id="sair" style="margin-top:10px">Sair</button></div></aside><main id="main"></main></div>`;
- document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{S.tela=b.dataset.t;render()});$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
-function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({vend:telaVend,prod:telaProd,est:telaEst,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
+ document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{if(S.tela==='abs'&&b.dataset.t!=='abs'&&AB.ed.size){if(!confirmar('Há alterações de mínimo e máximo não salvas. Descartar?'))return;AB.ed.clear()}S.tela=b.dataset.t;render()});$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
+function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({vend:telaVend,prod:telaProd,est:telaEst,abs:telaAbs,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
 
 // ---------- leitura do XML (NF-e modelo 55) ----------
 const tx=(el,sel)=>{if(!el)return '';const n=el.getElementsByTagName(sel)[0];return n?n.textContent.trim():''};
@@ -567,6 +577,83 @@ async function telaEst(){const M=$('#main');const locs=S.locais.filter(l=>l.ativ
   <h2 style="font-size:18px;margin:0 0 12px">Levar para a loja</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Produto</th><th class="n">Na loja</th><th class="n">Mínimo</th><th class="n">Máximo</th><th class="n">Levar</th></tr></thead><tbody>${repor.sort((a,b)=>b.levar-a.levar).map(x=>`<tr><td>${esc(nomeP(x.id))}</td><td class="n num">${x.s}</td><td class="n num mu">${x.min}</td><td class="n num mu">${x.max}</td><td class="n num"><b style="color:var(--y)">${x.levar}</b></td></tr>`).join('')||'<tr><td colspan="5" class="vazio">Nada abaixo do mínimo nesta loja.</td></tr>'}</tbody></table></div>
   ${fora.length?`<h2 style="font-size:18px;margin:24px 0 12px">Recolher: fora do portfólio</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Produto</th><th class="n">Na loja</th></tr></thead><tbody>${fora.map(([id,s])=>`<tr><td>${esc(nomeP(id))}</td><td class="n num"><b>${s}</b></td></tr>`).join('')}</tbody></table></div>`:''}
   <h2 style="font-size:18px;margin:24px 0 12px">Todos os produtos da loja</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Produto</th><th class="n">Saldo</th><th class="n">Mín.</th><th class="n">Máx.</th><th>Situação</th></tr></thead><tbody>${mix.map(x=>`<tr><td>${esc(nomeP(x.id))}</td><td class="n num">${x.s}</td><td class="n num mu">${x.min}</td><td class="n num mu">${x.max}</td><td>${x.s<=0?'<span class="pill bad">Zerado</span>':x.s<x.min?'<span class="pill warn">Repor</span>':'<span class="pill ok">OK</span>'}</td></tr>`).join('')||'<tr><td colspan="5" class="vazio">Esta loja não tem produtos à venda. Escolha um portfólio para ela.</td></tr>'}</tbody></table></div>`}
+
+// ---------- tela: abastecimento (mínimo e máximo por loja) ----------
+// Mínimo e máximo de cada produto em cada loja. O portfólio dá o valor inicial; o que for ajustado aqui
+// fica marcado como "ajustado na loja" e não é sobrescrito quando o portfólio é reaplicado.
+const AB={loja:null,q:'',filtro:'todos',ed:new Map()};
+const abNum=v=>{const t=String(v??'').trim().replace(',','.');if(t==='')return NaN;const n=Number(t);return Number.isInteger(n)&&n>=0&&n<=100000?n:NaN};
+function abBase(){const loc=S.locais.find(l=>l.id===AB.loja),prod=new Map(S.produtos.map(p=>[p.id,p]));
+ const pf=new Map(S.pitens.filter(i=>i.portfolio_id===loc?.portfolio_id).map(i=>[i.produto_id,i]));
+ return S.precos.filter(x=>x.local_id===AB.loja&&x.ativo_no_mix).map(x=>{const p=prod.get(x.produto_id),i=pf.get(x.produto_id);
+  return {id:x.produto_id,nome:bonito(p?.nome||'—'),ean:p?.ean||'',min:+x.estoque_min||0,max:+x.estoque_max||0,aj:!!x.minmax_ajustado,pfMin:i?+i.estoque_min||0:null,pfMax:i?+i.estoque_max||0:null}}).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))}
+// valores que a tela mostra: o que está sendo editado, ou o que está salvo
+function abAtual(r){const e=AB.ed.get(r.id);if(!e)return {min:r.min,max:r.max,aj:r.aj,mud:false};if(e.padrao)return {min:r.pfMin??r.min,max:r.pfMax??r.max,aj:false,mud:true};return {min:e.min,max:e.max,aj:true,mud:true}}
+const abErro=a=>Number.isNaN(a.min)||Number.isNaN(a.max)||a.max<a.min;
+function abFiltrar(L){const t=AB.q.trim().toLowerCase();return L.filter(r=>{const a=abAtual(r);
+ if(t&&!r.nome.toLowerCase().includes(t)&&!r.ean.includes(t))return false;
+ return AB.filtro==='todos'||(AB.filtro==='aj'&&a.aj)||(AB.filtro==='sem'&&!(a.max>0))||(AB.filtro==='mud'&&a.mud)})}
+function abSituacao(r){const a=abAtual(r);
+ if(a.mud)return `<span class="pill new">Alterado</span>`;
+ if(r.aj)return `<div class="stack" style="justify-items:start"><span class="pill warn">Ajustado na loja</span>${r.pfMin!=null?`<button class="lnk" data-pad="${r.id}">Usar o do portfólio</button>`:''}</div>`;
+ if(!(r.max>0))return `<span class="pill bad">Sem padrão</span>`;
+ return `<span class="mu sm">Do portfólio</span>`}
+function abLinha(r){const a=abAtual(r),er=abErro(a);
+ return `<tr data-r="${r.id}" class="${a.mud?'alt':''}"><td><b style="font-weight:600">${esc(r.nome)}</b><br><span class="mu sm">${esc(r.ean||'sem código')}</span><div class="so-m" data-sit="${r.id}">${abSituacao(r)}</div></td>
+  <td class="n hm mmpf">${r.pfMin==null?'<span class="sm">fora do portfólio</span>':`${r.pfMin}<span class="mmsep">a</span>${r.pfMax}`}</td>
+  <td class="n"><input class="mmin${er?' err':''}" inputmode="numeric" data-mn="${r.id}" value="${Number.isNaN(a.min)?'':a.min}" aria-label="Mínimo de ${esc(r.nome)}"></td>
+  <td class="n"><input class="mmin${er?' err':''}" inputmode="numeric" data-mx="${r.id}" value="${Number.isNaN(a.max)?'':a.max}" aria-label="Máximo de ${esc(r.nome)}"></td>
+  <td class="hm" data-sit="${r.id}">${abSituacao(r)}</td></tr>`}
+async function telaAbs(){const M=$('#main'),ls=lojas();
+ if(!ls.length){M.innerHTML='<div class="head"><div><h1>Abastecimento</h1></div></div><p class="vazio">Nenhuma loja ativa.</p>';return}
+ if(!ls.some(l=>l.id===AB.loja))AB.loja=(ls.find(l=>/lira holanda/i.test(l.nome))||ls[0]).id;
+ const L=abBase(),loc=S.locais.find(l=>l.id===AB.loja),pf=S.portfolios.find(p=>p.id===loc.portfolio_id);
+ const cont={todos:L.length,aj:L.filter(r=>abAtual(r).aj).length,sem:L.filter(r=>!(abAtual(r).max>0)).length,mud:AB.ed.size};
+ const chip=(k,t)=>`<button class="prchip${AB.filtro===k?' on':''}" data-f="${k}">${t}<span class="num">${cont[k]}</span></button>`;
+ M.innerHTML=`<div class="head"><div><h1>Mínimo e máximo</h1><p>Quanto cada produto deve ter na prateleira de cada loja. É a base da lista de abastecimento e da conferência na loja.</p></div>
+  <label class="f" style="width:280px">Loja<select id="abLoja">${ls.map(l=>`<option value="${l.id}" ${l.id===AB.loja?'selected':''}>${esc(l.nome)}</option>`).join('')}</select></label></div>
+  <div class="grid4" style="margin-bottom:16px"><div class="kpi"><span>Portfólio da loja</span><b style="font-size:18px">${esc(pf?.nome||'Nenhum')}</b></div><div class="kpi"><span>Produtos à venda</span><b class="num">${L.length}</b></div><div class="kpi"><span>Ajustados na loja</span><b class="num">${cont.aj}</b></div><div class="kpi"><span>Sem padrão definido</span><b class="num" style="color:${cont.sem?'#f87171':'inherit'}">${cont.sem}</b></div></div>
+  <div class="prbar"><div class="prbusca"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="abQ" placeholder="Buscar por nome ou código de barras" value="${esc(AB.q)}" autocomplete="off"></div>
+   <div class="row">${chip('todos','Todos')}${chip('sem','Sem padrão')}${chip('aj','Ajustados na loja')}${AB.ed.size?chip('mud','Alterados'):''}</div><button class="btn sm" id="abLote">Definir para os filtrados</button></div>
+  <div class="tblwrap"><table class="tbl mmtbl"><thead><tr><th>Produto</th><th class="n hm">Portfólio</th><th class="n">Mínimo</th><th class="n">Máximo</th><th class="hm" style="width:170px">Situação</th></tr></thead><tbody id="abBody"></tbody></table></div>
+  <p class="mu sm" style="margin-top:12px">Máximo é o que a prateleira comporta; mínimo é o menos que a loja pode ter. Exemplo: Coca-Cola, mínimo 4 e máximo 10. Tecle Enter para ir ao produto de baixo.</p>
+  <div id="abBarra"></div>`;
+ $('#abLoja').onchange=e=>{if(AB.ed.size&&!confirmar('Há alterações não salvas nesta loja. Descartar?')){e.target.value=AB.loja;return}AB.ed.clear();AB.loja=e.target.value;AB.filtro='todos';telaAbs()};
+ let t;$('#abQ').oninput=e=>{clearTimeout(t);t=setTimeout(()=>{AB.q=e.target.value;abDesenhar(L)},160)};
+ M.querySelectorAll('.prchip').forEach(b=>b.onclick=()=>{AB.filtro=b.dataset.f;telaAbs()});
+ $('#abLote').onclick=()=>abLote(L);
+ abDesenhar(L)}
+function abDesenhar(L){const F=abFiltrar(L),B=$('#abBody');if(!B)return;
+ B.innerHTML=F.map(abLinha).join('')||`<tr><td colspan="5" class="vazio">${L.length?'Nenhum produto neste filtro':'Esta loja ainda não tem produtos à venda. Aplique um portfólio em Portfólios.'}</td></tr>`;
+ const porId=new Map(L.map(r=>[r.id,r]));
+ const muda=(id)=>{const r=porId.get(id),tr=B.querySelector(`tr[data-r="${id}"]`),mn=abNum(tr.querySelector('[data-mn]').value),mx=abNum(tr.querySelector('[data-mx]').value);
+  if(mn===r.min&&mx===r.max)AB.ed.delete(id);else AB.ed.set(id,{min:mn,max:mx});
+  const a=abAtual(r),er=abErro(a);tr.classList.toggle('alt',a.mud);tr.querySelectorAll('.mmin').forEach(i=>i.classList.toggle('err',er));
+  tr.querySelectorAll(`[data-sit="${id}"]`).forEach(c=>c.innerHTML=abSituacao(r));ligarPad();abBarra(L)};
+ B.querySelectorAll('.mmin').forEach(i=>{i.onchange=()=>muda(i.dataset.mn||i.dataset.mx);i.onfocus=()=>i.select();
+  i.onkeydown=e=>{if(e.key!=='Enter')return;e.preventDefault();i.onchange();const col=i.dataset.mn?'[data-mn]':'[data-mx]',tr=i.closest('tr').nextElementSibling;const nx=tr?.querySelector(col);if(nx)nx.focus();else i.blur()}});
+ const ligarPad=()=>B.querySelectorAll('[data-pad]').forEach(b=>b.onclick=()=>{const id=b.dataset.pad;AB.ed.set(id,{padrao:true});abDesenhar(L)});
+ ligarPad();abBarra(L)}
+function abBarra(L){const el=$('#abBarra');if(!el)return;const n=AB.ed.size;if(!n){el.innerHTML='';return}
+ const porId=new Map(L.map(r=>[r.id,r])),ruins=[...AB.ed.keys()].filter(id=>abErro(abAtual(porId.get(id)))).length;
+ el.innerHTML=`<div class="barra"><div><b class="num">${n}</b> ${n===1?'alteração não salva':'alterações não salvas'}${ruins?`<br><span class="erro">${ruins===1?'1 produto está':ruins+' produtos estão'} com o máximo menor que o mínimo ou sem número</span>`:''}</div><span class="sp"></span><button class="btn" id="abDesc">Descartar</button><button class="btn pri" id="abSalvar" ${ruins?'disabled':''}>Salvar alterações</button></div>`;
+ $('#abDesc').onclick=()=>{AB.ed.clear();telaAbs()};
+ $('#abSalvar').onclick=async e=>{const bt=e.currentTarget;bt.disabled=true;bt.textContent='Salvando…';
+  const itens=[...AB.ed].map(([produto_id,v])=>v.padrao?{produto_id,padrao:true}:{produto_id,min:v.min,max:v.max});
+  const {data,error}=await sb.rpc('salvar_minmax',{p_local:AB.loja,p_itens:itens});
+  if(error){toast('Não foi possível salvar: '+error.message);bt.disabled=false;bt.textContent='Salvar alterações';return}
+  AB.ed.clear();try{await carregar()}catch(_){}if(AB.filtro==='mud')AB.filtro='todos';telaAbs();
+  const nome=S.locais.find(l=>l.id===AB.loja)?.nome||'';toast(`${nome}: ${(data?.ajustados||0)+(data?.padrao||0)} produtos salvos`)}}
+function abLote(L){const F=abFiltrar(L);if(!F.length)return toast('Nenhum produto no filtro');
+ modal(`<h2>Definir para ${F.length} ${F.length===1?'produto':'produtos'}</h2><p class="mu">Vale para os produtos que aparecem no filtro atual da loja ${esc(S.locais.find(l=>l.id===AB.loja)?.nome||'')}. Deixe em branco para manter o valor de cada um.</p>
+  <div class="g2"><label class="f">Mínimo<input id="lMin" inputmode="numeric" placeholder="manter"></label><label class="f">Máximo<input id="lMax" inputmode="numeric" placeholder="manter"></label></div><p class="erro" id="lErr"></p>
+  <div class="row"><span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="lOk">Aplicar</button></div>`);
+ $('#lMin').focus();
+ $('#lOk').onclick=()=>{const vm=$('#lMin').value.trim(),vx=$('#lMax').value.trim(),mn=vm===''?null:abNum(vm),mx=vx===''?null:abNum(vx);
+  if(mn===null&&mx===null)return $('#lErr').textContent='Informe o mínimo, o máximo ou os dois.';
+  if(Number.isNaN(mn)||Number.isNaN(mx))return $('#lErr').textContent='Use números inteiros, a partir de zero.';
+  let ruins=0;for(const r of F){const a=abAtual(r),nmn=mn??a.min,nmx=mx??a.max;if(nmx<nmn){ruins++;continue}AB.ed.set(r.id,{min:nmn,max:nmx})}
+  fechar();AB.filtro='mud';telaAbs();toast(ruins?`${F.length-ruins} alterados. ${ruins} ficaram de fora: o máximo ficaria menor que o mínimo.`:`${F.length} produtos alterados. Confira e salve.`)}}
 
 // ---------- tela: caixas ----------
 async function telaCx(){const M=$('#main');
