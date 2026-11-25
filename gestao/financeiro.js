@@ -165,8 +165,9 @@ export async function dashInicio(C, el) {
      <section class="card fncard"><div class="fnch"><div><h2>Formas de pagamento</h2><p class="mu sm">Quanto entrou por cada forma e quanto fica de taxa.</p></div></div><div data-ch="formas"></div></section>
      <section class="card fncard"><div class="fnch"><div><h2>Lojas</h2><p class="mu sm">Faturamento e margem bruta de cada loja.</p></div></div><div data-ch="lojas"></div></section>
     </div>
+    <section class="card fncard"><div class="fnch"><div><h2>Vendas por loja</h2><p class="mu sm">Faturamento de cada loja no período, ao lado do período anterior e do ano passado.</p></div><div class="fnleg" data-leg="ljcol"></div></div><div class="fnchart" data-ch="ljcol"></div></section>
     <div class="fnmais"><button class="btn" id="fAbrir">Abrir o financeiro completo</button><span class="mu sm">Curva ABC, CPV por dia, mapa de horários, fechamento e planilha.</span></div>`;
-  desenhar(C, Cp, R, D, P);
+  desenhar(C, Cp, R, D, P, A, Y);
   Cp.querySelector('#fAbrir').onclick = () => C.ir('fin');
 }
 
@@ -196,6 +197,7 @@ export async function telaFinanceiro(C) {
    </div>
    <section class="card fncard"><div class="fnch"><div><h2>${porHora ? 'Faturamento por hora' : 'Composição do faturamento'}</h2><p class="mu sm">${porHora ? 'Quanto entrou em cada hora do dia.' : 'Cada coluna é o faturamento do dia, dividido em CPV, taxas e resultado.'}</p></div>
     ${porHora ? '' : '<div class="fnleg"><span><i style="background:var(--fn-custo)"></i>CPV</span><span><i style="background:var(--fn-taxa)"></i>Taxas</span><span><i style="background:var(--fn-lucro)"></i>Resultado</span></div>'}</div><div class="fnchart" data-ch="colunas"></div></section>
+   <section class="card fncard"><div class="fnch"><div><h2>Vendas por loja</h2><p class="mu sm">Faturamento de cada loja no período, ao lado do período anterior e do ano passado.</p></div><div class="fnleg" data-leg="ljcol"></div></div><div class="fnchart" data-ch="ljcol"></div></section>
    <div class="fnrow fnrow-2">
     <section class="card fncard"><div class="fnch"><div><h2>Formas de pagamento</h2><p class="mu sm">Quanto entrou por cada forma e quanto fica de taxa.</p></div></div><div data-ch="formas"></div></section>
     <section class="card fncard"><div class="fnch"><div><h2>Lojas</h2><p class="mu sm">Faturamento e margem bruta de cada loja.</p></div></div><div data-ch="lojas"></div></section>
@@ -204,13 +206,13 @@ export async function telaFinanceiro(C) {
    <section class="card fncard"><div class="fnch"><div><h2>Mapa de horários</h2><p class="mu sm">Faturamento por dia da semana e hora. Ajuda a decidir reposição, limpeza e promoções.</p></div><div class="fnleg"><span class="fnescala"><em>menos</em><i></i><em>mais</em></span></div></div><div data-ch="mapa"></div></section>
    <h2 style="font-size:18px;margin:26px 0 12px">Fechamento</h2><div data-ch="fech"></div>
    <p class="mu sm" style="margin-top:10px">Só vendas pagas${F.teste ? ', incluindo as de teste' : ', sem as de teste'}. CPV é o custo que estava no cadastro na hora de cada venda. Taxas estimadas pelas taxas informadas em Taxas. Estornos contam no dia da venda original.${T.nEstorno ? ` Estornos no período: ${C.brl(T.estornado)} em ${T.nEstorno} ${T.nEstorno === 1 ? 'pagamento' : 'pagamentos'}.` : ''}${T.notas ? ` Compras lançadas por NF-e: ${C.brl(T.compras)} em ${T.notas} ${T.notas === 1 ? 'nota' : 'notas'}.` : ''}</p>`;
-  desenhar(C, Cp, R, D, P);
+  desenhar(C, Cp, R, D, P, A, Y);
   abc(C, Cp.querySelector('#fAbc'), R);
   $('#fCsv').onclick = () => exportar(D.atual, F.loja, id => S.locais.find(l => l.id === id)?.nome || 'Loja removida', P);
 }
 
 // ---------- desenho dos gráficos ----------
-function desenhar(C, Cp, R, D, P) {
+function desenhar(C, Cp, R, D, P, A, Y) {
   const larg = el => Math.max(300, Math.floor(el.clientWidth || 600));
   const q = s => Cp.querySelector(`[data-ch="${s}"]`);
   if (q('ritmo')) ritmo(C, q('ritmo'), Cp.querySelector('[data-leg="ritmo"]'), D, P, larg(q('ritmo')));
@@ -218,6 +220,7 @@ function desenhar(C, Cp, R, D, P) {
   if (q('colunas')) colunas(C, q('colunas'), R, P, larg(q('colunas')));
   if (q('formas')) formas(C, q('formas'), R);
   if (q('lojas')) lojasCh(C, q('lojas'), R);
+  if (q('ljcol')) lojasCol(C, q('ljcol'), Cp.querySelector('[data-leg="ljcol"]'), R, A, Y, P, larg(q('ljcol')));
   if (q('mapa')) mapa(C, q('mapa'), R);
   if (q('fech')) fechamento(C, q('fech'), R, P);
   dicas(Cp);
@@ -385,6 +388,31 @@ function lojasCh(C, el, R) {
     return `<div class="fnlj-r" data-tip="<b>${C.esc(nome(id))}</b><span>Faturamento<em>${$c(x.bruto)}</em></span><span>Vendas<em>${inteiro(x.vendas)}</em></span><span>CPV<em>${$c(x.cmv)}</em></span><span>Margem bruta<em>${porc(mb)}</em></span><span>Resultado após taxas<em>${$c(x.bruto - x.cmv - x.taxas)}</em></span>">
       <div class="fnlj-n"><b>${C.esc(nome(id))}</b><span class="mu sm">${inteiro(x.vendas)} ${x.vendas === 1 ? 'venda' : 'vendas'} · margem ${porc(mb)}</span></div>
       <div class="fnlj-b"><i style="width:${Math.max(1.5, x.bruto / max * 100).toFixed(2)}%"></i></div><b class="num fnlj-v">${$c(x.bruto)}</b></div>`; }).join('')}</div>`;
+}
+
+// colunas por loja: atual x período anterior x ano passado (mesma duração)
+function lojasCol(C, el, leg, R, A, Y, P, W) {
+  const $c = C.brl, nome = id => C.S.locais.find(l => l.id === id)?.nome || 'Loja removida';
+  const ids = Object.keys(R.loja).filter(id => R.loja[id].vendas).sort((a, b) => R.loja[b].bruto - R.loja[a].bruto);
+  if (!ids.length) { el.innerHTML = '<p class="vazio">Sem vendas no período.</p>'; if (leg) leg.innerHTML = ''; return; }
+  const val = (X, id) => X && X.loja[id] ? X.loja[id].bruto : 0;
+  const rotA = P.rotAnt ? P.rotAnt.charAt(0).toUpperCase() + P.rotAnt.slice(1) : 'Período anterior';
+  const ser = [['atual', 'Atual', R], ...(A && F.per !== 'ano' ? [['ant', rotA, A]] : []), ...(Y ? [['ano', 'Ano passado', Y]] : [])];
+  if (leg) leg.innerHTML = ser.map(([k, n]) => `<span><i style="background:${COR[k]}"></i>${n}</span>`).join('');
+  const max = Math.max(1, ...ids.flatMap(id => ser.map(x => val(x[2], id))));
+  const H = W < 560 ? 220 : 250, pe = 66, pb = 30, pt = 8, ax = eixoY(W, H, pe, pb, pt, max);
+  const n = ids.length, lw = (W - pe) / n, gap = 2, bw = Math.max(6, Math.min(36, (lw * .72 - gap * (ser.length - 1)) / ser.length)), gw = bw * ser.length + gap * (ser.length - 1);
+  const maxCh = Math.max(4, Math.floor(lw / 7.2));
+  let s = ax.s;
+  ids.forEach((id, i) => {
+    const cx = pe + lw * i + lw / 2, x0 = cx - gw / 2, nm = nome(id);
+    ser.forEach(([k, , X], j) => { const v = val(X, id), h = v * ax.k; if (h > 0) s += `<rect x="${(x0 + j * (bw + gap)).toFixed(1)}" y="${(H - pb - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, h).toFixed(1)}" rx="3" fill="${COR[k]}"/>`; });
+    const curtoNm = nm.length > maxCh ? nm.slice(0, maxCh - 1) + '…' : nm;
+    s += `<text x="${cx}" y="${H - 9}" text-anchor="middle" class="fnax">${C.esc(curtoNm)}</text>`;
+    const at = val(R, id), linhas = ser.map(([k, rot, X]) => { const v = val(X, id), d = k !== 'atual' && v ? (at - v) / v : null; return `<span><i style='background:${COR[k]}'></i>${rot}<em>${$c(v)}${d == null ? '' : ` (${d >= 0 ? '+' : ''}${porc(d)})`}</em></span>`; }).join('');
+    s += `<rect x="${cx - lw / 2}" y="${pt}" width="${lw}" height="${H - pb - pt}" class="fnhit" data-tip="<b>${C.esc(nm)}</b>${linhas}<span>Vendas<em>${inteiro(R.loja[id].vendas)}</em></span>"/>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="fnsvg" role="img" aria-label="Vendas por loja">${s}</svg>`;
 }
 
 function mapa(C, el, R) {
