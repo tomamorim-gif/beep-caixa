@@ -702,7 +702,7 @@ $('#pinTec').onclick=async e=>{const b=e.target.closest('.pinb');if(!b)return;co
  if(k!=='OK'){if(pinDig.length<6)pinDig+=k;desenhaPin();if(pinDig.length<6||pinModo==='criar')return}
  if(pinDig.length<4){$('#pinMsg').textContent='Use de 4 a 6 números';return}
  if(pinModo==='entrar'){if(bloqueadoAte()>Date.now()){$('#pinMsg').textContent='Bloqueado. Aguarde alguns minutos.';pinDig='';desenhaPin();return}
-  if(await hashPin(pinDig)===ls.get('bp-pin','')){ls.set('bp-pin-erros',0);if(liberarNav)liberadoNav=true;abrirAdmin();return}
+  if(await hashPin(pinDig)===ls.get('bp-pin','')){ls.set('bp-pin-erros',0);if(liberarNav){liberadoNav=true;ls.set('bp-nav-livre',true)}abrirAdmin();return}
   const n=ls.get('bp-pin-erros',0)+1;ls.set('bp-pin-erros',n);if(n>=3){ls.set('bp-pin-bloq',Date.now()+5*60000);ls.set('bp-pin-erros',0)}
   $('#pinMsg').textContent=n>=3?'3 erros: bloqueado por 5 minutos':'PIN incorreto';pinDig='';desenhaPin();return}
  if(pinModo==='criar'){pinPrimeiro=pinDig;pinDig='';pinModo='confirmar';$('#pinTit').textContent='Confirme o PIN';desenhaPin();return}
@@ -718,7 +718,7 @@ $('#admPin').onclick=()=>telaPin('criar');
 $('#admMic').onclick=async()=>{const ok=await pedirMic();toast(ok?'Microfone liberado neste aparelho':'Microfone bloqueado: libere no cadeado do Chrome › Permissões');};
 $('#admTela').onclick=()=>{$('#admInfo').innerHTML='<b>Para ninguém sair do caixa:</b> no Android, ative <b>Fixar app</b> (Samsung: Configurações › Segurança e privacidade › Mais configurações de segurança › Fixar janelas; outros: Configurações › Segurança › Fixação de app) e ligue "Pedir PIN para soltar". Depois abra o caixa, toque em Recentes (▢), no ícone do app e em Fixar. Para soltar: segure Voltar + Recentes e digite o PIN do celular.'};
 $('#admSair').onclick=()=>{if($('#admSair').dataset.c){desativar();return}$('#admSair').dataset.c=1;$('#admSair').textContent='Toque de novo para confirmar';setTimeout(()=>{delete $('#admSair').dataset.c;$('#admSair').textContent='Desativar este aparelho'},4000)};
-function desativar(expirado){['bp-token','bp-loja','bp-cat','bp-fila','bp-pin','bp-logo','bp-logo-v'].forEach(ls.del);token=null;loja=null;cat=null;fila=[];$('#passo1').style.display='flex';$('#passo2').style.display='none';mostrar('ativar');if(expirado)toast('Aparelho desativado. Ative de novo.');kitMostrar()}
+function desativar(expirado){['bp-token','bp-loja','bp-cat','bp-fila','bp-pin','bp-logo','bp-logo-v','bp-nav-livre'].forEach(ls.del);token=null;loja=null;cat=null;fila=[];$('#passo1').style.display='flex';$('#passo2').style.display='none';mostrar('ativar');if(expirado)toast('Aparelho desativado. Ative de novo.');kitMostrar()}
 
 // ---------- modo quiosque: dificulta sair do caixa ----------
 document.addEventListener('contextmenu',e=>e.preventDefault());
@@ -821,7 +821,9 @@ $('#vozMic').onclick=()=>{if(vozRec||$('#vozMic').classList.contains('falando'))
 const pedirMic=async()=>{try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());return true}catch(e){return false}};
 
 // ---------- trava de navegador ----------
-const instalado=()=>!!NATIVO||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+// Em navegador de quiosque (Fully Kiosk) o caixa não roda como app instalado. O gerente libera uma vez
+// (5 toques no logo + PIN) e fica liberado neste aparelho; o Fully com a interface JavaScript ligada libera sozinho.
+const instalado=()=>!!NATIVO||ls.get('bp-nav-livre',false)||typeof window.fully!=='undefined'||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 let liberadoNav=false,promptInst=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptInst=e;$('#btnInstalar').style.display='block'});
 addEventListener('appinstalled',()=>{$('#btnInstalar').style.display='none';$('#instalar').querySelector('h2').textContent='Instalado! Abra pelo ícone PagNow'});
