@@ -844,11 +844,12 @@ setInterval(travaNav,1500);
 // (só nas lojas com "Aceita pagamento com sistema offline"). Aqui, ao perder a rede, o caixa mostra o QR do app.
 const SB_URL='https://gdnvjpmpfgautrmtkjmx.supabase.co',SB_PUB='sb_publishable_z-GGao9BiSTEUgMi1xAHCQ_5Vh5e3FY';
 const emContingencia=()=>semRede&&contUsa&&!carrinho.length&&!!loja?.id;
-const linkApp=()=>loja?.id?location.origin+location.pathname.replace(/[^/]*$/,'')+'cliente/#l='+loja.id:'';
+// o QR leva também o código deste caixa: se ele cair, o app libera a compra para quem veio por ele
+const linkApp=()=>{if(!loja?.id)return '';const cx=ls.get('bp-caixa-id','');return location.origin+location.pathname.replace(/[^/]*$/,'')+'cliente/#l='+loja.id+(cx?'&c='+cx:'')};
 async function sinal(){if(!token)return;if(!navigator.onLine){marcarRede(false);return}
  const ac=new AbortController(),t=setTimeout(()=>ac.abort(),8000);
  try{const r=await fetch(SB_URL+'/rest/v1/rpc/caixa_sinal',{method:'POST',headers:{'content-type':'application/json',apikey:SB_PUB,authorization:'Bearer '+SB_PUB},body:JSON.stringify({p_token:token}),signal:ac.signal});
-  falhasSinal=0;if(r.ok){const j=await r.json().catch(()=>null);if(j&&j.ok&&!!j.contingencia!==contUsa){contUsa=!!j.contingencia;ls.set('bp-cont',contUsa)}}
+  falhasSinal=0;if(r.ok){const j=await r.json().catch(()=>null);if(j&&j.ok&&!!j.contingencia!==contUsa){contUsa=!!j.contingencia;ls.set('bp-cont',contUsa)}if(j?.ok&&j.caixa&&j.caixa!==ls.get('bp-caixa-id',''))ls.set('bp-caixa-id',j.caixa)}
   marcarRede(true);prepararQr()}
  catch(e){if(++falhasSinal>=2)marcarRede(false)}finally{clearTimeout(t)}}
 function marcarRede(on){semRede=!on;atualizarRede();const t=document.querySelector('.tela.on')?.id;

@@ -58,7 +58,13 @@ h1,h2,h3{font-family:Manrope,Inter,sans-serif;letter-spacing:-.015em}
 .vazio{text-align:center;color:var(--mu);padding:40px 16px}
 .aviso{padding:12px 14px;border-radius:14px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#fde68a;font-size:14px}
 .ok-tela{min-height:70vh;display:grid;place-items:center;text-align:center;gap:12px;padding:20px}.ok-ic{width:96px;height:96px;border-radius:50%;background:var(--ok);display:grid;place-items:center;margin:0 auto}
-.cam{position:relative;border-radius:var(--r);overflow:hidden;background:#000;aspect-ratio:3/4;max-height:58vh;width:100%}.cam video{width:100%;height:100%;object-fit:cover}.cam .mira{position:absolute;left:12%;right:12%;top:38%;height:24%;border:3px solid var(--y);border-radius:16px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.cam{position:relative;border-radius:var(--r);overflow:hidden;background:#000;aspect-ratio:1/1;max-height:46vh;width:100%}.cam video{width:100%;height:100%;object-fit:cover}.cam .mira{position:absolute;left:6%;right:6%;top:32%;height:36%;border:3px solid var(--y);border-radius:16px;box-shadow:0 0 0 999px rgba(0,0,0,.4);overflow:hidden}
+.cam .laser{position:absolute;left:6%;right:6%;top:50%;height:2px;background:rgba(255,214,10,.85);box-shadow:0 0 10px rgba(255,214,10,.9);animation:laser 1.6s ease-in-out infinite alternate}
+@keyframes laser{from{transform:translateY(-26px)}to{transform:translateY(26px)}}@media (prefers-reduced-motion:reduce){.cam .laser{animation:none}}
+.cam-msg{position:absolute;left:0;right:0;bottom:14px;text-align:center;color:#fff;font-size:14px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.8);margin:0}
+.luz{position:absolute;top:12px;right:12px;height:36px;padding:0 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,.25)}.luz.on{background:var(--y);color:#111}
+.item.lido{flex-wrap:wrap;border-color:rgba(34,197,94,.45)}.ok-sm{display:block;color:var(--ok);font-size:13px;font-weight:700;margin-top:2px}
+.ver-car{width:100%;height:44px;border-radius:12px;background:var(--y);color:#111;font-weight:800;font-size:15px}
 .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(16px);background:var(--ink);color:#111;padding:12px 18px;border-radius:14px;font-weight:600;opacity:0;transition:.2s;z-index:40;pointer-events:none;max-width:90vw;text-align:center}.toast.on{opacity:1;transform:translateX(-50%)}
 .pend{border-left:4px solid var(--y)}
 .aceite{display:flex;gap:12px;align-items:flex-start;font-size:14px;color:var(--mu);line-height:1.45;cursor:pointer}.aceite input{width:22px;height:22px;accent-color:var(--y);flex:none;margin-top:1px}.aceite a,.lnk{color:var(--ink);font-weight:600}
@@ -127,10 +133,12 @@ const uuid=()=>crypto.randomUUID?crypto.randomUUID():'10000000-1000-4000-8000-10
 const semAc=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 const bonito=n=>String(n||'').toLowerCase().replace(/(^|[\s\-(\/])([a-zà-ú])/g,(m,a,b)=>a+b.toUpperCase());
 let token=ls.get('bc-token',null),loja=ls.get('bc-loja',null),me=null,cat=ls.get('bc-cat',null),carrinho=ls.get('bc-carrinho',[]),aba='produtos',filtro='todos',busca='',pend=[];
-async function api(acao,dados={}){const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,...dados})});let j={};try{j=await r.json()}catch(e){}
+// caixa cujo QR o cliente leu: se ele estiver sem internet, a compra pelo celular é liberada (vale por 3 h)
+const caixaQr=()=>{const c=ls.get('bc-caixa',null);return c&&Date.now()-c.em<3*3600e3?c.id:undefined};
+async function api(acao,dados={}){const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify({acao,caixa:caixaQr(),...dados})});let j={};try{j=await r.json()}catch(e){}
  if(r.status===401&&token&&!['entrar','cadastrar'].includes(acao)){token=null;ls.del('bc-token');telaEntrada('entrar','Sua sessão expirou. Entre de novo.');throw new Error('sessão')}
  if(!r.ok)throw new Error(j.erro||'Não foi possível concluir');return j}
-async function apiPag(acao,dados={}){const r=await fetch(API_PAG,{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+token},body:JSON.stringify({acao,...dados})});let j={};try{j=await r.json()}catch(e){}
+async function apiPag(acao,dados={}){const r=await fetch(API_PAG,{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+token},body:JSON.stringify({acao,caixa:caixaQr(),...dados})});let j={};try{j=await r.json()}catch(e){}
  if(r.status===401){token=null;ls.del('bc-token');telaEntrada('entrar','Sua sessão expirou. Entre de novo.');throw new Error('sessão')}
  if(!r.ok){const e=new Error(j.erro||'Não foi possível concluir');e.status=r.status;throw e}return j}
 const ICON={coracao:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.1 0 3.6 1.2 5.2 3 1.6-1.8 3.1-3 5.2-3 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>',sino:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>',prod:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>',
@@ -145,7 +153,7 @@ const foto=(p,cls)=>p.foto?`<span class="${cls}"><img src="${esc(p.foto)}" alt="
 // ---------- loja pelo link (#l=ID) ----------
 // logo da empresa (marca própria) quando a loja tem um; senão, o logo padrão
 function logoImg(extra=''){const u=loja?.logo;return `<img class="logo${u?' marca-propria':''}" src="${u?esc(u):'../logo.png'}" alt="${esc(loja?.empresa||'Beep')}" onerror="this.onerror=null;this.src='../logo.png';this.classList.remove('marca-propria')" ${extra}>`}
-const m=location.hash.match(/l=([0-9a-f-]{36})/i);if(m){loja={id:m[1]};ls.set('bc-loja',loja);history.replaceState(null,'',location.pathname)}
+const m=location.hash.match(/l=([0-9a-f-]{36})/i);if(m){loja={id:m[1]};ls.set('bc-loja',loja);const cx=location.hash.match(/c=([0-9a-f-]{36})/i);if(cx)ls.set('bc-caixa',{id:cx[1],em:Date.now()});history.replaceState(null,'',location.pathname)}
 
 // ---------- entrada: cadastro ou login ----------
 function cpfFmt(v){v=v.replace(/\D/g,'').slice(0,11);return v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')}
@@ -209,8 +217,8 @@ function render(){if(!me)return;emPix=false;clearTimeout(pixLoop);nav();({produt
 function faixaCont(){if(!me?.perm?.contingencia)return '';const t=aba==='ler'?'Leia o código de barras de cada produto aqui e pague no Pix pelo carrinho.':aba==='carrinho'?'Confira os produtos e pague no Pix. A tela fica verde quando o pagamento é aprovado.':'Sua compra continua por aqui: toque em Ler código, leia cada produto e pague no Pix.';return `<div class="cont"><span class="ic">${ICON.wifi}</span><span><b>O caixa da loja está sem internet</b><span>${t}</span></span></div>`}
 function cabeca(t,sub){return `<div class="topo"><div class="ola"><h1>${t}</h1><p>${sub}</p></div>${logoImg()}</div>`}
 
-function cardProd(p){const esg=p.estoque==='esgotado';return `<div class="prod ${esg?'esg':''}"><div class="foto${p.foto?'':' sem'}">${p.foto?`<img src="${esc(p.foto)}" alt="" loading="lazy">`:esc(p.nome.trim().charAt(0).toUpperCase())}<span class="est ${p.estoque}">${esg?'Esgotado':p.estoque==='poucos'?'Últimas unidades':'Disponível'}</span><button class="fav ${favs.has(p.id)?'on':''}" data-fav="${p.id}" aria-label="${favs.has(p.id)?'Tirar dos favoritos':'Favoritar'}">${ICON.coracao}</button></div>
- <div class="info"><span class="nome">${esc(bonito(p.nome))}</span><div class="linha"><span class="preco num">${brl(p.preco)}</span>${esg?`<button class="avisar ${avisos.has(p.id)?'on':''}" data-avisar="${p.id}">${ICON.sino}${avisos.has(p.id)?'Vou avisar':'Avise-me'}</button>`:me.perm.compra?`<button class="add" data-add="${p.id}" aria-label="Adicionar ao carrinho">+</button>`:''}</div></div></div>`}
+function cardProd(p){const esg=p.estoque==='esgotado';return `<div class="prod ${esg?'esg':''}"><div class="foto${p.foto?'':' sem'}">${p.foto?`<img src="${esc(p.foto)}" alt="" loading="lazy">`:esc(p.nome.trim().charAt(0).toUpperCase())}${p.estoque?`<span class="est ${p.estoque}">${esg?'Esgotado':p.estoque==='poucos'?'Últimas unidades':'Disponível'}</span>`:''}<button class="fav ${favs.has(p.id)?'on':''}" data-fav="${p.id}" aria-label="${favs.has(p.id)?'Tirar dos favoritos':'Favoritar'}">${ICON.coracao}</button></div>
+ <div class="info"><span class="nome">${esc(bonito(p.nome))}</span><div class="linha"><span class="preco num">${brl(p.preco)}</span>${esg&&!me.perm.compra?`<button class="avisar ${avisos.has(p.id)?'on':''}" data-avisar="${p.id}">${ICON.sino}${avisos.has(p.id)?'Vou avisar':'Avise-me'}</button>`:me.perm.compra?`<button class="add" data-add="${p.id}" aria-label="Adicionar ao carrinho">+</button>`:''}</div></div></div>`}
 function telaProdutos(){const pr=(cat||[]).filter(p=>(filtro==='todos'||(filtro==='fav'?favs.has(p.id):filtro==='disp'?p.estoque!=='esgotado':p.estoque==='esgotado'))&&(!busca||semAc(p.nome).includes(semAc(busca))||p.codigos.includes(busca.trim())));
  $('#app').innerHTML=cabeca('Olá, '+esc((me.cliente.nome||'').split(' ')[0]),'Loja '+esc(me.loja.nome)+(me.perm.compra?' · compra pelo celular liberada':''))+faixaCont()+(chegaram.length?`<div class="chegou"><span style="font-size:26px">🎉</span><span><b>Chegou na loja!</b><span class="mu sm">${chegaram.map(p=>esc(bonito(p.nome))).join(', ')} ${chegaram.length>1?'voltaram':'voltou'} ao estoque.</span></span><button class="x" id="xCheg" aria-label="Fechar">×</button></div>`:'')+(busca?'':blocoAds())+
   `<div class="busca">${ICON.lupa}<input type="search" id="q" placeholder="Buscar produto" value="${esc(busca)}"></div>
@@ -231,17 +239,58 @@ async function adicionar(id){const p=cat.find(x=>x.id===id);if(!p)return;if(p.ma
  const x=carrinho.find(i=>i.id===id);if(x)x.q=Math.min(99,x.q+1);else carrinho.push({id,q:1});salvarCar();navigator.vibrate?.(30);toast(bonito(p.nome)+' no carrinho');nav()}
 
 // ---------- ler código ----------
-let camStream=null,camLoop=null;
-function pararCam(){if(camLoop)cancelAnimationFrame(camLoop);camLoop=null;camStream?.getTracks().forEach(t=>t.stop());camStream=null}
-async function telaLer(){$('#app').innerHTML=cabeca('Ler código','Aponte a câmera para o código de barras do produto')+faixaCont()+`<div class="cam"><video id="vid" playsinline muted></video><div class="mira"></div></div>
-  <div class="busca" style="margin-top:14px">${ICON.lupa}<input id="codMan" inputmode="numeric" placeholder="Ou digite o código de barras"></div><div id="res" style="margin-top:12px"></div>`;
- $('#codMan').onchange=e=>mostrarCod(e.target.value.trim());
- if(!('BarcodeDetector' in window)){$('#res').innerHTML='<p class="mu sm">Este celular não lê código pela câmera. Digite o número que fica embaixo das barras.</p>';$('.cam').style.display='none';return}
- try{camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});const v=$('#vid');v.srcObject=camStream;await v.play();const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});let ult='';
-  const loop=async()=>{if(!camStream)return;try{const r=await det.detect(v);if(r[0]&&r[0].rawValue!==ult){ult=r[0].rawValue;navigator.vibrate?.(40);mostrarCod(ult)}}catch(e){}camLoop=requestAnimationFrame(()=>setTimeout(loop,180))};loop()}
- catch(e){$('.cam').style.display='none';$('#res').innerHTML='<p class="mu sm">Não consegui abrir a câmera. Libere a câmera para este site ou digite o código.</p>'}}
-function mostrarCod(c){const nz=x=>String(x).replace(/\D/g,'').replace(/^0+/,'');const p=(cat||[]).find(x=>x.codigos.some(k=>nz(k)===nz(c)));
- $('#res').innerHTML=p?`<div class="item">${foto(p,'th')}<span class="n">${esc(bonito(p.nome))}<small class="num">${brl(p.preco)}</small><span class="mu sm" style="display:block;font-weight:500">${p.estoque==='esgotado'?'Esgotado nesta loja':p.estoque==='poucos'?'Últimas unidades':'Disponível'}</span></span>${me.perm.compra&&p.estoque!=='esgotado'?`<button class="add" data-add="${p.id}" aria-label="Adicionar ao carrinho">+</button>`:''}</div>`:`<div class="aviso">O código ${esc(c)} não está à venda nesta loja.</div>`;ligarAdd()}
+// Leitor pela câmera: usa o leitor do próprio celular (Android) e, onde não existe (iPhone), um leitor embutido.
+// Só aceita código com dígito verificador certo e lido 2 vezes seguidas: acaba com leitura errada
+// ("não está à venda") de código lido pela metade. Lê só a faixa da mira, em alta resolução.
+let camStream=null,camLoop=null,camGen=0,detector=null,lerOcupado=false,ult='',falta=0,ultRes=null;
+function pararCam(){camGen++;if(camLoop)clearTimeout(camLoop);camLoop=null;camStream?.getTracks().forEach(t=>t.stop());camStream=null}
+const soNum=x=>String(x).replace(/\D/g,'');
+const nzCod=x=>soNum(x).replace(/^0+/,'');
+function gtinOk(c){if(!/^(\d{8}|\d{12,14})$/.test(c))return false;const d=c.split('').reverse().map(Number);let s=0;for(let i=1;i<d.length;i++)s+=d[i]*(i%2?3:1);return (10-s%10)%10===d[0]}
+async function obterDetector(){if(detector)return detector;const F=['ean_13','ean_8','upc_a'];
+ if('BarcodeDetector' in window){try{const sup=await BarcodeDetector.getSupportedFormats();const f=F.filter(x=>sup.includes(x));if(f.length)return detector=new BarcodeDetector({formats:f})}catch(e){}}
+ if(!window.BarcodeDetectionAPI)await new Promise((ok,er)=>{const sc=document.createElement('script');sc.src='vendor/barcode-detector.js';sc.onload=ok;sc.onerror=er;document.head.appendChild(sc)});
+ const A=window.BarcodeDetectionAPI;A.prepareZXingModule({overrides:{locateFile:(f,pre)=>f.endsWith('.wasm')?new URL('vendor/zxing_reader.wasm',location.href).href:pre+f},fireImmediately:true});
+ return detector=new A.BarcodeDetector({formats:F})}
+async function telaLer(){pararCam();const gen=camGen;$('#app').innerHTML=cabeca('Ler código','Aponte a câmera para o código de barras, dentro da faixa amarela')+faixaCont()+`<div class="cam"><video id="vid" playsinline muted></video><div class="mira"><span class="laser"></span></div><button class="luz" id="luz" hidden aria-label="Lanterna">Lanterna</button><p class="cam-msg" id="camMsg">Abrindo a câmera…</p></div>
+  <div id="res" style="margin-top:12px"></div><div class="busca" style="margin-top:12px">${ICON.lupa}<input id="codMan" inputmode="numeric" enterkeyhint="search" placeholder="Ou digite o código de barras"></div>`;
+ if(ultRes&&Date.now()-ultRes.t<20000){$('#res').innerHTML=ultRes.h;$('#verCar')&&($('#verCar').onclick=verCarrinho)}
+ $('#codMan').onchange=e=>{const c=soNum(e.target.value);if(c){aceitarCod(c,true);e.target.value=''}};
+ let det;try{det=await obterDetector()}catch(e){if(gen===camGen)semCamera('Este celular não lê código pela câmera. Digite o número que fica embaixo das barras.');return}
+ let st;try{st=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}})}
+ catch(e){if(gen===camGen)semCamera('Não consegui abrir a câmera. Libere a câmera para este site nas configurações do navegador ou digite o código.');return}
+ if(aba!=='ler'||gen!==camGen){st.getTracks().forEach(t=>t.stop());return}
+ camStream=st;
+ const v=$('#vid');v.srcObject=camStream;try{await v.play()}catch(e){}
+ const tr=camStream.getVideoTracks()[0],cap=tr.getCapabilities?.()||{};
+ try{if(cap.focusMode?.includes('continuous'))await tr.applyConstraints({advanced:[{focusMode:'continuous'}]})}catch(e){}
+ if(cap.torch){const b=$('#luz');b.hidden=false;let on=false;b.onclick=async()=>{on=!on;try{await tr.applyConstraints({advanced:[{torch:on}]});b.classList.toggle('on',on)}catch(e){}}}
+ $('#camMsg').textContent='Aproxime o código da faixa amarela';
+ const cv=document.createElement('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});let cand='',vezes=0;
+ const loop=async()=>{if(gen!==camGen||!camStream||aba!=='ler')return;
+  if(!lerOcupado&&v.videoWidth){try{
+   // recorta só a faixa da mira (o vídeo aparece cortado na tela: object-fit cover)
+   const box=v.getBoundingClientRect(),vw=v.videoWidth,vh=v.videoHeight,esc_=Math.max(box.width/vw,box.height/vh),sw=box.width/esc_,sh=box.height/esc_,sx=(vw-sw)/2,sy=(vh-sh)/2;
+   const x=sx+sw*.04,y=sy+sh*.3,w=sw*.92,h=sh*.4;cv.width=Math.min(1280,Math.round(w));cv.height=Math.round(h*cv.width/w);cx.drawImage(v,x,y,w,h,0,0,cv.width,cv.height);
+   const r=await det.detect(cv);const c=r.map(b=>soNum(b.rawValue)).find(gtinOk);
+   // o mesmo produto só entra de novo depois de sair da frente da câmera (evita somar sem querer)
+   if(c!==ult){if(++falta>=4)ult=''}else falta=0;
+   if(c&&c!==ult){if(c===cand)vezes++;else{cand=c;vezes=1}
+    if(vezes>=2){ult=c;falta=0;vezes=0;cand='';await aceitarCod(c,false)}}
+  }catch(e){}}
+  if(gen===camGen)camLoop=setTimeout(loop,120)};loop()}
+function semCamera(t){pararCam();const c=$('.cam');if(c)c.style.display='none';$('#res').innerHTML=`<p class="mu sm">${t}</p>`;$('#codMan')?.focus()}
+async function aceitarCod(c,manual){const p=(cat||[]).find(x=>x.codigos.some(k=>nzCod(k)===nzCod(c)));
+ if(!p){navigator.vibrate?.([80,60,80]);$('#res').innerHTML=`<div class="aviso">O código ${esc(c)} não foi encontrado nesta loja.${manual?' Confira o número.':' Tente de novo ou digite o número.'}</div>`;return}
+ navigator.vibrate?.(40);const selo=p.estoque==='poucos'?'<span class="mu sm" style="display:block;font-weight:500">Últimas unidades</span>':'';
+ if(!me.perm.compra){$('#res').innerHTML=`<div class="item">${foto(p,'th')}<span class="n">${esc(bonito(p.nome))}<small class="num">${brl(p.preco)}</small>${selo}</span></div>`;return}
+ lerOcupado=true;const antes=qtdCar();try{await adicionar(p.id)}finally{lerOcupado=false}
+ if(qtdCar()===antes){$('#res').innerHTML='';return}
+ const q=carrinho.find(i=>i.id===p.id)?.q||1;
+ $('#res').innerHTML=`<div class="item lido">${foto(p,'th')}<span class="n">${esc(bonito(p.nome))}<small class="num">${brl(p.preco)}${q>1?` · ${q} no carrinho`:''}</small><span class="ok-sm">✓ No carrinho</span></span><button class="ver-car" id="verCar">Ver carrinho · ${brl(totCar())}</button></div>`;
+ ultRes={h:$('#res').innerHTML,t:Date.now()};$('#verCar').onclick=verCarrinho}
+function verCarrinho(){pararCam();ultRes=null;aba='carrinho';render();window.scrollTo(0,0)}
+const mostrarCod=c=>aceitarCod(soNum(c),true);
 
 // ---------- carrinho e pagamento ----------
 let formaSel='pix';
