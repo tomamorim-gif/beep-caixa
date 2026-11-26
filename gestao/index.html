@@ -263,7 +263,7 @@ async function iniciar(){const kit=(location.hash.match(/kit=([A-Za-z0-9]{8})/)|
  const {data:{session}}=await sb.auth.getSession();if(!session){telaLogin();return}S.user=session.user;
  const {data:m}=await sb.from('membros').select('empresa_id,papel').eq('user_id',S.user.id).eq('ativo',true).in('papel',['dono','gerente']).limit(1);
  if(!m?.length){await sb.auth.signOut();telaLogin('entrar','Este login não tem acesso de dono ou gerente.');return}
- S.papel=m[0].papel;const {data:emp}=await sb.from('empresas').select('id,nome_exibicao,razao_social,cnpj,regra_preco,gravacao,dias_video').eq('id',m[0].empresa_id).single();S.emp=emp;
+ S.papel=m[0].papel;const {data:emp}=await sb.from('empresas').select('id,nome_exibicao,razao_social,cnpj,regra_preco,gravacao,dias_video,logo_path').eq('id',m[0].empresa_id).single();S.emp=emp;
  try{await carregar()}catch(e){$('#raiz').innerHTML=`<div class="login"><div class="card"><h2>Não foi possível carregar</h2><p class="mu">${esc(e.message)}</p><button class="btn" onclick="location.reload()">Tentar de novo</button></div></div>`;return}
  shell()}
 function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img class="logo" src="../logo-claro.png" alt="PagNow">
@@ -1152,6 +1152,7 @@ function telaCfg(){const M=$('#main'),g=S.emp.gravacao||'intercorrencias',d=S.em
    ${dono?'<div class="row"><span class="sp"></span><button class="btn pri" id="salvarCfg">Salvar</button></div>':'<p class="mu sm">Só o dono pode mudar estas opções.</p>'}
   </div>
   <div class="card" style="max-width:760px;margin-top:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h2 style="font-size:18px">Aviso de câmera (LGPD)</h2><p class="mu sm" style="margin-top:4px">Cartaz para colar perto do caixa. O app do cliente já pede o aceite dos <a href="../termos/" target="_blank" style="color:var(--ink)">Termos e Privacidade</a>, que explicam a gravação.</p></div><button class="btn" id="cartazCam">Imprimir cartaz</button></div>
+  <div class="card" id="marcaCard" style="max-width:760px;margin-top:16px;display:flex;gap:18px;align-items:center;flex-wrap:wrap"><div id="marcaPrev" style="width:104px;height:104px;border-radius:14px;background:var(--soft,#f3f3f1);display:grid;place-items:center;overflow:hidden;flex:none"></div><div style="flex:1;min-width:240px"><h2 style="font-size:18px">Logo da loja nas telas</h2><p class="mu sm" style="margin-top:4px">Aparece no caixa de autoatendimento e no app do cliente no lugar do logo padrão. PNG, JPG, WebP ou SVG; o ideal é fundo transparente. Os caixas trocam em até 10 minutos.</p>${dono?'<div class="row" style="margin-top:10px"><input type="file" id="marcaArq" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden><button class="btn pri" id="marcaEnviar">Enviar logo</button><button class="btn" id="marcaTirar" hidden>Voltar ao padrão</button></div>':'<p class="mu sm" style="margin-top:8px">Só o dono pode trocar o logo.</p>'}</div></div>
   <div class="card" id="mpCard" style="max-width:760px;margin-top:16px;display:grid;gap:12px"><div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h2 style="font-size:18px">Maquininha de cartão · Mercado Pago</h2><p class="mu sm" style="margin-top:4px">Credencial da conta que recebe as vendas no cartão dos caixas. Fica guardada só no servidor, nunca no tablet.</p></div><span class="pill" id="mpEstado">Verificando…</span></div><div id="mpCorpo"></div></div>
   <div class="card" id="nfCard" style="max-width:760px;margin-top:16px;display:grid;gap:12px"><div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="flex:1;min-width:240px"><h2 style="font-size:18px">Nota fiscal do consumidor · NFC-e</h2><p class="mu sm" style="margin-top:4px">O servidor emite a nota de cada venda paga, com o certificado A1 da empresa, direto na SEFAZ.</p></div><span class="pill" id="nfEstado">Verificando…</span></div><div id="nfCorpo"></div></div>
   <div class="card" style="max-width:760px;margin-top:16px"><h2 style="font-size:18px">Regra de preço para produtos novos</h2><p class="mu sm" style="margin-top:4px">Custo ÷ ${String(regra().divisor).replace('.',',')}, arredondado para cima terminando em ,${String(regra().terminacaoCentavos).padStart(2,'0')}. Exemplo: custo ${brl(204)} → ${brl(precoSugerido(204))}.</p></div>`;
@@ -1160,8 +1161,27 @@ function telaCfg(){const M=$('#main'),g=S.emp.gravacao||'intercorrencias',d=S.em
    <h2 style="font-size:34px;line-height:1.1">Ambiente monitorado<br>por câmera</h2><p style="max-width:520px;font-size:18px" class="mu">O caixa de autoatendimento grava vídeo ${g==='tudo'?'durante as compras':'em ocorrências (compras canceladas, abandonadas ou recusadas)'} para a segurança de todos. As imagens ficam guardadas por até ${dias} ${dias===1?'dia':'dias'}, só a loja tem acesso, e depois são apagadas.</p>
    <p class="mu sm">Lei nº 13.709/2018 (LGPD) · ${esc(S.emp.razao_social||'')} · Saiba mais: ${esc(location.origin+location.pathname.replace(/gestao\/?.*$/,''))}termos/#camera</p></div>
    <div class="row"><span class="sp"></span><button class="btn" data-close>Fechar</button><button class="btn pri" onclick="window.print()">Imprimir</button></div>`)};
- cartaoMp();cartaoNf();
+ cartaoMp();cartaoNf();cartaoMarca();
  if(dono)$('#salvarCfg').onclick=async()=>{const gv=M.querySelector('input[name=grav]:checked').value,dv=+$('#dias').value;const r=await sb.from('empresas').update({gravacao:gv,dias_video:dv}).eq('id',S.emp.id);if(r.error)return toast('Erro: '+r.error.message);S.emp.gravacao=gv;S.emp.dias_video=dv;toast('Configuração salva. Os caixas aplicam em até 10 minutos.')}}
+
+// ---------- logo da empresa (marca própria): bucket privado "marca", caminho <empresa>/logo-<data>.png ----------
+// O arquivo é redesenhado num canvas de no máximo 512 px (PNG): fica leve para o caixa guardar e mostrar sem internet.
+async function cartaoMarca(){const P=$('#marcaPrev');if(!P)return;const tirar=$('#marcaTirar');
+ const vazio=()=>{P.innerHTML='<span class="mu sm" style="text-align:center;padding:8px">Logo padrão</span>';if(tirar)tirar.hidden=true};
+ if(!S.emp.logo_path)vazio();else{const {data}=await sb.storage.from('marca').createSignedUrl(S.emp.logo_path,3600);
+  if(data?.signedUrl){P.innerHTML=`<img src="${esc(data.signedUrl)}" alt="Logo" style="max-width:92px;max-height:92px;object-fit:contain">`;if(tirar)tirar.hidden=false}else vazio()}
+ const env=$('#marcaEnviar'),arq=$('#marcaArq');if(!env)return;env.onclick=()=>arq.click();
+ arq.onchange=async()=>{const f=arq.files[0];arq.value='';if(!f)return;if(f.size>5e6)return toast('Arquivo maior que 5 MB');
+  env.disabled=true;env.textContent='Enviando…';
+  try{const url=URL.createObjectURL(f),img=new Image();await new Promise((ok,er)=>{img.onload=ok;img.onerror=()=>er(new Error('Não consegui abrir esta imagem'));img.src=url});
+   const w=img.naturalWidth||512,h=img.naturalHeight||512,k=Math.min(1,512/Math.max(w,h)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(w*k));c.height=Math.max(1,Math.round(h*k));
+   c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+   const blob=await new Promise(ok=>c.toBlob(ok,'image/png'));if(!blob)throw new Error('Não consegui converter a imagem');
+   const path=`${S.emp.id}/logo-${Date.now()}.png`;const up=await sb.storage.from('marca').upload(path,blob,{contentType:'image/png'});if(up.error)throw new Error(up.error.message);
+   const r=await sb.from('empresas').update({logo_path:path}).eq('id',S.emp.id);if(r.error)throw new Error(r.error.message);
+   S.emp.logo_path=path;toast('Logo salvo. Os caixas trocam em até 10 minutos.');cartaoMarca()}catch(e){toast('Erro: '+e.message)}
+  env.disabled=false;env.textContent='Enviar logo'};
+ if(tirar)tirar.onclick=async()=>{if(!confirmar('Voltar ao logo padrão nos caixas e no app?'))return;const r=await sb.from('empresas').update({logo_path:null}).eq('id',S.emp.id);if(r.error)return toast('Erro: '+r.error.message);S.emp.logo_path=null;toast('Logo padrão de volta');cartaoMarca()}}
 
 // ---------- ponte para o assistente (skill no Claude no Chrome): só funciona com o login aberto ----------
 window.beep={

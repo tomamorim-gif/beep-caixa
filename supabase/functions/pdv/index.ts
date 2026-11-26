@@ -4,6 +4,13 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+// logo da empresa (marca própria, bucket privado "marca"): link assinado de 30 dias; o caixa guarda uma cópia local
+async function logoAssinado(path: string | null | undefined) {
+  if (!path) return null;
+  const { data, error } = await db.storage.from("marca").createSignedUrl(path, 60 * 60 * 24 * 30);
+  if (error) console.error("catalogo: logo", error.message);
+  return data?.signedUrl ?? null;
+}
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
 const erro = (m: string, s = 400) => json({ erro: m }, s);
@@ -94,7 +101,7 @@ Deno.serve(async (req) => {
   if (acao === "catalogo") {
     const [{ data: precos }, { data: emp }, { data: loja }] = await Promise.all([
       db.from("precos_local").select("preco, ativo_no_mix, produtos!inner(id, nome, ean, unidade, ativo, idade_minima, produto_codigos(ean, quantidade))").eq("local_id", d.local_id).eq("ativo_no_mix", true),
-      db.from("empresas").select("nome_exibicao, cores, gravacao, dias_video").eq("id", d.empresa_id).single(),
+      db.from("empresas").select("nome_exibicao, cores, gravacao, dias_video, logo_path").eq("id", d.empresa_id).single(),
       db.from("locais").select("nome, teste").eq("id", d.local_id).single(),
     ]);
     await db.from("dispositivos").update({ ultimo_sinal: new Date().toISOString() }).eq("id", d.id);
@@ -127,7 +134,7 @@ Deno.serve(async (req) => {
       codigos: [...new Set([p.produtos.ean, ...(p.produtos.produto_codigos ?? []).map((c: any) => c.ean)].filter(Boolean))],
     }));
     const gravacao = { modo: emp?.gravacao ?? "intercorrencias", dias: emp?.dias_video ?? 3 };
-    return json({ empresa: { nome_exibicao: emp?.nome_exibicao, cores: emp?.cores }, loja: loja?.nome, loja_teste: !!loja?.teste, aparelho: d.nome, gravacao, produtos, midia: await midiaCaixa(d), atualizado: new Date().toISOString() });
+    return json({ empresa: { nome_exibicao: emp?.nome_exibicao, cores: emp?.cores, logo: await logoAssinado(emp?.logo_path), logo_versao: emp?.logo_path ?? null }, loja: loja?.nome, loja_teste: !!loja?.teste, aparelho: d.nome, gravacao, produtos, midia: await midiaCaixa(d), atualizado: new Date().toISOString() });
   }
 
   // preços sempre daqui: o aparelho nunca define o valor

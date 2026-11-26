@@ -6,6 +6,12 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+// logo da empresa (marca própria, bucket privado "marca"): link assinado de 30 dias
+async function logoAssinado(path: string | null | undefined) {
+  if (!path) return null;
+  const { data } = await db.storage.from("marca").createSignedUrl(path, 60 * 60 * 24 * 30);
+  return data?.signedUrl ?? null;
+}
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
 const erro = (m: string, s = 400) => json({ erro: m }, s);
@@ -75,8 +81,8 @@ Deno.serve(async (req) => {
     const l = await lojaInfo(b.loja);
     const cont = l ? await contingencia(l.id) : false;
     if (!l || !(l.app_consulta || cont)) return erro("Esta loja ainda não liberou o app", 404);
-    const { data: e } = await db.from("empresas").select("nome_exibicao").eq("id", l.empresa_id).single();
-    return json({ loja: { id: l.id, nome: l.nome }, empresa: e?.nome_exibicao ?? "Beep", contingencia: cont });
+    const { data: e } = await db.from("empresas").select("nome_exibicao, logo_path").eq("id", l.empresa_id).single();
+    return json({ loja: { id: l.id, nome: l.nome }, empresa: e?.nome_exibicao ?? "Beep", logo: await logoAssinado(e?.logo_path), contingencia: cont });
   }
 
   if (acao === "cadastrar") {
@@ -165,7 +171,10 @@ Deno.serve(async (req) => {
     return json({ ok: true });
   }
 
-  if (acao === "me") return json({ cliente: { nome: s.c.nome, unidade: s.c.unidade, cpf: s.c.cpf_mascara }, loja: { id: s.l.id, nome: s.l.nome }, perm: s.perm, pagamento_teste: false, termos_ok: s.c.termos_versao === TERMOS_V });
+  if (acao === "me") {
+    const { data: e } = await db.from("empresas").select("logo_path").eq("id", s.c.empresa_id).single();
+    return json({ cliente: { nome: s.c.nome, unidade: s.c.unidade, cpf: s.c.cpf_mascara }, loja: { id: s.l.id, nome: s.l.nome, logo: await logoAssinado(e?.logo_path) }, perm: s.perm, pagamento_teste: false, termos_ok: s.c.termos_versao === TERMOS_V });
+  }
 
   // o app pergunta de tempos em tempos: a contingência começou ou acabou?
   if (acao === "status") return json({ perm: s.perm });
