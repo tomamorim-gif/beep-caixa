@@ -49,11 +49,12 @@ async function lojaInfo(id: string) {
   return l;
 }
 // contingência valendo agora nesta loja (caixa sem sinal): o app abre mesmo que a loja esteja só em consulta
-async function contingencia(localId: string) {
-  const { data, error } = await db.rpc("loja_contingencia", { p_local: localId });
+// caixa: o caixa cujo QR o cliente leu (se ele estiver sem sinal, libera a compra mesmo com outro caixa online)
+async function contingencia(localId: string, caixa?: unknown) {
+  const { data, error } = await db.rpc("contingencia_agora", { p_local: localId, p_caixa: uuidOk(caixa) ? caixa : null });
   return !error && data === true;
 }
-async function sessao(req: Request) {
+async function sessao(req: Request, caixa?: unknown) {
   const tok = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (tok.length < 30) return null;
   const { data: s } = await db.from("sessoes_cliente").select("cliente_id, expira_em").eq("token_hash", await sha256(tok)).maybeSingle();
@@ -62,7 +63,7 @@ async function sessao(req: Request) {
   if (!c || !c.ativo) return null;
   const l = await lojaInfo(c.local_id);
   if (!l) return null;
-  const { data: p, error } = await db.rpc("app_perm", { p_cliente: c.id });
+  const { data: p, error } = await db.rpc("app_perm", { p_cliente: c.id, p_caixa: uuidOk(caixa) ? caixa : null });
   let perm: any;
   if (!error && p) perm = { consulta: true, compra: !!p.compra, pendente: !!p.pendente, contingencia: !!p.contingencia };
   else { const compra = l.app_compra || c.compra_liberada; perm = { consulta: true, compra, pendente: l.app_pendente || compra, contingencia: false }; }
@@ -79,7 +80,7 @@ Deno.serve(async (req) => {
   if (acao === "loja") {
     if (!uuidOk(b.loja)) return erro("Link da loja inválido");
     const l = await lojaInfo(b.loja);
-    const cont = l ? await contingencia(l.id) : false;
+    const cont = l ? await contingencia(l.id, b.caixa) : false;
     if (!l || !(l.app_consulta || cont)) return erro("Esta loja ainda não liberou o app", 404);
     const { data: e } = await db.from("empresas").select("nome_exibicao, logo_path").eq("id", l.empresa_id).single();
     return json({ loja: { id: l.id, nome: l.nome }, empresa: e?.nome_exibicao ?? "Beep", logo: await logoAssinado(e?.logo_path), contingencia: cont });
@@ -88,7 +89,7 @@ Deno.serve(async (req) => {
   if (acao === "cadastrar") {
     if (!uuidOk(b.loja)) return erro("Link da loja inválido");
     const l = await lojaInfo(b.loja);
-    if (!l || !(l.app_consulta || await contingencia(l.id))) return erro("Esta loja ainda não liberou o app", 404);
+    if (!l || !(l.app_consulta || await contingencia(l.id, b.caixa))) return erro("Esta loja ainda não liberou o app", 404);
     const nome = String(b.nome ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
     const unidade = String(b.unidade ?? "").trim().slice(0, 30);
     const cpf = String(b.cpf ?? "").replace(/\D/g, "");
@@ -153,7 +154,7 @@ Deno.serve(async (req) => {
       totais: { visualizacoes: v, cliques: k, pessoas: pessoas.size }, canais, dias: [...dias].map(([d, x]) => ({ d, ...x })), gerado: new Date().toISOString() });
   }
 
-  const s = await sessao(req);
+  const s = await sessao(req, b.caixa);
   if (!s) return erro("Entre de novo no app", 401);
 
   if (acao === "aceitar_termos") {
@@ -199,11 +200,15 @@ Deno.serve(async (req) => {
       const porPath = new Map((urls ?? []).filter((u: any) => u.signedUrl).map((u: any) => [u.path, u.signedUrl]));
       for (const f of fs) if (porPath.has(f.path)) fotos.set(f.produto_id, porPath.get(f.path)!);
     }
+    // loja sem controle de estoque (quase nenhum produto com saldo lançado): não mostra "esgotado", senão o app
+    // trava a compra de produtos que estão na prateleira
+    const comSaldo = ativos.filter((p: any) => (saldo.get(p.produtos.id) ?? 0) > 0).length;
+    const controla = comSaldo >= Math.max(5, ativos.length * 0.3);
     const produtos = ativos.map((p: any) => {
       const q = saldo.get(p.produtos.id) ?? 0;
       return { id: p.produtos.id, nome: p.produtos.nome, preco: p.preco, foto: fotos.get(p.produtos.id) ?? null, maior18: (p.produtos.idade_minima ?? 0) >= 18,
         codigos: [...new Set([p.produtos.ean, ...(p.produtos.produto_codigos ?? []).map((c: any) => c.ean)].filter(Boolean))],
-        estoque: q <= 0 ? "esgotado" : q <= 3 ? "poucos" : "tem" };
+        estoque: !controla ? null : q <= 0 ? "esgotado" : q <= 3 ? "poucos" : "tem" };
     }).sort((a: any, b: any) => a.nome.localeCompare(b.nome, "pt-BR"));
     // avise-me: o que o cliente pediu e o que já voltou ao estoque (avisa uma vez só)
     const { data: avs } = await db.from("avisos_estoque").select("id, produto_id").eq("cliente_app_id", s.c.id).is("avisado_em", null);

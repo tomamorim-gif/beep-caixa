@@ -239,14 +239,14 @@ async function encerrarAnterior(a: any, tk: string) {
 // ---------- app do cliente: Pix no próprio celular ----------
 // Vale quando a loja libera a compra no app, para clientes selecionados, para vendas travadas
 // e na contingência (caixa da loja sem internet). A regra de quem pode comprar fica no banco (app_perm).
-async function clienteSessao(req: Request) {
+async function clienteSessao(req: Request, caixa?: unknown) {
   const tok = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (tok.length < 30) return null;
   const { data: s } = await db.from("sessoes_cliente").select("cliente_id, expira_em").eq("token_hash", await sha256(tok)).maybeSingle();
   if (!s || new Date(s.expira_em) < new Date()) return null;
   const { data: c } = await db.from("clientes_app").select("id, empresa_id, local_id, ativo").eq("id", s.cliente_id).maybeSingle();
   if (!c || !c.ativo) return null;
-  const { data: perm, error } = await db.rpc("app_perm", { p_cliente: c.id });
+  const { data: perm, error } = await db.rpc("app_perm", { p_cliente: c.id, p_caixa: uuidOk(caixa) ? caixa : null });
   if (error || !perm) return null;
   return { c, perm: perm as { compra: boolean; pendente: boolean; contingencia: boolean } };
 }
@@ -274,7 +274,7 @@ async function calcularApp(c: any, itensIn: any[]) {
 }
 
 async function appCliente(req: Request, b: Record<string, any>) {
-  const s = await clienteSessao(req);
+  const s = await clienteSessao(req, b.caixa);
   if (!s) return erro("Entre de novo no app", 401);
   const tk = (await credencial(s.c.empresa_id)).token;
   if (tk.length <= 20) return erro("O Pix pelo app ainda não está disponível nesta loja. Pague no caixa.", 503);
