@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- O PagNow não pede nenhuma política de administrador além de ser o dono do aparelho (quiosque). -->
+<device-admin>
+    <uses-policies />
+</device-admin>

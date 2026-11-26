@@ -35,6 +35,16 @@ async function aparelho(req: Request) {
   return data && data.ativo ? data : null;
 }
 
+// modo quiosque do app Android (Painel › Caixas). O sal do PIN é o id do caixa, igual ao cálculo do banco.
+// Lido à parte e sem derrubar o catálogo: se a coluna ainda não existir, o caixa só não recebe o quiosque.
+async function quiosqueDoCaixa(d: any) {
+  const { data, error } = await db.from("dispositivos").select("quiosque").eq("id", d.id).maybeSingle();
+  if (error) { console.error("catalogo: quiosque", error.message); return null; }
+  const q = data?.quiosque;
+  if (!q || typeof q !== "object") return null;
+  return { ligado: !!q.ligado, pin_hash: q.pin_hash ?? null, sal: d.id, pagina: q.pagina === "vendedor" ? "vendedor" : "caixa", atualizado: q.atualizado ?? null };
+}
+
 // anúncios com canal "caixa" para a loja do aparelho, em ordem fixa (pagos primeiro, ofertas da loja depois)
 async function midiaCaixa(d: any) {
   const br = new Date(Date.now() - 3 * 3600 * 1000), hoje = br.toISOString().slice(0, 10);
@@ -134,7 +144,7 @@ Deno.serve(async (req) => {
       codigos: [...new Set([p.produtos.ean, ...(p.produtos.produto_codigos ?? []).map((c: any) => c.ean)].filter(Boolean))],
     }));
     const gravacao = { modo: emp?.gravacao ?? "intercorrencias", dias: emp?.dias_video ?? 3 };
-    return json({ empresa: { nome_exibicao: emp?.nome_exibicao, cores: emp?.cores, logo: await logoAssinado(emp?.logo_path), logo_versao: emp?.logo_path ?? null }, loja: loja?.nome, loja_teste: !!loja?.teste, aparelho: d.nome, gravacao, produtos, midia: await midiaCaixa(d), atualizado: new Date().toISOString() });
+    return json({ empresa: { nome_exibicao: emp?.nome_exibicao, cores: emp?.cores, logo: await logoAssinado(emp?.logo_path), logo_versao: emp?.logo_path ?? null }, loja: loja?.nome, loja_teste: !!loja?.teste, aparelho: d.nome, gravacao, produtos, midia: await midiaCaixa(d), quiosque: await quiosqueDoCaixa(d), atualizado: new Date().toISOString() });
   }
 
   // preços sempre daqui: o aparelho nunca define o valor

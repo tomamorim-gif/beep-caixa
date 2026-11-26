@@ -378,6 +378,7 @@ img.marca-propria{width:auto;object-fit:contain;border-radius:0}
     <button class="btn g" id="admVoz">Voz: ligada</button>
     <button class="btn g" id="admPin">Trocar PIN do gerente</button>
     <button class="btn g" id="admTela">Como travar o celular no caixa</button>
+    <button class="btn g" id="admQuiosque" style="display:none">Modo quiosque deste tablet</button>
     <button class="btn g" id="admMic">Liberar microfone (atendimento por áudio)</button>
     <button class="btn g" id="admMaq">Maquininha de cartão (Mercado Pago)</button>
     <button class="btn bad" id="admSair">Desativar este aparelho</button>
@@ -449,7 +450,11 @@ function mostrarSlide(L,i){clearTimeout(dsRoda);if(!$('#descanso').classList.con
 function registrarDs(a,seg){if(seg<2)return;dsEv.push({anuncio_id:a.id,campanha_id:a.campanha_id,tipo:'exibicao',segundos:Math.round(seg),em:new Date().toISOString()});if(dsEv.length>2000)dsEv=dsEv.slice(-2000);ls.set('bp-midia-ev',dsEv)}
 function fecharDescanso(){const D=$('#descanso');if(!D.classList.contains('on'))return;const L=adsCaixa();if(dsDesde&&L[dsIdx])registrarDs(L[dsIdx],(Date.now()-dsDesde)/1000);dsDesde=0;clearTimeout(dsRoda);D.classList.remove('on');$('#dsSlides').innerHTML='';enviarDs()}
 async function enviarDs(){if(!dsEv.length||!navigator.onLine||!token)return;const lote=dsEv.slice(0,200);try{await api('midia_evento',{eventos:lote});dsEv=dsEv.slice(lote.length);ls.set('bp-midia-ev',dsEv)}catch(e){}}
-$('#admMaq').onclick=()=>abrirMaq();$('#fecharMaq').onclick=()=>abrirAdmin();
+$('#admMaq').onclick=()=>abrirMaq();
+// app Android: modo quiosque (trava o tablet no PagNow). A configuração do Painel chega junto com o catálogo.
+const temQuiosque=!!(NATIVO&&typeof NATIVO.abrirQuiosque==='function');
+if(temQuiosque){$('#admQuiosque').style.display='';$('#admQuiosque').onclick=()=>{try{NATIVO.abrirQuiosque()}catch(e){}}}
+function quiosqueDoPainel(q){if(!temQuiosque||q===undefined)return;try{NATIVO.quiosque(JSON.stringify(q))}catch(e){}}$('#fecharMaq').onclick=()=>abrirAdmin();
 if(NATIVO){setTimeout(ajustarFormas,0);const vv=window.beepNativoVoltou;window.beepNativoVoltou=()=>{try{vv&&vv()}catch(e){}ajustarFormas()}}
 $('#descanso').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();fecharDescanso();armarDescanso('espera');setTimeout(()=>$('#leitor').focus({preventScroll:true}),60)});
 document.addEventListener('keydown',()=>{if($('#descanso').classList.contains('on'))fecharDescanso();const t=document.querySelector('.tela.on');if(t?.id==='espera')armarDescanso('espera')},true);
@@ -488,7 +493,7 @@ $('#kitPinIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefau
 const kitSemPin=()=>token&&!ls.get('bp-pin',null)&&ls.get('bp-kit',null);
 
 // ---------- catálogo e fila ----------
-async function sincronizar(silencioso){carregarMp();try{const r=await api('catalogo');cat={...r,mapa:null};ls.set('bp-cat',cat);guardarLogo();setTimeout(()=>(r.midia||[]).filter(a=>!a.video).forEach(a=>fetch(a.midia,{mode:'cors'}).catch(()=>{})),800);setTimeout(()=>r.produtos.filter(p=>p.foto).forEach((p,i)=>setTimeout(()=>fetch(p.foto,{mode:'cors'}).catch(()=>{}),i*150)),1500);$('#lojaNome').textContent=r.loja||loja?.nome||'—';if(!silencioso)toast(r.produtos.length+' produtos atualizados');return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
+async function sincronizar(silencioso){carregarMp();try{const r=await api('catalogo');cat={...r,mapa:null};ls.set('bp-cat',cat);quiosqueDoPainel(r.quiosque);guardarLogo();setTimeout(()=>(r.midia||[]).filter(a=>!a.video).forEach(a=>fetch(a.midia,{mode:'cors'}).catch(()=>{})),800);setTimeout(()=>r.produtos.filter(p=>p.foto).forEach((p,i)=>setTimeout(()=>fetch(p.foto,{mode:'cors'}).catch(()=>{}),i*150)),1500);$('#lojaNome').textContent=r.loja||loja?.nome||'—';if(!silencioso)toast(r.produtos.length+' produtos atualizados');return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
 const nz=c=>String(c).replace(/\D/g,'').replace(/^0+/,'');
 function porCodigo(c){if(!cat)return null;const k=nz(c);return cat.produtos.find(p=>p.codigos.some(x=>nz(x)===k))||null}
 async function enviarFila(){if(!fila.length)return;const resto=[];for(const v of fila){try{await api('venda',v)}catch(e){if(!/inválid|sem preço|vazio/i.test(e.message))resto.push(v)}}fila=resto;ls.set('bp-fila',fila);atualizarRede()}

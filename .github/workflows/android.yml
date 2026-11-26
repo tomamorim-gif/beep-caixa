@@ -19,6 +19,26 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Destino (main = android-teste; outro ramo = android-previa)
+        run: |
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then T=android-teste; N="PagNow (Android) — versão de teste"; else T=android-previa; N="PagNow (Android) — prévia para aprovar"; fi
+          echo "TAG=$T" >> "$GITHUB_ENV"; echo "TITULO=$N" >> "$GITHUB_ENV"
+      # Chave fixa de assinatura: sem ela cada APK sai com uma assinatura diferente e o tablet
+      # não aceita atualizar por cima (nem o modo quiosque com proteção total).
+      - name: Chave de assinatura
+        env:
+          KS_B64: ${{ secrets.BEEP_KEYSTORE_B64 }}
+          KS_SENHA: ${{ secrets.BEEP_KS_SENHA }}
+        run: |
+          if [ -n "$KS_B64" ] && [ -n "$KS_SENHA" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/beep.jks"
+            echo "BEEP_KEYSTORE=$RUNNER_TEMP/beep.jks" >> "$GITHUB_ENV"
+            echo "BEEP_KS_SENHA=$KS_SENHA" >> "$GITHUB_ENV"
+            echo "ASSINATURA=fixa" >> "$GITHUB_ENV"
+          else
+            echo "ASSINATURA=provisoria" >> "$GITHUB_ENV"
+            echo "::warning::Sem a chave BEEP_KEYSTORE_B64: o APK sai com assinatura provisória."
+          fi
       - name: Compilar APK
         working-directory: android
         env:
@@ -27,19 +47,35 @@ jobs:
         run: |
           set -o pipefail
           ./gradlew --no-daemon assembleRelease --stacktrace 2>&1 | tee ../build.log
-      - name: Preparar arquivo
-        run: cp android/app/build/outputs/apk/release/app-release.apk beep-caixa.apk
+      - name: Preparar arquivo e QR de preparação do tablet
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk beep-caixa.apk
+          AS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner
+          HEX=$("$AS" verify --print-certs beep-caixa.apk | grep -m1 'SHA-256 digest' | awk '{print $NF}')
+          SUM=$(python3 -c "import base64,sys;print(base64.urlsafe_b64encode(bytes.fromhex(sys.argv[1])).decode().rstrip('='))" "$HEX")
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/beep-caixa.apk"
+          printf '{"android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME":"br.com.beep.caixa/br.com.beep.caixa.AdminQuiosque","android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION":"%s","android.app.extra.PROVISIONING_DEVICE_ADMIN_SIGNATURE_CHECKSUM":"%s","android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED":true,"android.app.extra.PROVISIONING_SKIP_ENCRYPTION":true}' "$URL" "$SUM" > preparar-tablet.json
+          pip install --quiet qrcode pillow
+          python3 -c "import qrcode,sys;q=qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M,box_size=10,border=4);q.add_data(open('preparar-tablet.json').read());q.make(fit=True);q.make_image().save('preparar-tablet-qr.png')"
+          echo "CHECKSUM=$SUM" >> "$GITHUB_ENV"
       - name: Publicar para download
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: android-teste
-          name: Beep Caixa (Android) — teste da maquininha
+          tag_name: ${{ env.TAG }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ env.TITULO }}
           prerelease: true
           make_latest: false
           body: |
-            App Android do caixa Beep com a ponte para a maquininha PagBank (PlugPag 4.15.1).
-            Versão 0.1.${{ github.run_number }} — instale o arquivo beep-caixa.apk no telefone do caixa.
-          files: beep-caixa.apk
+            App Android do PagNow: caixa de autoatendimento ou PDV do vendedor, ponte para a maquininha e modo quiosque.
+            Versão 0.1.${{ github.run_number }} (ramo ${{ github.ref_name }}, assinatura ${{ env.ASSINATURA }}).
+
+            - beep-caixa.apk: instale no tablet.
+            - preparar-tablet-qr.png: QR para preparar um tablet zerado com proteção total do quiosque (6 toques na tela de boas-vindas do Android e leia o QR).
+          files: |
+            beep-caixa.apk
+            preparar-tablet-qr.png
+            preparar-tablet.json
           fail_on_unmatched_files: true
       - name: Guardar log da falha
         if: failure()
