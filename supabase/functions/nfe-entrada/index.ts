@@ -7,10 +7,13 @@
 //   - ponte_resultado (token BEEP_PONTE): guarda os XML e atualiza a lista de notas recebidas;
 //   - atualizar (painel, dono/gerente): dispara o workflow do GitHub;
 //   - buscar_chave (painel, dono/gerente): coloca uma nota na fila pela chave de acesso e dispara a busca.
+//   - cupom (painel, dono/gerente): consulta um cupom fiscal (NFC-e) de compra no site da SEFAZ-CE pelo QR code
+//     e devolve o DANFE em HTML; o painel lê os itens e segue a mesma conferência da NF-e.
 // Certificado e senha ficam no Vault e só saem para o GitHub, por HTTPS, durante a busca.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { UF_CODIGO } from "../_shared/nfce.ts";
 import { chaveValida, lerDoc } from "../_shared/dfe.ts";
+import { CE_BASE, CupomInvalido, erroSefaz, lerCupom } from "../_shared/cupom.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
@@ -146,6 +149,33 @@ async function disparar(emp: string) {
   return { disparado: true, mensagem: "Buscando na SEFAZ…" };
 }
 
+// Site público da SEFAZ-CE (o mesmo que o celular abre ao ler o QR do cupom). Abre a página antes,
+// como o navegador, para receber o cookie de sessão, e depois pede o cupom à API do site.
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36";
+async function consultarCupom(entrada: string) {
+  const c = lerCupom(entrada);
+  let cookie = "";
+  try {
+    const pg = await fetch(c.pagina, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(12_000) });
+    cookie = pg.headers.getSetCookie().map((x) => x.split(";")[0]).join("; ");
+    await pg.body?.cancel();
+  } catch { /* segue sem cookie */ }
+  let r: Response;
+  try {
+    r = await fetch(c.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json, text/plain, */*", "User-Agent": UA, Origin: CE_BASE, Referer: c.pagina, ...(cookie ? { Cookie: cookie } : {}) },
+      body: JSON.stringify(c.payload), signal: AbortSignal.timeout(20_000),
+    });
+  } catch { throw new Error("O site da SEFAZ-CE não respondeu. Tente de novo em alguns minutos."); }
+  if (!r.ok) throw new Error(`O site da SEFAZ-CE está com problema agora (erro ${r.status}). Tente de novo em alguns minutos.`);
+  const j = await r.json().catch(() => null) as { xml?: string; erro?: string } | null;
+  const html = typeof j?.xml === "string" ? j.xml : "";
+  if (!html) throw new CupomInvalido(erroSefaz(j?.erro, c.soChave));
+  if (html.length > 3_000_000) throw new Error("Cupom grande demais");
+  return { chave: c.chave, html };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
   if (req.method !== "POST") return erro("use POST", 405);
@@ -183,6 +213,14 @@ Deno.serve(async (req) => {
     return json({ ok: false, situacao: "fila", ...d, mensagem: d.disparado
       ? "Nota pedida à SEFAZ. Em 1 a 2 minutos ela aparece na lista; o XML completo costuma vir na busca seguinte."
       : `Nota pedida à SEFAZ. ${d.mensagem}` });
+  }
+  if (b.acao === "cupom") {
+    try {
+      const r = await consultarCupom(String(b.qr ?? b.chave ?? ""));
+      return json({ ok: true, ...r });
+    } catch (err) {
+      return erro((err as Error).message, err instanceof CupomInvalido ? 422 : 502);
+    }
   }
   return erro("Ação desconhecida");
 });
