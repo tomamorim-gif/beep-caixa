@@ -23,6 +23,7 @@ class BeepApp : Application() {
     override fun onCreate() {
         super.onCreate()
         Diag.iniciar(this)
+        Quiosque.iniciar(this)
         Pagamento.iniciar(this)
     }
 }
