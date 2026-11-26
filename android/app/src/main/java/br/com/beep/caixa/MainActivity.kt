@@ -9,6 +9,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
+import android.os.SystemClock
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
@@ -34,7 +36,6 @@ import java.util.Locale
  */
 class MainActivity : AppCompatActivity() {
     companion object {
-        const val URL_CAIXA = "https://tomamorim-gif.github.io/beep-caixa/"
         // app.pagnow.com.br: domínio próprio (o endereço antigo do GitHub passa a redirecionar para ele)
         private val HOSTS_OK = setOf("tomamorim-gif.github.io", "app.pagnow.com.br")
         private const val REQ_PERM = 10
@@ -44,6 +45,11 @@ class MainActivity : AppCompatActivity() {
     private var tts: TextToSpeech? = null
     private var ttsPronto = false
     private var pedidoWeb: PermissionRequest? = null
+    /** Página que está aberta (autoatendimento ou vendedor), para recarregar se o quiosque trocar. */
+    private var paginaAberta = ""
+    // 5 toques seguidos no canto superior esquerdo abrem a área do responsável (PIN do quiosque)
+    private var toquesCanto = 0
+    private var primeiroToque = 0L
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -104,7 +110,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         pedirPermissoesIniciais()
-        if (savedInstanceState == null) web.loadUrl(URL_CAIXA) else web.restoreState(savedInstanceState)
+        paginaAberta = Quiosque.pagina
+        if (savedInstanceState == null) web.loadUrl(Quiosque.url) else web.restoreState(savedInstanceState)
 
         // primeira vez: abre a configuração da maquininha
         if (Pagamento.maquininhaEndereco == null && savedInstanceState == null) {
@@ -146,7 +153,35 @@ class MainActivity : AppCompatActivity() {
         if (hasFocus) telaCheia()
     }
 
-    override fun onResume() { super.onResume(); web.onResume(); js("window.beepNativoVoltou&&window.beepNativoVoltou()") }
+    override fun onResume() {
+        super.onResume(); web.onResume()
+        abrirPaginaCerta()
+        Quiosque.garantir(this)
+        js("window.beepNativoVoltou&&window.beepNativoVoltou()")
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.getBooleanExtra("recarregar", false)) web.reload()
+    }
+
+    private fun abrirPaginaCerta() {
+        if (Quiosque.pagina != paginaAberta) { paginaAberta = Quiosque.pagina; web.loadUrl(Quiosque.url) }
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
+            val canto = 80 * resources.displayMetrics.density
+            if (ev.x <= canto && ev.y <= canto) {
+                val agora = SystemClock.elapsedRealtime()
+                if (agora - primeiroToque > 3000) { primeiroToque = agora; toquesCanto = 0 }
+                if (++toquesCanto >= 5) { toquesCanto = 0; primeiroToque = 0; abrirQuiosque() }
+            } else toquesCanto = 0
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
+    private fun abrirQuiosque() = startActivity(Intent(this, QuiosqueActivity::class.java))
     override fun onPause() { web.onPause(); super.onPause() }
     override fun onSaveInstanceState(outState: Bundle) { super.onSaveInstanceState(outState); web.saveState(outState) }
     override fun onDestroy() { tts?.shutdown(); web.destroy(); super.onDestroy() }
@@ -180,6 +215,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         @JavascriptInterface fun cancelarCobranca() = Pagamento.cancelar()
+
+        /** Configuração do quiosque que veio do Painel (junto com o catálogo). */
+        @JavascriptInterface fun quiosque(json: String?) {
+            runOnUiThread { if (Quiosque.aplicarDoPainel(json, this@MainActivity)) abrirPaginaCerta() }
+        }
+        @JavascriptInterface fun quiosqueEstado(): String = Quiosque.estado().toString()
+        /** Abre a área do responsável (o menu do caixa pode chamar). */
+        @JavascriptInterface fun abrirQuiosque() { runOnUiThread { this@MainActivity.abrirQuiosque() } }
 
         /** Voz do caixa (o WebView do Android não fala sozinho). */
         @JavascriptInterface fun falar(texto: String) {
