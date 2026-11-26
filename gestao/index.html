@@ -927,7 +927,8 @@ async function gerarCodigo(){const {data:{session}}=await sb.auth.getSession();c
   ${qr?`<div style="background:#fff;border-radius:16px;padding:12px;width:240px;margin:0 auto">${qr}</div>`:''}
   <div style="text-align:center;font:800 34px Manrope,Inter,sans-serif;letter-spacing:.12em" class="num">${esc(j.codigo)}</div>
   <div class="row"><input type="text" value="${esc(link)}" readonly id="lnk"><button class="btn" id="cpy">Copiar link</button></div>
-  <p class="mu sm">Na ativação, escolha a loja e crie o PIN do gerente daquele caixa.</p><div class="row"><span class="sp"></span><button class="btn pri" data-close>Pronto</button></div>`);
+  <p class="mu sm">Na ativação, escolha a loja e crie o PIN do gerente daquele caixa.</p>
+  <p class="mu sm">É para o <b>PDV do vendedor</b> (tablet operado por um atendente)? Use este link no tablet: <a href="${esc(BASE)}vendedor/#c=${esc(j.codigo)}" target="_blank" rel="noopener">${esc(BASE.replace(/^https?:\/\//,''))}vendedor</a></p><div class="row"><span class="sp"></span><button class="btn pri" data-close>Pronto</button></div>`);
  $('#cpy').onclick=async()=>{try{await navigator.clipboard.writeText(link);toast('Link copiado')}catch(e){$('#lnk').select()}}}
 
 // ---------- tela: vídeos de segurança ----------
