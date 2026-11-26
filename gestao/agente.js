@@ -189,7 +189,7 @@ function modeloCsv() {
     'Refrigerante Coca-Cola Lata 350ml;7894900011517;2,49;;22021000;UN;Bebidas;Refrigerantes',
     'Biscoito Recheado Chocolate 130g;7896004000000;1,89;3,49;19053100;UN;;',
     'Sabonete em Barra 85g;;1,20;;34011190;UN;;'];
-  baixar('planilha-modelo-beep.csv', '﻿' + linhas.join('\r\n'), 'text/csv');
+  baixar('planilha-modelo.csv', '﻿' + linhas.join('\r\n'), 'text/csv');
 }
 function baixar(nome, conteudo, tipo) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([conteudo], { type: tipo + ';charset=utf-8' })); a.download = nome; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
@@ -226,16 +226,16 @@ function inicio() {
   const { $, esc, S, brl } = C, M = $('#main'), r = lerRasc(), dono = S.papel === 'dono', m = markup();
   A.modo = null;
   const semCat = S.produtos.filter(p => p.ativo).length;
-  M.innerHTML = `<div class="head"><div><h1>Configurar minha loja</h1><p>Mande as notas de compra ou a planilha. O Beep Smart Pay monta o cadastro, você revisa e só então ele grava.</p></div>
+  M.innerHTML = `<div class="head"><div><h1>Configurar minha loja</h1><p>Mande as notas de compra ou a planilha. O PagNow monta o cadastro, você revisa e só então ele grava.</p></div>
    <div class="row"><button class="btn" id="agDic">Dicionário de categorias</button></div></div>
   <div id="agPassos"></div>
   ${A.semBanco ? '<div class="aviso" style="margin-bottom:16px"><b>Falta atualizar o banco.</b>&nbsp;A leitura e a revisão funcionam, mas para gravar é preciso aplicar a atualização do agente no Supabase.</div>' : ''}
   ${r?.linhas?.length ? `<div class="aviso info" style="margin-bottom:16px;align-items:center"><div style="flex:1">Você tem uma revisão que não terminou: <b>${r.linhas.length} produtos</b>, guardada em ${esc(dataHora(r.em))}. Ela fica salva neste computador mesmo se a internet cair.</div><button class="btn sm pri" id="agCont">Continuar</button><button class="btn sm" id="agDesc">Descartar</button></div>` : ''}
   <div class="agopts">
-   <div class="card agopt"><div class="agic">${IC.nota}</div><h3>Notas de compra</h3><p class="mu sm">Arraste os XMLs das notas (ou um .zip com todos). O Beep Smart Pay lê nome, código de barras, custo, NCM e unidade.</p>
+   <div class="card agopt"><div class="agic">${IC.nota}</div><h3>Notas de compra</h3><p class="mu sm">Arraste os XMLs das notas (ou um .zip com todos). O PagNow lê nome, código de barras, custo, NCM e unidade.</p>
     <div class="drop agdrop" id="agDropX"><b>Solte os XMLs aqui</b><span class="mu sm">ou</span><label class="btn sm">Escolher arquivos<input type="file" id="agFx" accept=".xml,.zip,text/xml,application/zip" multiple hidden></label></div>
     <button class="btn sm" id="agSefaz" style="justify-self:start">Usar as notas recebidas da SEFAZ</button></div>
-   <div class="card agopt"><div class="agic">${IC.plan}</div><h3>Planilha</h3><p class="mu sm">Preencha a planilha modelo (Excel ou CSV). Só o nome é obrigatório; o resto o Beep Smart Pay completa ou aponta.</p>
+   <div class="card agopt"><div class="agic">${IC.plan}</div><h3>Planilha</h3><p class="mu sm">Preencha a planilha modelo (Excel ou CSV). Só o nome é obrigatório; o resto o PagNow completa ou aponta.</p>
     <div class="drop agdrop" id="agDropP"><b>Solte a planilha aqui</b><span class="mu sm">ou</span><label class="btn sm">Escolher planilha<input type="file" id="agFp" accept=".csv,.xlsx,.xls,.ods,.txt" hidden></label></div>
     <button class="btn sm" id="agModelo" style="justify-self:start">Baixar planilha modelo</button></div>
    <div class="card agopt"><div class="agic">${IC.org}</div><h3>Organizar o que já tenho</h3><p class="mu sm">Coloca categoria e subcategoria nos ${semCat} produtos ativos usando o dicionário. Você revisa antes.</p>
@@ -478,7 +478,7 @@ function relatorio(lote) {
   M.innerHTML = `<div class="head"><div><h1>Relatório da importação</h1><p>${esc(nomeOrig)} · ${esc(dataHora(lote.criado_em))}${lote.desfeito_em ? ' · <b style="color:#f87171">desfeita em ' + esc(dataHora(lote.desfeito_em)) + '</b>' : ''}</p></div>
    <div class="row"><button class="btn" id="agIni">Voltar</button><button class="btn" onclick="print()">Imprimir</button>${!org && ncm.length ? '<button class="btn" id="agCsv">Lista para o contador</button>' : ''}${lote.desfeito_em ? '' : '<button class="btn dang" id="agUndo">Desfazer esta importação</button>'}</div></div>
   <div class="grid2 agrel">
-   <div class="card"><h2 class="agh">O que o Beep Smart Pay fez</h2><ul class="aglist">
+   <div class="card"><h2 class="agh">O que o PagNow fez</h2><ul class="aglist">
     ${org ? `<li><b>${r.organizados || 0}</b> produtos receberam categoria.</li>` : `<li><b>${r.criados || 0}</b> produtos criados${lojas.length ? ', à venda em ' + esc(lojas.join(', ')) : ' só no cadastro'}.</li>
     ${r.leitura?.notas ? `<li>${r.leitura.notas} notas lidas, ${r.leitura.itens} itens.</li>` : r.leitura?.itens ? `<li>${r.leitura.itens} linhas da planilha lidas.</li>` : ''}
     <li>Preço sugerido com markup de ${r.markup ?? '—'}%.</li>
@@ -535,7 +535,7 @@ function editarDic() {
   C.$('#modal').classList.add('wide');
   const linha = (r, i) => `<tr data-i="${i}"><td><input data-d="c" value="${esc(r.c)}" placeholder="Categoria"></td><td><input data-d="s" value="${esc(r.s || '')}" placeholder="Subcategoria"></td><td><input data-d="p" value="${esc((r.p || []).join(', '))}" placeholder="palavras separadas por vírgula"></td><td><input data-d="ncm" class="num" value="${esc((r.ncm || []).join(', '))}" placeholder="ex.: 2202"></td><td><button class="btn sm dang" data-x="${i}" title="Remover">✕</button></td></tr>`;
   const desenha = () => {
-    C.modal(`<div class="row"><div style="flex:1"><h2>Dicionário de categorias</h2><p class="mu sm">Quando uma palavra aparece no nome do produto, ele vai para aquela categoria. Sem palavra, vale o começo do NCM. ${A.agente?.dicionario?.length ? 'Este é o dicionário da sua empresa.' : 'Você está vendo o dicionário padrão do Beep Smart Pay.'}</p></div></div>
+    C.modal(`<div class="row"><div style="flex:1"><h2>Dicionário de categorias</h2><p class="mu sm">Quando uma palavra aparece no nome do produto, ele vai para aquela categoria. Sem palavra, vale o começo do NCM. ${A.agente?.dicionario?.length ? 'Este é o dicionário da sua empresa.' : 'Você está vendo o dicionário padrão do PagNow.'}</p></div></div>
      <div class="row"><input id="dTeste" placeholder="Teste: digite o nome de um produto" style="flex:1"><span id="dRes" class="sm"></span></div>
      <div class="tblwrap" style="max-height:52vh"><table class="tbl agdic"><thead><tr><th>Categoria</th><th>Subcategoria</th><th>Palavras no nome</th><th>Começo do NCM</th><th></th></tr></thead><tbody>${R.map(linha).join('')}</tbody></table></div>
      <p class="erro" id="dErr"></p>
