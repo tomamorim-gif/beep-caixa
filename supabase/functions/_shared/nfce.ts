@@ -7,6 +7,7 @@ export const NS = "http://www.portalfiscal.inf.br/nfe";
 export const UF_CODIGO: Record<string, string> = { CE: "23", MA: "21", PI: "22", RN: "24", PB: "25", PE: "26" };
 
 // Endereços. CE autoriza NFC-e pela SVRS desde 07/2025; o QR Code e a consulta continuam no portal do CE.
+// urlChave: endereço oficial da tabela nacional de URLs de consulta (o mesmo para produção e homologação no CE).
 export const WS: Record<string, Record<string, Record<string, string>>> = {
   CE: {
     homologacao: {
@@ -15,7 +16,7 @@ export const WS: Record<string, Record<string, Record<string, string>>> = {
       consulta: "https://nfce-homologacao.svrs.rs.gov.br/ws/NfeConsulta/NfeConsulta4.asmx",
       evento: "https://nfce-homologacao.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx",
       qrcode: "http://nfceh.sefaz.ce.gov.br/pages/ShowNFCe.html",
-      urlChave: "http://nfceh.sefaz.ce.gov.br/pages/consultaChaveAcesso.jsf",
+      urlChave: "http://www.sefaz.ce.gov.br/nfce/consulta",
     },
     producao: {
       autorizacao: "https://nfce.svrs.rs.gov.br/ws/NfeAutorizacao/NFeAutorizacao4.asmx",
@@ -23,7 +24,7 @@ export const WS: Record<string, Record<string, Record<string, string>>> = {
       consulta: "https://nfce.svrs.rs.gov.br/ws/NfeConsulta/NfeConsulta4.asmx",
       evento: "https://nfce.svrs.rs.gov.br/ws/recepcaoevento/recepcaoevento4.asmx",
       qrcode: "http://nfce.sefaz.ce.gov.br/pages/ShowNFCe.html",
-      urlChave: "http://nfce.sefaz.ce.gov.br/pages/consultaChaveAcesso.jsf",
+      urlChave: "http://www.sefaz.ce.gov.br/nfce/consulta",
     },
   },
 };
