@@ -6,13 +6,13 @@
 <meta name="theme-color" content="#0b0b0b">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Beep · Minha loja</title>
+<title>Minha loja</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="../icon-192.png"><link rel="apple-touch-icon" href="../icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0b0b0b;--k1:#141414;--k2:#1c1c1c;--k3:#262626;--line:#2c2c2c;--ink:#f5f5f5;--mu:#a1a1aa;--y:#ffd60a;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--r:18px}
+:root{--bg:#0b0b0b;--k1:#141414;--k2:#1c1c1c;--k3:#262626;--line:#2c2c2c;--ink:#f5f5f5;--mu:#a1a1aa;--y:#ffd60a;--yr:255,214,10;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--r:18px}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
 html,body{background:var(--bg);color:var(--ink);font:16px/1.45 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100%}
 button,input{font:inherit;color:inherit}button{border:0;background:none;cursor:pointer}
@@ -20,12 +20,13 @@ h1,h2,h3{font-family:Manrope,Inter,sans-serif;letter-spacing:-.015em}
 .num{font-variant-numeric:tabular-nums}
 .wrap{max-width:560px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 18px calc(96px + env(safe-area-inset-bottom))}
 .logo{height:34px;width:auto}
+.logo.marca-nome{display:inline-block;height:auto;font:800 20px/34px Manrope,Inter,sans-serif;letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw}
 .btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;border-radius:16px;font-weight:700;font-size:17px;width:100%;background:var(--k3);border:1px solid var(--line)}
 .btn.y{background:var(--y);color:#111;border-color:var(--y)}.btn:disabled{opacity:.45}
 .btn.sm{min-height:42px;font-size:15px;border-radius:12px;width:auto;padding:0 16px}
 .campo{display:grid;gap:6px;font-size:14px;color:var(--mu);font-weight:500}
 .campo input{min-height:54px;padding:0 16px;border-radius:14px;border:1px solid var(--line);background:var(--k2);font-size:17px;color:var(--ink);outline:none;width:100%}
-.campo input:focus{border-color:var(--y);box-shadow:0 0 0 3px rgba(255,214,10,.15)}
+.campo input:focus{border-color:var(--y);box-shadow:0 0 0 3px rgba(var(--yr),.15)}
 .pin{letter-spacing:.5em;text-align:center;font-size:24px!important;font-weight:700}
 .card{background:var(--k1);border:1px solid var(--line);border-radius:var(--r);padding:18px}
 .msg{color:#f87171;font-size:14px;min-height:20px}
@@ -40,7 +41,7 @@ h1,h2,h3{font-family:Manrope,Inter,sans-serif;letter-spacing:-.015em}
 .prod{background:var(--k1);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
 .prod .foto{aspect-ratio:1;background:#fff;display:grid;place-items:center;padding:12px;position:relative}.prod .foto img{max-width:100%;max-height:100%;object-fit:contain}
 .prod .foto.sem{background:linear-gradient(145deg,#1d1d1d,#121212);font:800 44px Manrope,Inter,sans-serif;color:var(--y)}
-.prod.esg .foto img{opacity:.45}.prod.esg .foto.sem{color:rgba(255,214,10,.38)}
+.prod.esg .foto img{opacity:.45}.prod.esg .foto.sem{color:rgba(var(--yr),.38)}
 .prod .info{padding:10px 12px 12px;display:grid;gap:4px;flex:1}.prod .nome{font-size:14px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:36px}
 .prod .linha{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto}.prod .preco{font:800 17px Manrope,Inter,sans-serif;color:var(--y)}
 .add{width:38px;height:38px;border-radius:12px;background:var(--y);color:#111;font-weight:800;font-size:22px;display:grid;place-items:center;flex:none}
@@ -54,12 +55,12 @@ h1,h2,h3{font-family:Manrope,Inter,sans-serif;letter-spacing:-.015em}
 .item .n{flex:1;min-width:0;font-size:15px;font-weight:600;line-height:1.3}.item .n small{display:block;color:var(--y);font:800 15px Manrope,Inter,sans-serif;margin-top:2px}
 .qtd{display:flex;align-items:center;gap:6px}.qtd button{width:36px;height:36px;border-radius:10px;background:var(--k3);font-weight:800;font-size:18px}.qtd b{min-width:22px;text-align:center}
 .total{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0}.total b{font:800 30px Manrope,Inter,sans-serif;color:var(--y)}
-.formas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.forma{padding:16px;border-radius:16px;border:2px solid var(--line);background:var(--k2);display:grid;gap:4px;justify-items:center;font-weight:700}.forma.on{border-color:var(--y);background:rgba(255,214,10,.07)}
+.formas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.forma{padding:16px;border-radius:16px;border:2px solid var(--line);background:var(--k2);display:grid;gap:4px;justify-items:center;font-weight:700}.forma.on{border-color:var(--y);background:rgba(var(--yr),.07)}
 .vazio{text-align:center;color:var(--mu);padding:40px 16px}
 .aviso{padding:12px 14px;border-radius:14px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#fde68a;font-size:14px}
 .ok-tela{min-height:70vh;display:grid;place-items:center;text-align:center;gap:12px;padding:20px}.ok-ic{width:96px;height:96px;border-radius:50%;background:var(--ok);display:grid;place-items:center;margin:0 auto}
 .cam{position:relative;border-radius:var(--r);overflow:hidden;background:#000;aspect-ratio:1/1;max-height:46vh;width:100%}.cam video{width:100%;height:100%;object-fit:cover}.cam .mira{position:absolute;left:6%;right:6%;top:32%;height:36%;border:3px solid var(--y);border-radius:16px;box-shadow:0 0 0 999px rgba(0,0,0,.4);overflow:hidden}
-.cam .laser{position:absolute;left:6%;right:6%;top:50%;height:2px;background:rgba(255,214,10,.85);box-shadow:0 0 10px rgba(255,214,10,.9);animation:laser 1.6s ease-in-out infinite alternate}
+.cam .laser{position:absolute;left:6%;right:6%;top:50%;height:2px;background:rgba(var(--yr),.85);box-shadow:0 0 10px rgba(var(--yr),.9);animation:laser 1.6s ease-in-out infinite alternate}
 @keyframes laser{from{transform:translateY(-26px)}to{transform:translateY(26px)}}@media (prefers-reduced-motion:reduce){.cam .laser{animation:none}}
 .cam-msg{position:absolute;left:0;right:0;bottom:14px;text-align:center;color:#fff;font-size:14px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.8);margin:0}
 .luz{position:absolute;top:12px;right:12px;height:36px;padding:0 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,.25)}.luz.on{background:var(--y);color:#111}
@@ -69,7 +70,7 @@ h1,h2,h3{font-family:Manrope,Inter,sans-serif;letter-spacing:-.015em}
 .pend{border-left:4px solid var(--y)}
 .aceite{display:flex;gap:12px;align-items:flex-start;font-size:14px;color:var(--mu);line-height:1.45;cursor:pointer}.aceite input{width:22px;height:22px;accent-color:var(--y);flex:none;margin-top:1px}.aceite a,.lnk{color:var(--ink);font-weight:600}
 .fav{position:absolute;right:6px;top:6px;width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.92);display:grid;place-items:center;color:#9ca3af;box-shadow:0 1px 4px rgba(0,0,0,.12)}.fav.on{color:#ef4444}.fav svg{width:19px;height:19px}
-.prod .linha{flex-wrap:wrap}.avisar{width:100%;justify-content:center;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--k2);font-size:12.5px;font-weight:700;padding:0 10px;display:flex;align-items:center;gap:6px;color:var(--ink);flex:none}.avisar.on{border-color:rgba(255,214,10,.5);color:var(--y);background:rgba(255,214,10,.08)}.avisar svg{width:15px;height:15px}
+.prod .linha{flex-wrap:wrap}.avisar{width:100%;justify-content:center;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--k2);font-size:12.5px;font-weight:700;padding:0 10px;display:flex;align-items:center;gap:6px;color:var(--ink);flex:none}.avisar.on{border-color:rgba(var(--yr),.5);color:var(--y);background:rgba(var(--yr),.08)}.avisar svg{width:15px;height:15px}
 .chegou{display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(34,197,94,.05));border:1px solid rgba(34,197,94,.35);border-radius:16px;padding:12px 14px;margin-bottom:14px}.chegou b{display:block}.chegou .x{margin-left:auto;color:var(--mu);font-size:22px;width:32px;height:32px}
 .ad .txt .lin{display:flex;align-items:center;gap:8px;min-width:0}.ad .txt .lin>span:last-child{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}.cupom{flex:none;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px dashed rgba(255,255,255,.6);color:#fff;font:700 12.5px Inter,sans-serif;letter-spacing:.06em;padding:4px 9px;border-radius:8px;width:max-content}
 .selo.casa{background:var(--y);color:#111}
@@ -94,10 +95,10 @@ h1,h2,h3{font-family:Manrope,Inter,sans-serif;letter-spacing:-.015em}
 .ad-grade{grid-column:1/-1;aspect-ratio:2/1}
 .ad-ok{margin-top:22px;aspect-ratio:16/9;width:100%}
 /* contingência, Pix e 18+ */
-.cont{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(255,214,10,.16),rgba(255,214,10,.05));border:1px solid rgba(255,214,10,.4);margin-bottom:14px}
+.cont{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(var(--yr),.16),rgba(var(--yr),.05));border:1px solid rgba(var(--yr),.4);margin-bottom:14px}
 .cont .ic{width:36px;height:36px;border-radius:11px;background:var(--y);color:#111;display:grid;place-items:center;flex:none}.cont .ic svg{width:20px;height:20px}
 .cont b{display:block;font-size:15px}.cont span{font-size:13.5px;color:#e7e5d8;line-height:1.4}
-.forma-pix{display:flex;gap:14px;align-items:center;padding:14px 16px;border-radius:16px;border:2px solid var(--y);background:rgba(255,214,10,.07);margin-bottom:12px}
+.forma-pix{display:flex;gap:14px;align-items:center;padding:14px 16px;border-radius:16px;border:2px solid var(--y);background:rgba(var(--yr),.07);margin-bottom:12px}
 .forma-pix svg{flex:none;color:var(--y)}.forma-pix b{display:block;font-size:16px}.forma-pix small{color:var(--mu);font-size:13px}
 .pix{display:grid;gap:14px}
 .pix-valor{display:flex;justify-content:space-between;align-items:baseline}.pix-valor b{font:800 30px Manrope,Inter,sans-serif;color:var(--y)}
@@ -152,15 +153,24 @@ const foto=(p,cls)=>p.foto?`<span class="${cls}"><img src="${esc(p.foto)}" alt="
 
 // ---------- loja pelo link (#l=ID) ----------
 // logo da empresa (marca própria) quando a loja tem um; senão, o logo padrão
-function logoImg(extra=''){const u=loja?.logo;return `<img class="logo${u?' marca-propria':''}" src="${u?esc(u):'../logo.png'}" alt="${esc(loja?.empresa||'Beep')}" onerror="this.onerror=null;this.src='../logo.png';this.classList.remove('marca-propria')" ${extra}>`}
+// marca da loja (white label): logo enviado no Painel; sem logo, o nome da loja escrito; antes de ler o QR, PagNow
+const PAGNOW_LOGO='../site/marca/logo-fundo-escuro.svg';
+function logoImg(extra=''){const u=loja?.logo,nome=loja?.empresa||'';pintarCor();
+ if(!u&&nome)return `<span class="logo marca-nome" ${extra.replace(/height:\s*\d+px/,'')}>${esc(nome)}</span>`;
+ return `<img class="logo${u?' marca-propria':''}" src="${u?esc(u):PAGNOW_LOGO}" alt="${esc(nome||'PagNow')}" onerror="this.onerror=null;this.src=PAGNOW_LOGO;this.classList.remove('marca-propria')" ${extra}>`}
+function corDaMarca(hex){const m=/^#?([0-9a-f]{6})$/i.exec(String(hex||'').trim());if(!m)return null;let c=[0,2,4].map(i=>parseInt(m[1].slice(i,i+2),16));
+ const lum=x=>{const f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(x[0])+.7152*f(x[1])+.0722*f(x[2])};
+ for(let k=0;k<20&&(lum(c)+.05)/(lum([17,17,17])+.05)<7;k++)c=c.map(v=>Math.round(v+(255-v)*.12));
+ return {hex:'#'+c.map(v=>v.toString(16).padStart(2,'0')).join(''),rgb:c.join(',')}}
+function pintarCor(){const c=corDaMarca(loja?.cor),r=document.documentElement.style;if(c){r.setProperty('--y',c.hex);r.setProperty('--yr',c.rgb)}else{r.removeProperty('--y');r.removeProperty('--yr')}if(loja?.empresa)document.title=loja.empresa}
 const m=location.hash.match(/l=([0-9a-f-]{36})/i);if(m){loja={id:m[1]};ls.set('bc-loja',loja);const cx=location.hash.match(/c=([0-9a-f-]{36})/i);if(cx)ls.set('bc-caixa',{id:cx[1],em:Date.now()});history.replaceState(null,'',location.pathname)}
 
 // ---------- entrada: cadastro ou login ----------
 function cpfFmt(v){v=v.replace(/\D/g,'').slice(0,11);return v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')}
 async function telaEntrada(modo,msg=''){$('#nav').style.display='none';
  if(!loja){$('#app').innerHTML=`<div class="ok-tela"><div>${logoImg('style="height:44px"')}<h1 style="margin-top:24px;font-size:24px">Leia o QR code da sua loja</h1><p class="mu" style="margin-top:8px">O QR fica colado na loja do seu condomínio. Ele abre o app já na sua unidade.</p></div></div>`;return}
- if(!loja.nome||!telaEntrada.vista){telaEntrada.vista=true;try{const r=await api('loja',{loja:loja.id});loja={id:loja.id,nome:r.loja.nome,empresa:r.empresa,logo:r.logo||null};telaEntrada.cont=!!r.contingencia;ls.set('bc-loja',loja)}catch(e){$('#app').innerHTML=`<div class="ok-tela"><div><h1 style="font-size:22px">${esc(e.message)}</h1><p class="mu" style="margin-top:8px">Fale com o responsável pela loja.</p></div></div>`;return}}
- $('#app').innerHTML=`${logoImg()}<div style="margin:22px 0 18px"><h1 style="font-size:26px">${modo==='cadastrar'?'Crie seu acesso':'Bem-vindo de volta'}</h1><p class="mu">Loja ${esc(loja.nome)}</p></div>${telaEntrada.cont?`<div class="cont"><span class="ic">${ICON.wifi}</span><span><b>O caixa da loja está sem internet</b><span>Crie seu acesso em menos de um minuto e faça a compra por aqui: leia o código de barras e pague no Pix.</span></span></div>`:''}
+ if(!loja.nome||!telaEntrada.vista){telaEntrada.vista=true;try{const r=await api('loja',{loja:loja.id});loja={id:loja.id,nome:r.loja.nome,empresa:r.empresa,logo:r.logo||null,cor:r.cor||null};telaEntrada.cont=!!r.contingencia;ls.set('bc-loja',loja)}catch(e){$('#app').innerHTML=`<div class="ok-tela"><div><h1 style="font-size:22px">${esc(e.message)}</h1><p class="mu" style="margin-top:8px">Fale com o responsável pela loja.</p></div></div>`;return}}
+ $('#app').innerHTML=`${logoImg()}<div style="margin:22px 0 18px"><h1 style="font-size:26px">${modo==='cadastrar'?'Crie seu acesso':'Bem-vindo de volta'}</h1><p class="mu">${/^loja\b/i.test(loja.nome||"")?"":"Loja "}${esc(loja.nome)}</p></div>${telaEntrada.cont?`<div class="cont"><span class="ic">${ICON.wifi}</span><span><b>O caixa da loja está sem internet</b><span>Crie seu acesso em menos de um minuto e faça a compra por aqui: leia o código de barras e pague no Pix.</span></span></div>`:''}
   <div class="tabs2" style="margin-bottom:16px"><button class="${modo==='cadastrar'?'on':''}" data-m="cadastrar">Primeiro acesso</button><button class="${modo==='entrar'?'on':''}" data-m="entrar">Já tenho cadastro</button></div>
   <form id="fEnt" class="card" style="display:grid;gap:14px">
    ${modo==='cadastrar'?`<label class="campo">Seu nome<input name="nome" autocomplete="name" required maxlength="80"></label><label class="campo">Casa ou apartamento<input name="unidade" placeholder="Ex.: Apto 302, Bloco B" required maxlength="30"></label>`:''}
@@ -179,7 +189,7 @@ async function telaEntrada(modo,msg=''){$('#nav').style.display='none';
 
 // ---------- app ----------
 async function iniciar(){if(!token){telaEntrada(ls.get('bc-ja',false)?'entrar':'cadastrar');return}
- try{me=await api('me');ls.set('bc-ja',true);loja={...loja,id:me.loja.id,nome:me.loja.nome,logo:me.loja.logo||null};ls.set('bc-loja',loja)}catch(e){if(e.message!=='sessão')telaErro(e.message);return}
+ try{me=await api('me');ls.set('bc-ja',true);loja={...loja,id:me.loja.id,nome:me.loja.nome,logo:me.loja.logo||null,cor:me.loja.cor??loja.cor??null,empresa:me.loja.empresa||loja.empresa};ls.set('bc-loja',loja)}catch(e){if(e.message!=='sessão')telaErro(e.message);return}
  if(!me.termos_ok){telaTermos();return}
  if(me.perm.contingencia)aba='ler';const px=ls.get('bc-pix',null);if(px){await carregarCat();telaPix(px);return}if(cat)render();await Promise.all([carregarCat(),carregarPend(),carregarAds()]);render()}
 function telaTermos(){$('#nav').style.display='none';$('#app').innerHTML=`${logoImg()}<div class="card" style="margin-top:24px;display:grid;gap:14px"><h1 style="font-size:22px">Atualizamos nossos termos</h1><p class="mu">Para continuar usando o app, confira e aceite os Termos de uso e a Política de privacidade. Em resumo: usamos só o necessário para suas compras, não vendemos seus dados e a câmera do caixa grava apenas para segurança.</p>
@@ -195,7 +205,7 @@ function adEvento(a,tipo){if(tipo==='exibicao'){const k=a.campanha_id+a.id;if(ad
 function enviarAds(){if(!adsFila.length)return;const eventos=adsFila.splice(0,30);api('midia_evento',{eventos}).catch(()=>{})}
 addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')enviarAds()});
 function adHtml(a,i,cls=''){const m=a.video?`<video src="${esc(a.midia)}" muted autoplay loop playsinline preload="metadata"></video>`:`<img src="${esc(a.midia)}" alt="" loading="lazy">`;
- return `<button class="ad ${cls}" data-ad="${i}" aria-label="${esc(a.titulo)} — ${esc(a.anunciante)}">${m}<span class="vel"></span><span class="selo${a.proprio?' casa':''}">${a.proprio?'Oferta Beep':'Patrocinado'}</span>${a.link?`<span class="cta">${esc(a.botao||'Saiba mais')}</span>`:''}<span class="txt"><b>${esc(a.titulo)}</b><span class="lin">${a.cupom?`<span class="cupom">CUPOM ${esc(a.cupom)}</span>`:''}<span>${esc(a.texto||a.anunciante)}</span></span></span></button>`}
+ return `<button class="ad ${cls}" data-ad="${i}" aria-label="${esc(a.titulo)} — ${esc(a.anunciante)}">${m}<span class="vel"></span><span class="selo${a.proprio?' casa':''}">${a.proprio?'Oferta da loja':'Patrocinado'}</span>${a.link?`<span class="cta">${esc(a.botao||'Saiba mais')}</span>`:''}<span class="txt"><b>${esc(a.titulo)}</b><span class="lin">${a.cupom?`<span class="cupom">CUPOM ${esc(a.cupom)}</span>`:''}<span>${esc(a.texto||a.anunciante)}</span></span></span></button>`}
 function blocoAds(){const lista=ads.slice(0,5);if(!lista.length)return'';return `<div class="ads"><div class="ads-trilho" id="adsT">${lista.map((a,i)=>adHtml(a,i)).join('')}</div>${lista.length>1?`<div class="ads-pontos" id="adsP">${lista.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>`:''}</div>`}
 function ligarAds(){clearInterval(adsRoda);document.querySelectorAll('[data-ad]').forEach(el=>{const a=ads[+el.dataset.ad];if(!a)return;
   el.onclick=async()=>{adEvento(a,'clique');if(a.cupom){try{await navigator.clipboard.writeText(a.cupom);toast('Cupom '+a.cupom+' copiado')}catch(e){}}if(a.link)setTimeout(()=>window.open(a.link,'_blank','noopener'),a.cupom?600:0)};

@@ -82,8 +82,8 @@ Deno.serve(async (req) => {
     const l = await lojaInfo(b.loja);
     const cont = l ? await contingencia(l.id, b.caixa) : false;
     if (!l || !(l.app_consulta || cont)) return erro("Esta loja ainda não liberou o app", 404);
-    const { data: e } = await db.from("empresas").select("nome_exibicao, logo_path").eq("id", l.empresa_id).single();
-    return json({ loja: { id: l.id, nome: l.nome }, empresa: e?.nome_exibicao ?? "Beep", logo: await logoAssinado(e?.logo_path), contingencia: cont });
+    const { data: e } = await db.from("empresas").select("nome_exibicao, logo_path, cores").eq("id", l.empresa_id).single();
+    return json({ loja: { id: l.id, nome: l.nome }, empresa: e?.nome_exibicao ?? "", logo: await logoAssinado(e?.logo_path), cor: e?.cores?.principal ?? null, contingencia: cont });
   }
 
   if (acao === "cadastrar") {
@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
     if (!c) return erro("Relatório não encontrado", 404);
     const [{ data: an }, { data: emp }, { data: ad }, { data: lojas }, { data: ev }] = await Promise.all([
       db.from("anunciantes").select("nome").eq("id", c.anunciante_id).single(),
-      db.from("empresas").select("nome_exibicao").eq("id", c.empresa_id).single(),
+      db.from("empresas").select("nome_exibicao, logo_path").eq("id", c.empresa_id).single(),
       db.from("anuncios").select("titulo, texto, arquivo_path, formato, cupom").in("id", c.anuncios ?? []).limit(1),
       db.from("locais").select("id, nome").eq("empresa_id", c.empresa_id).eq("tipo", "loja"),
       db.from("midia_exibicoes").select("exibido_em, tipo, canal, cliente_app_id").eq("campanha_id", c.id).order("exibido_em").limit(100000),
@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
     let midia = null;
     if (ad?.[0]?.arquivo_path) { const { data: u } = await db.storage.from("midia").createSignedUrl(ad[0].arquivo_path, 3600); midia = u?.signedUrl ?? null; }
     const nomes = (lojas ?? []).filter((l: any) => !c.locais?.length || c.locais.includes(l.id)).map((l: any) => l.nome);
-    return json({ empresa: emp?.nome_exibicao ?? "Beep", anunciante: an?.nome, campanha: { titulo: ad?.[0]?.titulo ?? c.nome, texto: ad?.[0]?.texto, cupom: ad?.[0]?.cupom, video: ad?.[0]?.formato !== "imagem", midia, inicio: c.inicio, fim: c.fim, status: c.status, canais: c.canais, lojas: nomes },
+    return json({ empresa: emp?.nome_exibicao ?? "", logo: await logoAssinado(emp?.logo_path), anunciante: an?.nome, campanha: { titulo: ad?.[0]?.titulo ?? c.nome, texto: ad?.[0]?.texto, cupom: ad?.[0]?.cupom, video: ad?.[0]?.formato !== "imagem", midia, inicio: c.inicio, fim: c.fim, status: c.status, canais: c.canais, lojas: nomes },
       totais: { visualizacoes: v, cliques: k, pessoas: pessoas.size }, canais, dias: [...dias].map(([d, x]) => ({ d, ...x })), gerado: new Date().toISOString() });
   }
 
@@ -173,8 +173,8 @@ Deno.serve(async (req) => {
   }
 
   if (acao === "me") {
-    const { data: e } = await db.from("empresas").select("logo_path").eq("id", s.c.empresa_id).single();
-    return json({ cliente: { nome: s.c.nome, unidade: s.c.unidade, cpf: s.c.cpf_mascara }, loja: { id: s.l.id, nome: s.l.nome, logo: await logoAssinado(e?.logo_path) }, perm: s.perm, pagamento_teste: false, termos_ok: s.c.termos_versao === TERMOS_V });
+    const { data: e } = await db.from("empresas").select("nome_exibicao, logo_path, cores").eq("id", s.c.empresa_id).single();
+    return json({ cliente: { nome: s.c.nome, unidade: s.c.unidade, cpf: s.c.cpf_mascara }, loja: { id: s.l.id, nome: s.l.nome, empresa: e?.nome_exibicao ?? "", logo: await logoAssinado(e?.logo_path), cor: e?.cores?.principal ?? null }, perm: s.perm, pagamento_teste: false, termos_ok: s.c.termos_versao === TERMOS_V });
   }
 
   // o app pergunta de tempos em tempos: a contingência começou ou acabou?

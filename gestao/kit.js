@@ -13,7 +13,7 @@ async function apiKit(acao, corpo = {}, auth = false) {
   let r; try { r = await fetch(C.SB_URL + '/functions/v1/kit', { method: 'POST', headers: h, body: JSON.stringify({ acao, ...corpo }) }); } catch { throw new Error('Sem internet. Confira a conexão e tente de novo.'); }
   const j = await r.json().catch(() => ({ erro: 'Resposta inválida' })); if (!r.ok) throw new Error(j.erro || 'Erro'); return j;
 }
-const tela = (h) => { C.$('#raiz').innerHTML = `<div class="login kitm"><div class="card"><img src="../logo-claro.png" alt="Beep Smart Pay">${h}</div></div>`; };
+const tela = (h) => { C.$('#raiz').innerHTML = `<div class="login kitm"><div class="card"><img src="../site/marca/logo-fundo-claro.svg" alt="PagNow">${h}</div></div>`; };
 const passos = n => `<div class="kitpassos">${['Conta', 'Loja', 'Tablet'].map((t, i) => `<span class="${i < n ? 'ok' : i === n ? 'on' : ''}"><i></i>${t}</span>`).join('')}</div>`;
 
 export async function telaKit(ctx, codigo) {
@@ -129,7 +129,7 @@ export async function cartaoFabrica(ctx, el) {
   const { data: adm } = await C.sb.from('kit_admins').select('user_id').eq('user_id', session.user.id).maybeSingle();
   if (!adm) return;
   const { data: ss } = await C.sb.from('kit_seriais').select('final,rotulo,criado_em,usado_em').order('criado_em', { ascending: false }).limit(8);
-  el.innerHTML = `<div class="card" style="margin-top:18px;display:grid;gap:12px"><div class="row"><div style="flex:1;min-width:240px"><h2 style="font-size:18px">Kits de fábrica <span class="pill new">equipe Beep</span></h2><p class="mu sm" style="margin-top:4px">Prepara um tablet novo para ser vendido: ele sai mostrando o QR para o cliente criar a conta sozinho. Só você vê este quadro.</p></div><button class="btn" id="fabNovo">Preparar tablet</button></div>
+  el.innerHTML = `<div class="card" style="margin-top:18px;display:grid;gap:12px"><div class="row"><div style="flex:1;min-width:240px"><h2 style="font-size:18px">Kits de fábrica <span class="pill new">equipe PagNow</span></h2><p class="mu sm" style="margin-top:4px">Prepara um tablet novo para ser vendido: ele sai mostrando o QR para o cliente criar a conta sozinho. Só você vê este quadro.</p></div><button class="btn" id="fabNovo">Preparar tablet</button></div>
    ${ss?.length ? `<div class="tblwrap"><table class="tbl"><thead><tr><th>Série</th><th>Identificação</th><th>Preparado</th><th>Situação</th></tr></thead><tbody>${ss.map(x => `<tr><td class="num">…${C.esc(x.final)}</td><td>${C.esc(x.rotulo || '—')}</td><td class="mu">${new Date(x.criado_em).toLocaleDateString('pt-BR')}</td><td>${x.usado_em ? '<span class="pill ok">Ativado pelo cliente</span>' : '<span class="pill">Aguardando cliente</span>'}</td></tr>`).join('')}</tbody></table></div>` : ''}</div>`;
   C.$('#fabNovo').onclick = () => {
     C.modal(`<h2>Preparar tablet de fábrica</h2><p class="mu sm">Dê um nome para lembrar qual tablet é (ex.: etiqueta da caixa).</p><label class="f">Identificação<input id="fabRot" placeholder="Ex.: Kit 001 · Samsung Tab A9"></label><p class="erro" id="fabErr"></p><div class="row"><span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="fabOk">Gerar</button></div>`);

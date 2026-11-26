@@ -15,9 +15,9 @@
 /* VOICE: balcão de conveniência premium, direto, sem atrito
    IDEA: a etiqueta amarela de preço da gôndola, grande e legível de longe
    PICTURE: a câmera lendo o código, o carrinho como recibo vivo
-   COLOUR and TYPE: preto da marca, amarelo Beep #FFD60A, verde aprovação, vermelho recusa; Manrope + Inter
+   COLOUR and TYPE: preto da marca, cor principal da empresa (padrão amarelo #FFD60A), verde aprovação, vermelho recusa; Manrope + Inter
    LAYOUT: uma coluna em pé, polegar alcança tudo, botões de 64px */
-:root{--y:#FFD60A;--k:#0b0b0b;--k2:#161616;--k3:#232323;--w:#fff;--mu:#9a9a9a;--ok:#0fa958;--bad:#e5262d;--line:#2b2b2b;--r:22px}
+:root{--y:#FFD60A;--yr:255,214,10;--k:#0b0b0b;--k2:#161616;--k3:#232323;--w:#fff;--mu:#9a9a9a;--ok:#0fa958;--bad:#e5262d;--line:#2b2b2b;--r:22px}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent;min-width:0}
 html,body{height:100%;background:var(--k);color:var(--w);font:16px/1.45 Inter,system-ui,sans-serif;overscroll-behavior:none;user-select:none}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
@@ -29,11 +29,11 @@ input{font:inherit}
 .voz-tit{font:800 26px/1.2 Manrope,Inter,sans-serif;text-align:center;margin:0}
 .voz-op{display:flex;gap:16px;align-items:center;text-align:left;padding:20px;border-radius:20px;background:var(--k2);border:2px solid var(--line);color:#fff;min-height:96px}
 .voz-op:active{border-color:var(--y)}.voz-op b{display:block;font:800 20px Manrope,Inter,sans-serif}.voz-op small{display:block;color:var(--mu);font-size:15px;margin-top:4px;line-height:1.35}
-.voz-ic{flex:none;width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:rgba(255,214,10,.12);color:var(--y)}
+.voz-ic{flex:none;width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:rgba(var(--yr),.12);color:var(--y)}
 .voz-fala{justify-content:flex-start;padding-top:6px;overflow-y:auto}
-.voz-mic{align-self:center;width:112px;height:112px;border-radius:50%;background:var(--y);color:#111;display:grid;place-items:center;flex:none;box-shadow:0 0 0 0 rgba(255,214,10,.5)}
+.voz-mic{align-self:center;width:112px;height:112px;border-radius:50%;background:var(--y);color:#111;display:grid;place-items:center;flex:none;box-shadow:0 0 0 0 rgba(var(--yr),.5)}
 .voz-mic.ouvindo{animation:vozPulso 1.2s ease-out infinite}.voz-mic.falando{background:var(--k3);color:var(--y)}
-@keyframes vozPulso{0%{box-shadow:0 0 0 0 rgba(255,214,10,.55)}100%{box-shadow:0 0 0 26px rgba(255,214,10,0)}}
+@keyframes vozPulso{0%{box-shadow:0 0 0 0 rgba(var(--yr),.55)}100%{box-shadow:0 0 0 26px rgba(var(--yr),0)}}
 .voz-ouvido{text-align:center;min-height:22px;font-size:17px;font-style:italic;margin:0}
 .voz-opcoes{display:grid;gap:10px}.voz-opcoes button{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:var(--k2);border:2px solid var(--line);color:#fff;text-align:left;font:600 16px Inter}
 .voz-lista{display:grid;gap:10px}.voz-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:var(--k2)}
@@ -62,15 +62,16 @@ h2{font-size:22px;font-weight:800}
 .pill{font:600 12px Inter;padding:6px 10px;border-radius:999px;background:var(--k3);color:var(--mu);white-space:nowrap}
 .pill.on{color:#111;background:var(--y)}
 /* espera */
-#espera{justify-content:space-between;background:radial-gradient(120% 70% at 50% 0%,#2a2400 0%,var(--k) 60%)}
+#espera{justify-content:space-between;background:radial-gradient(120% 70% at 50% 0%,rgba(var(--yr),.16) 0%,var(--k) 60%)}
 #espera .centro{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px}
-#espera .logoG{width:min(78vw,360px);border-radius:24px;box-shadow:0 30px 80px rgba(255,214,10,.15)}
+#espera .logoG{width:min(78vw,360px);border-radius:24px;box-shadow:0 30px 80px rgba(var(--yr),.15)}
 /* logo da empresa (marca própria): mantém a proporção do arquivo enviado no Painel */
 img.marca-propria{width:auto;object-fit:contain;border-radius:0}
 #espera .logoG.marca-propria{width:auto;height:min(26vh,220px);max-width:78vw;box-shadow:none;margin-bottom:12px}
+#espera .logoG.marca-texto{height:min(10vh,84px)}
 .pulso{width:120px;height:120px;border-radius:50%;background:var(--y);color:#111;display:grid;place-items:center;animation:p 2.2s ease-in-out infinite}
 .pulso svg{width:56px;height:56px}
-@keyframes p{0%,100%{box-shadow:0 0 0 0 rgba(255,214,10,.45)}50%{box-shadow:0 0 0 26px rgba(255,214,10,0)}}
+@keyframes p{0%,100%{box-shadow:0 0 0 0 rgba(var(--yr),.45)}50%{box-shadow:0 0 0 26px rgba(var(--yr),0)}}
 @media (prefers-reduced-motion:reduce){.pulso{animation:none}}
 /* câmera */
 .vitrine{position:relative;border-radius:var(--r);overflow:hidden;background:var(--k2);aspect-ratio:4/3;flex:none;display:flex}
@@ -195,12 +196,12 @@ img.marca-propria{width:auto;object-fit:contain;border-radius:0}
 #descanso .barra img{height:38px;border-radius:8px}#descanso .barra b{flex:1;font:800 clamp(18px,3vw,26px) Manrope,Inter,sans-serif;color:var(--y)}
 #descanso .prog{display:flex;gap:6px}#descanso .prog i{width:8px;height:8px;border-radius:4px;background:#3f3f46;transition:.3s}#descanso .prog i.on{width:24px;background:var(--y)}
 /* contingência: caixa sem internet, a compra segue pelo celular do cliente */
-#contT{justify-content:space-between;background:radial-gradient(120% 70% at 50% 0%,#2a2400 0%,var(--k) 62%)}
+#contT{justify-content:space-between;background:radial-gradient(120% 70% at 50% 0%,rgba(var(--yr),.16) 0%,var(--k) 62%)}
 .cont-corpo{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px;width:100%;max-width:560px;margin:0 auto}
-.cont-selo{font:700 13px Inter;letter-spacing:.08em;text-transform:uppercase;color:var(--y);border:1px solid rgba(255,214,10,.45);padding:7px 14px;border-radius:999px}
+.cont-selo{font:700 13px Inter;letter-spacing:.08em;text-transform:uppercase;color:var(--y);border:1px solid rgba(var(--yr),.45);padding:7px 14px;border-radius:999px}
 .cont-corpo h1{font-size:clamp(28px,4.4vh,40px);line-height:1.1}
 .cont-corpo h1 span{color:var(--y)}
-.cont-qr{width:min(60vw,360px);aspect-ratio:1;background:#fff;border-radius:24px;padding:16px;display:grid;place-items:center;box-shadow:0 30px 80px rgba(255,214,10,.16)}
+.cont-qr{width:min(60vw,360px);aspect-ratio:1;background:#fff;border-radius:24px;padding:16px;display:grid;place-items:center;box-shadow:0 30px 80px rgba(var(--yr),.16)}
 .cont-qr svg{width:100%;height:100%;display:block}.cont-qr p{color:#111;font:600 15px/1.35 Inter;word-break:break-all}
 .cont-passos{list-style:none;padding:0;display:grid;gap:10px;width:100%;text-align:left}
 .cont-passos li{display:grid;grid-template-columns:40px 1fr;gap:14px;align-items:center;background:var(--k2);border:1px solid var(--line);border-radius:18px;padding:14px 16px;font-size:17px;line-height:1.35}
@@ -213,7 +214,7 @@ img.marca-propria{width:auto;object-fit:contain;border-radius:0}
 
 <!-- ativação -->
 <section class="tela" id="ativar">
-  <div class="topo"><img class="logo" src="logo.png" alt="Beep"><span class="pill">Ativação do aparelho</span></div>
+  <div class="topo"><img class="logo" src="site/marca/logo-fundo-escuro.svg" alt="PagNow"><span class="pill">Ativação do aparelho</span></div>
   <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px">
     <h1 id="atvTit">Ative este aparelho como caixa</h1>
     <p class="mu" id="atvSub">Digite o código de ativação que o dono da loja recebeu. Ele vale uma vez só.</p>
@@ -250,7 +251,7 @@ img.marca-propria{width:auto;object-fit:contain;border-radius:0}
 <section class="tela" id="espera">
   <div class="topo"><span class="pill" id="lojaNome">—</span><span class="pill" id="rede">online</span></div>
   <div class="centro" id="toqueEspera">
-    <img class="logoG" src="logo.png" alt="Beep Smart Mercadinhos" id="logoSecreto" data-marca>
+    <img class="logoG" src="site/marca/logo-fundo-escuro.svg" alt="" id="logoSecreto" data-marca>
     <div class="pulso" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg></div>
     <h1>Toque para começar</h1>
     <p class="mu">ou passe o código de barras no leitor</p>
@@ -262,7 +263,7 @@ img.marca-propria{width:auto;object-fit:contain;border-radius:0}
 
 <!-- carrinho -->
 <section class="tela" id="carrinho">
-  <div class="topo"><img class="logo" src="logo.png" alt="Beep" data-marca><span class="pill on" id="contItens">0 itens</span></div>
+  <div class="topo"><img class="logo" src="site/marca/logo-fundo-escuro.svg" alt="" data-marca><span class="pill on" id="contItens">0 itens</span></div>
   <div class="vitrine" id="vitrine">
     <div class="vit-vazio" id="vitVazio"><svg viewBox="0 0 64 40" width="76" height="48" aria-hidden="true"><g fill="currentColor"><rect x="2" y="2" width="3" height="36"/><rect x="8" y="2" width="1.5" height="36"/><rect x="12" y="2" width="4" height="36"/><rect x="19" y="2" width="1.5" height="36"/><rect x="23" y="2" width="3" height="36"/><rect x="29" y="2" width="1.5" height="36"/><rect x="33" y="2" width="5" height="36"/><rect x="41" y="2" width="1.5" height="36"/><rect x="45" y="2" width="3" height="36"/><rect x="51" y="2" width="1.5" height="36"/><rect x="55" y="2" width="4" height="36"/><rect x="61" y="2" width="1.5" height="36"/></g></svg><b>Passe o código de barras no leitor</b><span>O produto aparece aqui</span></div>
     <div class="vit-prod" id="vitProd" style="display:none"><div class="vit-foto" id="vitFoto"></div><div class="vit-info"><span class="vit-nome" id="vitNome"></span><span class="vit-preco" id="vitPreco"></span></div></div>
@@ -310,7 +311,7 @@ img.marca-propria{width:auto;object-fit:contain;border-radius:0}
 
 <!-- contingência: sem internet no caixa -->
 <section class="tela" id="contT" aria-live="polite">
-  <div class="topo"><img class="logo" src="logo.png" alt="Beep Smart Mercadinhos" data-marca><span class="pill on">Caixa sem internet</span></div>
+  <div class="topo"><img class="logo" src="site/marca/logo-fundo-escuro.svg" alt="" data-marca><span class="pill on">Caixa sem internet</span></div>
   <div class="cont-corpo" id="contToque">
     <span class="cont-selo">Pague com Pix pelo app</span>
     <h1>O caixa está sem internet.<br><span>Compre pelo seu celular.</span></h1>
@@ -329,9 +330,9 @@ img.marca-propria{width:auto;object-fit:contain;border-radius:0}
 <section class="tela" id="ruim"><div class="marca"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></div><h1 class="big">Compra não finalizada</h1><p style="font-size:20px" id="ruimTxt">Os produtos devem voltar à prateleira</p></section>
 
 <!-- trava: caixa não vende em aba do navegador -->
-<div id="descanso" aria-label="Toque para comprar"><div id="dsSlides"></div><div class="barra"><img src="logo.png" alt="Beep" data-marca><b>Toque na tela para comprar</b><div class="prog" id="dsProg"></div></div></div>
+<div id="descanso" aria-label="Toque para comprar"><div id="dsSlides"></div><div class="barra"><img src="site/marca/logo-fundo-escuro.svg" alt="" data-marca><b>Toque na tela para comprar</b><div class="prog" id="dsProg"></div></div></div>
 <div id="instalar" style="display:none;position:fixed;inset:0;z-index:90;background:#0b0b0b;padding:28px 24px;flex-direction:column;gap:18px;overflow:auto">
-  <img src="logo.png" alt="Beep" id="logoInst" style="height:44px;width:auto;align-self:flex-start">
+  <img src="site/marca/logo-fundo-escuro.svg" alt="PagNow" id="logoInst" style="height:44px;width:auto;align-self:flex-start">
   <h2 style="font:800 28px/1.15 Manrope,Inter,sans-serif;margin-top:18px">Instale o caixa para usar</h2>
   <p style="color:var(--mu);font-size:16px;line-height:1.5">Aberto no navegador, a barra do Google fica liberada e qualquer pessoa pode navegar. Instalado, o caixa abre em tela cheia, sem barra.</p>
   <button class="btn" id="btnInstalar" style="display:none">Instalar o PagNow</button>
@@ -411,10 +412,22 @@ const brl=c=>'R$ '+(c/100).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!
 const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
 let token=ls.get('bp-token',null),loja=ls.get('bp-loja',null),cat=ls.get('bp-cat',null),fila=ls.get('bp-fila',[]),voz=ls.get('bp-voz',true);
 // ---------- marca própria (white label) ----------
-// O logo enviado no Painel vem no catálogo como link assinado; o caixa guarda uma cópia (data URL) para mostrar
-// mesmo sem internet. Sem logo próprio, fica o logo padrão (logo.png).
-function aplicarLogo(){const d=ls.get('bp-logo',null),nome=cat?.empresa?.nome_exibicao;
- document.querySelectorAll('img[data-marca]').forEach(i=>{if(d){i.onerror=()=>{i.onerror=null;i.src='logo.png';i.classList.remove('marca-propria')};i.src=d;i.classList.add('marca-propria');if(nome)i.alt=nome}else if(i.classList.contains('marca-propria')){i.src='logo.png';i.classList.remove('marca-propria')}})}
+// Marca da loja (white label): o logo enviado no Painel vem no catálogo como link assinado; o caixa guarda uma cópia
+// (data URL) para mostrar mesmo sem internet. Sem logo próprio, mostra o nome da loja escrito; antes de ativar, PagNow.
+const PAGNOW_LOGO='site/marca/logo-fundo-escuro.svg';
+function marcaTexto(nome){nome=String(nome||'').trim();if(!nome)return PAGNOW_LOGO;
+ const t=nome.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));let w=Math.round(nome.length*31);
+ try{const x=document.createElement('canvas').getContext('2d');x.font="800 54px Manrope,Roboto,'Segoe UI',Helvetica,Arial,sans-serif";w=Math.ceil(x.measureText(nome).width-nome.length+8)}catch(e){}
+ return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} 96" width="${w}" height="96"><text x="50%" y="64" text-anchor="middle" font-family="Manrope,Roboto,'Segoe UI',Helvetica,Arial,sans-serif" font-weight="800" font-size="54" letter-spacing="-1" fill="#ffffff">${t}</text></svg>`)}
+// cor principal da empresa nos destaques; clareada se for escura, para o texto preto dos botões continuar legível
+function corDaMarca(hex){const m=/^#?([0-9a-f]{6})$/i.exec(String(hex||'').trim());if(!m)return null;let c=[0,2,4].map(i=>parseInt(m[1].slice(i,i+2),16));
+ const lum=x=>{const f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(x[0])+.7152*f(x[1])+.0722*f(x[2])};
+ for(let k=0;k<20&&(lum(c)+.05)/(lum([17,17,17])+.05)<7;k++)c=c.map(v=>Math.round(v+(255-v)*.12));
+ return {hex:'#'+c.map(v=>v.toString(16).padStart(2,'0')).join(''),rgb:c.join(',')}}
+function aplicarCor(){const c=corDaMarca(cat?.empresa?.cores?.principal);const r=document.documentElement.style;
+ if(c){r.setProperty('--y',c.hex);r.setProperty('--yr',c.rgb)}else{r.removeProperty('--y');r.removeProperty('--yr')}}
+function aplicarLogo(){const d=ls.get('bp-logo',null),nome=cat?.empresa?.nome_exibicao||'',neutro=marcaTexto(nome);aplicarCor();
+ document.querySelectorAll('img[data-marca]').forEach(i=>{i.alt=nome;i.classList.add('marca-propria');i.classList.toggle('marca-texto',!d);if(d){i.onerror=()=>{i.onerror=null;i.src=neutro;i.classList.add('marca-texto')};i.src=d}else{i.onerror=null;i.src=neutro}})}
 async function guardarLogo(){const u=cat?.empresa?.logo,v=cat?.empresa?.logo_versao||'';
  if(!u){if(ls.get('bp-logo',null)){ls.del('bp-logo');ls.del('bp-logo-v')}aplicarLogo();return}
  if(ls.get('bp-logo-v','')!==v||!ls.get('bp-logo',null)){try{const r=await fetch(u);if(!r.ok)throw new Error('logo');const b=await r.blob();
@@ -439,7 +452,7 @@ const DS_ESPERA=30000;
 function adsCaixa(){const h=new Date(Date.now()-3*36e5).toISOString().slice(11,19);return(cat?.midia||[]).filter(a=>!a.hora_inicio||!a.hora_fim||(h>=a.hora_inicio&&h<=a.hora_fim))}
 function armarDescanso(id){clearTimeout(dsTimer);if(id!=='espera'){fecharDescanso();return}dsTimer=setTimeout(()=>{const t=document.querySelector('.tela.on');if(t?.id==='espera'&&!carrinho.length&&!$('#idade')?.classList.contains('on'))abrirDescanso()},DS_ESPERA)}
 function abrirDescanso(){const L=adsCaixa();if(!L.length)return;const D=$('#descanso');dsIdx=0;
- $('#dsSlides').innerHTML=L.map((a,i)=>`<div class="ds" data-i="${i}"><div class="fundo" style="background-image:url('${a.midia.replace(/'/g,'%27')}')"></div>${a.video?`<video src="${esc(a.midia)}" muted playsinline preload="auto"></video>`:`<img src="${esc(a.midia)}" alt="" crossorigin="anonymous">`}<div class="vel"></div><span class="sl${a.proprio?' casa':''}">${a.proprio?'Oferta Beep':'Patrocinado'}</span><div class="tx"><b>${esc(a.titulo)}</b>${a.texto?`<span>${esc(a.texto)}</span>`:''}${a.cupom?`<span class="cp">CUPOM ${esc(a.cupom)}</span>`:''}</div></div>`).join('');
+ $('#dsSlides').innerHTML=L.map((a,i)=>`<div class="ds" data-i="${i}"><div class="fundo" style="background-image:url('${a.midia.replace(/'/g,'%27')}')"></div>${a.video?`<video src="${esc(a.midia)}" muted playsinline preload="auto"></video>`:`<img src="${esc(a.midia)}" alt="" crossorigin="anonymous">`}<div class="vel"></div><span class="sl${a.proprio?' casa':''}">${a.proprio?'Oferta da loja':'Patrocinado'}</span><div class="tx"><b>${esc(a.titulo)}</b>${a.texto?`<span>${esc(a.texto)}</span>`:''}${a.cupom?`<span class="cp">CUPOM ${esc(a.cupom)}</span>`:''}</div></div>`).join('');
  $('#dsProg').innerHTML=L.length>1?L.map(()=>'<i></i>').join(''):'';D.classList.add('on');mostrarSlide(L,0)}
 function mostrarSlide(L,i){clearTimeout(dsRoda);if(!$('#descanso').classList.contains('on'))return;
  if(dsDesde&&L[dsIdx])registrarDs(L[dsIdx],(Date.now()-dsDesde)/1000);dsIdx=i;dsDesde=Date.now();
@@ -473,7 +486,7 @@ const API_KIT=API.replace(/\/pdv$/,'/kit');
 (()=>{const m=location.hash.match(/fabrica=([A-Za-z0-9]{16})/);if(!m)return;ls.set('bp-kit',m[1].toUpperCase());history.replaceState(null,'',location.pathname)})();
 let kitSeg=null,kitT=null,kitAte=0;
 async function apiKit(acao,c={}){const r=await fetch(API_KIT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({acao,...c})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(!r.ok){const e=new Error(j.erro||'Erro');e.status=r.status;throw e}return j}
-function kitTopo(k){const lg=$('#ativar .logo');if(k&&!lg.dataset.sp){lg.dataset.sp=1;lg.onerror=()=>{lg.onerror=null;lg.src='logo.png'};lg.src='site/marca/logo-fundo-escuro.png'}else if(!k&&lg.dataset.sp){delete lg.dataset.sp;lg.src='logo.png'}$('#atvTit').textContent=k?'Bem-vindo ao Beep Smart Pay':'Ative este aparelho como caixa';$('#atvSub').textContent=k?'Vamos ligar este tablet à sua loja. Leva uns 3 minutos.':'Digite o código de ativação que o dono da loja recebeu. Ele vale uma vez só.'}
+function kitTopo(k){const lg=$('#ativar .logo');if(k&&!lg.dataset.sp){lg.dataset.sp=1;lg.src=PAGNOW_LOGO}else if(!k&&lg.dataset.sp){delete lg.dataset.sp;lg.src=PAGNOW_LOGO}$('#atvTit').textContent=k?'Bem-vindo ao PagNow':'Ative este aparelho como caixa';$('#atvSub').textContent=k?'Vamos ligar este tablet à sua loja. Leva uns 3 minutos.':'Digite o código de ativação que o dono da loja recebeu. Ele vale uma vez só.'}
 function kitManual(msg){clearTimeout(kitT);kitSeg=null;kitTopo(false);$('#kitQr').style.display='none';$('#passo1').style.display='flex';if(msg)$('#msg1').textContent=msg}
 async function kitMostrar(){if(token||!ls.get('bp-kit',null))return;clearTimeout(kitT);$('#passo1').style.display='none';$('#passo2').style.display='none';$('#kitQr').style.display='flex';$('#kitMsg').textContent='';kitTopo(true);
  if(!navigator.onLine){$('#kitSvg').innerHTML='<span class="mu" style="color:#111">Sem internet</span>';$('#kitMsg').textContent='Ligue o tablet ao Wi-Fi da loja. O QR aparece assim que a internet voltar.';kitT=setTimeout(kitMostrar,5000);return}
@@ -714,7 +727,7 @@ $('#pinTec').onclick=async e=>{const b=e.target.closest('.pinb');if(!b)return;co
  if(pinModo==='confirmar'){if(pinDig!==pinPrimeiro){$('#pinMsg').textContent='Os PINs não conferem. Comece de novo.';pinModo='criar';$('#pinTit').textContent='Crie o PIN do gerente';pinDig='';desenhaPin();return}ls.set('bp-pin',await hashPin(pinDig));toast('PIN salvo');abrirAdmin()}};
 $('#pinVoltar').onclick=()=>{liberarNav=false;mostrar('espera');travaNav()};
 let toques=0,tq=null;$('#logoSecreto').onclick=()=>{toques++;clearTimeout(tq);tq=setTimeout(()=>toques=0,2500);if(toques>=5){toques=0;telaPin(ls.get('bp-pin','')?'entrar':'criar')}};
-function abrirAdmin(){$('#admLoja').textContent=(cat?.empresa?.nome_exibicao||'Beep')+' · '+(cat?.loja||loja?.nome||'');$('#admInfo').textContent=`${cat?.produtos?.length||0} produtos · ${fila.length} venda(s) na fila · atualizado ${cat?.atualizado?new Date(cat.atualizado).toLocaleString('pt-BR'):'—'}`;$('#admVoz').textContent='Voz: '+(voz?'ligada':'desligada');mostrar('admin')}
+function abrirAdmin(){$('#admLoja').textContent=(cat?.empresa?.nome_exibicao?cat.empresa.nome_exibicao+' · ':'')+(cat?.loja||loja?.nome||'');$('#admInfo').textContent=`${cat?.produtos?.length||0} produtos · ${fila.length} venda(s) na fila · atualizado ${cat?.atualizado?new Date(cat.atualizado).toLocaleString('pt-BR'):'—'}`;$('#admVoz').textContent='Voz: '+(voz?'ligada':'desligada');mostrar('admin')}
 $('#fecharAdmin').onclick=()=>mostrar('espera');
 $('#admSync').onclick=async()=>{await sincronizar();abrirAdmin()};
 $('#admFila').onclick=async()=>{await enviarFila();toast(fila.length?fila.length+' ainda na fila':'Fila enviada');abrirAdmin()};
