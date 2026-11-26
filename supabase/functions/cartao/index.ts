@@ -166,7 +166,7 @@ function corpoOrdem(c: any) {
     description: "Compra Beep",
     expiration_time: EXPIRA,
     transactions: { payments: [{ amount: reais(c.valor) }] },
-    config: { point: { terminal_id: c.terminal_id, print_on_terminal: "no_ticket" }, payment_method: { default_type: c.forma === "debito" ? "debit_card" : "credit_card" } },
+    config: { point: { terminal_id: c.terminal_id, print_on_terminal: "no_ticket" }, payment_method: c.forma === "debito" ? { default_type: "debit_card" } : { default_type: "credit_card", default_installments: 1 } }, // crédito sempre à vista (1x)
   });
 }
 async function enviarOrdem(c: any, tk: string) {
