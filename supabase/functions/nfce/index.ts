@@ -232,7 +232,9 @@ async function emitir(n: any): Promise<{ status: string; motivo?: string }> {
     const x = Array.isArray(r) ? r[0] : r;
     if (!x?.numero) return falhaTemporaria("Não foi possível reservar o número da nota");
     serie = x.serie; numero = x.numero;
-    await atualizar({ serie, numero, ambiente: f.ambiente });
+    // o índice único (empresa, ambiente, série, número) recusa número já usado por outra venda: tenta de novo com outro
+    const { error: errNum } = await atualizar({ serie, numero, ambiente: f.ambiente });
+    if (errNum) return falhaTemporaria(`Número ${numero} da série ${serie} já está em outra nota; outro número será reservado`);
   }
 
   let cred;
@@ -266,14 +268,21 @@ async function emitir(n: any): Promise<{ status: string; motivo?: string }> {
     await atualizar({ status: "autorizada", protocolo: r.protocolo, cstat: r.cStat, ultimo_erro: null, xml_path: path, processando_ate: null, tentativas: (n.tentativas ?? 0) + 1 });
     return { status: "autorizada" };
   }
-  // a SEFAZ já tem uma nota com esse número (envio anterior sem resposta): adota a que foi autorizada
+  // a SEFAZ já tem uma nota com esse número.
+  // Só adota a nota autorizada se ela é desta mesma venda (envio anterior sem resposta, cuja chave ficou gravada aqui).
+  // Se o número já foi usado por outra venda, a nota NÃO é desta venda: libera o número e reserva outro na próxima tentativa.
   const outra = (r.motivo.match(/\d{44}/) ?? [])[0];
+  if ((r.cStat === 204 || r.cStat === 539) && outra && outra !== n.chave && outra !== chave) {
+    await atualizar({ serie: null, numero: null, chave: null, qrcode_url: null });
+    return falhaTemporaria(`Número ${numero} da série ${serie} já usado em outra nota (SEFAZ ${r.cStat}); vai sair com outro número`);
+  }
   if ((r.cStat === 204 || r.cStat === 539) && outra) {
     try {
       const c = await enviar(emp, w.consulta, "NFeConsultaProtocolo4", consSitNFe(amb, outra), "nfeConsultaNF");
       const cr = lerRetorno(c);
       if (AUTORIZADA.has(cr.cStat)) {
-        await atualizar({ status: "autorizada", chave: outra, protocolo: cr.protocolo, cstat: cr.cStat, ultimo_erro: "Autorizada em envio anterior", processando_ate: null });
+        // o QR também tem de ser o da nota adotada (o gerado agora aponta para uma chave que a SEFAZ não tem)
+        await atualizar({ status: "autorizada", chave: outra, qrcode_url: await qrCodeV2(w.qrcode, outra, amb, f.csc_id, cred.csc), protocolo: cr.protocolo, cstat: cr.cStat, ultimo_erro: "Autorizada em envio anterior", processando_ate: null });
         return { status: "autorizada" };
       }
     } catch { /* cai na rejeição abaixo */ }
