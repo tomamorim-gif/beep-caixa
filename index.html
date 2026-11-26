@@ -65,6 +65,9 @@ h2{font-size:22px;font-weight:800}
 #espera{justify-content:space-between;background:radial-gradient(120% 70% at 50% 0%,#2a2400 0%,var(--k) 60%)}
 #espera .centro{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px}
 #espera .logoG{width:min(78vw,360px);border-radius:24px;box-shadow:0 30px 80px rgba(255,214,10,.15)}
+/* logo da empresa (marca própria): mantém a proporção do arquivo enviado no Painel */
+img.marca-propria{width:auto;object-fit:contain;border-radius:0}
+#espera .logoG.marca-propria{width:auto;height:min(26vh,220px);max-width:78vw;box-shadow:none;margin-bottom:12px}
 .pulso{width:120px;height:120px;border-radius:50%;background:var(--y);color:#111;display:grid;place-items:center;animation:p 2.2s ease-in-out infinite}
 .pulso svg{width:56px;height:56px}
 @keyframes p{0%,100%{box-shadow:0 0 0 0 rgba(255,214,10,.45)}50%{box-shadow:0 0 0 26px rgba(255,214,10,0)}}
@@ -247,7 +250,7 @@ h2{font-size:22px;font-weight:800}
 <section class="tela" id="espera">
   <div class="topo"><span class="pill" id="lojaNome">—</span><span class="pill" id="rede">online</span></div>
   <div class="centro" id="toqueEspera">
-    <img class="logoG" src="logo.png" alt="Beep Smart Mercadinhos" id="logoSecreto">
+    <img class="logoG" src="logo.png" alt="Beep Smart Mercadinhos" id="logoSecreto" data-marca>
     <div class="pulso" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg></div>
     <h1>Toque para começar</h1>
     <p class="mu">ou passe o código de barras no leitor</p>
@@ -259,7 +262,7 @@ h2{font-size:22px;font-weight:800}
 
 <!-- carrinho -->
 <section class="tela" id="carrinho">
-  <div class="topo"><img class="logo" src="logo.png" alt="Beep"><span class="pill on" id="contItens">0 itens</span></div>
+  <div class="topo"><img class="logo" src="logo.png" alt="Beep" data-marca><span class="pill on" id="contItens">0 itens</span></div>
   <div class="vitrine" id="vitrine">
     <div class="vit-vazio" id="vitVazio"><svg viewBox="0 0 64 40" width="76" height="48" aria-hidden="true"><g fill="currentColor"><rect x="2" y="2" width="3" height="36"/><rect x="8" y="2" width="1.5" height="36"/><rect x="12" y="2" width="4" height="36"/><rect x="19" y="2" width="1.5" height="36"/><rect x="23" y="2" width="3" height="36"/><rect x="29" y="2" width="1.5" height="36"/><rect x="33" y="2" width="5" height="36"/><rect x="41" y="2" width="1.5" height="36"/><rect x="45" y="2" width="3" height="36"/><rect x="51" y="2" width="1.5" height="36"/><rect x="55" y="2" width="4" height="36"/><rect x="61" y="2" width="1.5" height="36"/></g></svg><b>Passe o código de barras no leitor</b><span>O produto aparece aqui</span></div>
     <div class="vit-prod" id="vitProd" style="display:none"><div class="vit-foto" id="vitFoto"></div><div class="vit-info"><span class="vit-nome" id="vitNome"></span><span class="vit-preco" id="vitPreco"></span></div></div>
@@ -307,7 +310,7 @@ h2{font-size:22px;font-weight:800}
 
 <!-- contingência: sem internet no caixa -->
 <section class="tela" id="contT" aria-live="polite">
-  <div class="topo"><img class="logo" src="logo.png" alt="Beep Smart Mercadinhos"><span class="pill on">Caixa sem internet</span></div>
+  <div class="topo"><img class="logo" src="logo.png" alt="Beep Smart Mercadinhos" data-marca><span class="pill on">Caixa sem internet</span></div>
   <div class="cont-corpo" id="contToque">
     <span class="cont-selo">Pague com Pix pelo app</span>
     <h1>O caixa está sem internet.<br><span>Compre pelo seu celular.</span></h1>
@@ -326,7 +329,7 @@ h2{font-size:22px;font-weight:800}
 <section class="tela" id="ruim"><div class="marca"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></div><h1 class="big">Compra não finalizada</h1><p style="font-size:20px" id="ruimTxt">Os produtos devem voltar à prateleira</p></section>
 
 <!-- trava: caixa não vende em aba do navegador -->
-<div id="descanso" aria-label="Toque para comprar"><div id="dsSlides"></div><div class="barra"><img src="logo.png" alt="Beep"><b>Toque na tela para comprar</b><div class="prog" id="dsProg"></div></div></div>
+<div id="descanso" aria-label="Toque para comprar"><div id="dsSlides"></div><div class="barra"><img src="logo.png" alt="Beep" data-marca><b>Toque na tela para comprar</b><div class="prog" id="dsProg"></div></div></div>
 <div id="instalar" style="display:none;position:fixed;inset:0;z-index:90;background:#0b0b0b;padding:28px 24px;flex-direction:column;gap:18px;overflow:auto">
   <img src="logo.png" alt="Beep" id="logoInst" style="height:44px;width:auto;align-self:flex-start">
   <h2 style="font:800 28px/1.15 Manrope,Inter,sans-serif;margin-top:18px">Instale o caixa para usar</h2>
@@ -407,6 +410,17 @@ const $=s=>document.querySelector(s);
 const brl=c=>'R$ '+(c/100).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
 let token=ls.get('bp-token',null),loja=ls.get('bp-loja',null),cat=ls.get('bp-cat',null),fila=ls.get('bp-fila',[]),voz=ls.get('bp-voz',true);
+// ---------- marca própria (white label) ----------
+// O logo enviado no Painel vem no catálogo como link assinado; o caixa guarda uma cópia (data URL) para mostrar
+// mesmo sem internet. Sem logo próprio, fica o logo padrão (logo.png).
+function aplicarLogo(){const d=ls.get('bp-logo',null),nome=cat?.empresa?.nome_exibicao;
+ document.querySelectorAll('img[data-marca]').forEach(i=>{if(d){i.onerror=()=>{i.onerror=null;i.src='logo.png';i.classList.remove('marca-propria')};i.src=d;i.classList.add('marca-propria');if(nome)i.alt=nome}else if(i.classList.contains('marca-propria')){i.src='logo.png';i.classList.remove('marca-propria')}})}
+async function guardarLogo(){const u=cat?.empresa?.logo,v=cat?.empresa?.logo_versao||'';
+ if(!u){if(ls.get('bp-logo',null)){ls.del('bp-logo');ls.del('bp-logo-v')}aplicarLogo();return}
+ if(ls.get('bp-logo-v','')!==v||!ls.get('bp-logo',null)){try{const r=await fetch(u);if(!r.ok)throw new Error('logo');const b=await r.blob();
+  if(!/^image\//.test(b.type)||b.size>600000)throw new Error('logo inválido');
+  const d=await new Promise((ok,er)=>{const f=new FileReader();f.onload=()=>ok(f.result);f.onerror=er;f.readAsDataURL(b)});ls.set('bp-logo',d);ls.set('bp-logo-v',v)}catch(e){}}
+ aplicarLogo()}
 let contUsa=ls.get('bp-cont',false),semRede=!navigator.onLine,falhasSinal=0;
 let maior18Em=null,carrinho=[],forma=null,vendaId=null,iniciada=null,stream=null,frontStream=null,detector=null,lendo=false,ultimoCod='',ultimoT=0,inativo=null;
 
@@ -479,7 +493,7 @@ $('#kitPinIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefau
 const kitSemPin=()=>token&&!ls.get('bp-pin',null)&&ls.get('bp-kit',null);
 
 // ---------- catálogo e fila ----------
-async function sincronizar(silencioso){carregarMp();try{const r=await api('catalogo');cat={...r,mapa:null};ls.set('bp-cat',cat);quiosqueDoPainel(r.quiosque);setTimeout(()=>(r.midia||[]).filter(a=>!a.video).forEach(a=>fetch(a.midia,{mode:'cors'}).catch(()=>{})),800);setTimeout(()=>r.produtos.filter(p=>p.foto).forEach((p,i)=>setTimeout(()=>fetch(p.foto,{mode:'cors'}).catch(()=>{}),i*150)),1500);$('#lojaNome').textContent=r.loja||loja?.nome||'—';if(!silencioso)toast(r.produtos.length+' produtos atualizados');return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
+async function sincronizar(silencioso){carregarMp();try{const r=await api('catalogo');cat={...r,mapa:null};ls.set('bp-cat',cat);quiosqueDoPainel(r.quiosque);guardarLogo();setTimeout(()=>(r.midia||[]).filter(a=>!a.video).forEach(a=>fetch(a.midia,{mode:'cors'}).catch(()=>{})),800);setTimeout(()=>r.produtos.filter(p=>p.foto).forEach((p,i)=>setTimeout(()=>fetch(p.foto,{mode:'cors'}).catch(()=>{}),i*150)),1500);$('#lojaNome').textContent=r.loja||loja?.nome||'—';if(!silencioso)toast(r.produtos.length+' produtos atualizados');return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
 const nz=c=>String(c).replace(/\D/g,'').replace(/^0+/,'');
 function porCodigo(c){if(!cat)return null;const k=nz(c);return cat.produtos.find(p=>p.codigos.some(x=>nz(x)===k))||null}
 async function enviarFila(){if(!fila.length)return;const resto=[];for(const v of fila){try{await api('venda',v)}catch(e){if(!/inválid|sem preço|vazio/i.test(e.message))resto.push(v)}}fila=resto;ls.set('bp-fila',fila);atualizarRede()}
@@ -693,7 +707,7 @@ $('#pinTec').onclick=async e=>{const b=e.target.closest('.pinb');if(!b)return;co
  if(k!=='OK'){if(pinDig.length<6)pinDig+=k;desenhaPin();if(pinDig.length<6||pinModo==='criar')return}
  if(pinDig.length<4){$('#pinMsg').textContent='Use de 4 a 6 números';return}
  if(pinModo==='entrar'){if(bloqueadoAte()>Date.now()){$('#pinMsg').textContent='Bloqueado. Aguarde alguns minutos.';pinDig='';desenhaPin();return}
-  if(await hashPin(pinDig)===ls.get('bp-pin','')){ls.set('bp-pin-erros',0);if(liberarNav)liberadoNav=true;abrirAdmin();return}
+  if(await hashPin(pinDig)===ls.get('bp-pin','')){ls.set('bp-pin-erros',0);if(liberarNav){liberadoNav=true;ls.set('bp-nav-livre',true)}abrirAdmin();return}
   const n=ls.get('bp-pin-erros',0)+1;ls.set('bp-pin-erros',n);if(n>=3){ls.set('bp-pin-bloq',Date.now()+5*60000);ls.set('bp-pin-erros',0)}
   $('#pinMsg').textContent=n>=3?'3 erros: bloqueado por 5 minutos':'PIN incorreto';pinDig='';desenhaPin();return}
  if(pinModo==='criar'){pinPrimeiro=pinDig;pinDig='';pinModo='confirmar';$('#pinTit').textContent='Confirme o PIN';desenhaPin();return}
@@ -709,7 +723,7 @@ $('#admPin').onclick=()=>telaPin('criar');
 $('#admMic').onclick=async()=>{const ok=await pedirMic();toast(ok?'Microfone liberado neste aparelho':'Microfone bloqueado: libere no cadeado do Chrome › Permissões');};
 $('#admTela').onclick=()=>{$('#admInfo').innerHTML='<b>Para ninguém sair do caixa:</b> no Android, ative <b>Fixar app</b> (Samsung: Configurações › Segurança e privacidade › Mais configurações de segurança › Fixar janelas; outros: Configurações › Segurança › Fixação de app) e ligue "Pedir PIN para soltar". Depois abra o caixa, toque em Recentes (▢), no ícone do app e em Fixar. Para soltar: segure Voltar + Recentes e digite o PIN do celular.'};
 $('#admSair').onclick=()=>{if($('#admSair').dataset.c){desativar();return}$('#admSair').dataset.c=1;$('#admSair').textContent='Toque de novo para confirmar';setTimeout(()=>{delete $('#admSair').dataset.c;$('#admSair').textContent='Desativar este aparelho'},4000)};
-function desativar(expirado){['bp-token','bp-loja','bp-cat','bp-fila','bp-pin'].forEach(ls.del);token=null;loja=null;cat=null;fila=[];$('#passo1').style.display='flex';$('#passo2').style.display='none';mostrar('ativar');if(expirado)toast('Aparelho desativado. Ative de novo.');kitMostrar()}
+function desativar(expirado){['bp-token','bp-loja','bp-cat','bp-fila','bp-pin','bp-logo','bp-logo-v','bp-nav-livre'].forEach(ls.del);token=null;loja=null;cat=null;fila=[];$('#passo1').style.display='flex';$('#passo2').style.display='none';mostrar('ativar');if(expirado)toast('Aparelho desativado. Ative de novo.');kitMostrar()}
 
 // ---------- modo quiosque: dificulta sair do caixa ----------
 document.addEventListener('contextmenu',e=>e.preventDefault());
@@ -812,7 +826,9 @@ $('#vozMic').onclick=()=>{if(vozRec||$('#vozMic').classList.contains('falando'))
 const pedirMic=async()=>{try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());return true}catch(e){return false}};
 
 // ---------- trava de navegador ----------
-const instalado=()=>!!NATIVO||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+// Em navegador de quiosque (Fully Kiosk) o caixa não roda como app instalado. O gerente libera uma vez
+// (5 toques no logo + PIN) e fica liberado neste aparelho; o Fully com a interface JavaScript ligada libera sozinho.
+const instalado=()=>!!NATIVO||ls.get('bp-nav-livre',false)||typeof window.fully!=='undefined'||matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 let liberadoNav=false,promptInst=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptInst=e;$('#btnInstalar').style.display='block'});
 addEventListener('appinstalled',()=>{$('#btnInstalar').style.display='none';$('#instalar').querySelector('h2').textContent='Instalado! Abra pelo ícone PagNow'});
@@ -843,7 +859,7 @@ async function prepararQr(){const link=linkApp();if(!link)return;const q=ls.get(
 function desenharQr(svg){const el=$('#contQr');if(!el)return;if(svg&&svg.startsWith('<svg'))el.innerHTML=svg;else el.innerHTML='<p>'+esc(linkApp())+'</p>'}
 function avisoCont(){navigator.vibrate?.(120);toast('Sem internet no caixa: compre pelo celular');falar('O caixa está sem internet. Leia o QR code com o seu celular e use o app da loja.')}
 $('#contToque').addEventListener('pointerdown',avisoCont);
-function iniciar(){$('#lojaNome').textContent=cat?.loja||loja?.nome||'—';const q=ls.get('bp-qr-app',null);desenharQr(q?.link===linkApp()?q.svg:null);atualizarRede();mostrar('espera');sinal();setInterval(sinal,30000);ligarRosto();enviarFila();setInterval(()=>{sincronizar(true);enviarFila();enviarDs()},10*60*1000)}
+function iniciar(){aplicarLogo();$('#lojaNome').textContent=cat?.loja||loja?.nome||'—';const q=ls.get('bp-qr-app',null);desenharQr(q?.link===linkApp()?q.svg:null);atualizarRede();mostrar('espera');sinal();setInterval(sinal,30000);ligarRosto();enviarFila();setInterval(()=>{sincronizar(true);enviarFila();enviarDs()},10*60*1000)}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{setInterval(()=>r.update().catch(()=>{}),10*60000)}).catch(()=>{});
  // versão nova chegou: recarrega sozinho, mas nunca no meio de uma compra
  let recarregar=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(recarregar)return;recarregar=true;const tenta=()=>{if(typeof carrinho!=='undefined'&&carrinho.length){setTimeout(tenta,5000);return}location.reload()};tenta()})}
