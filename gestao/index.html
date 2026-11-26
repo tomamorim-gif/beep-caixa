@@ -209,6 +209,23 @@ input[type=file]{font-size:13px;color:var(--mu)}input[type=file]::file-selector-
 .camqr.erro .mira{display:none}.camqr.erro p{top:0;display:grid;place-items:center;background:var(--p2);color:var(--mu)}
 .sug .pill{justify-self:start}
 @media(max-width:900px){.cupom-ac{grid-template-columns:1fr 1fr;flex-basis:100%}}
+
+@media(max-width:700px){
+ .conf thead{display:none}.conf,.conf tbody{display:block}
+ .conf tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 10px;padding:16px 14px;border-bottom:1px solid var(--line)}
+ .conf tr:last-child{border-bottom:0}
+ .conf td{display:block;padding:0;border:0;text-align:left!important;min-width:0}
+ .conf td:first-child{display:none}.conf td:nth-child(2),.conf td:nth-child(3){grid-column:1/-1}
+ .conf td[data-l]::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mu);margin-bottom:6px}
+ .conf .stack{justify-items:start!important}
+ .conf td:nth-child(2) input[type=text]{width:100%}
+ .conf .inp-s{width:100%!important;max-width:110px;text-align:left}
+ .conf td:nth-child(4) .inp-s{width:56px!important}
+ .conf .row .btn.sm{flex:1 1 auto}
+ .navcmd kbd{display:none}.navcmd{white-space:nowrap;flex:none}
+ .cupom{padding:16px}.cupom-ac{grid-template-columns:1fr 1fr}.cupom-ac .btn{min-height:48px}
+ .barra{padding:12px;gap:10px}.barra .f{min-width:0!important;flex:1 1 100%}.barra .mu.sm{display:none}.barra .btn.pri{flex:1 1 100%;min-height:48px;justify-content:center}
+}
 </style>
 </head>
 <body>
@@ -371,11 +388,12 @@ function conferir(n){const porEan=new Map();S.produtos.forEach(p=>{if(p.ean)porE
 
 // ---------- tela: entrada de NF-e ----------
 function telaNF(){const M=$('#main');
- if(!S.nota){M.innerHTML=`<div class="head"><div><h1>Entrada de NF-e e cupom</h1><p>Notas emitidas para o CNPJ da empresa vêm pelo "Atualizar notas". Compra com cupom fiscal entra pelo QR code.</p></div><button class="btn pri" id="sincr">Atualizar notas</button></div>
-  <div class="card" style="padding:0;overflow:hidden"><div class="row" style="padding:16px 18px;border-bottom:1px solid var(--line)"><b style="font-size:16px">Notas emitidas para a empresa</b><span class="sp"></span><span class="mu sm" id="sincInfo"></span></div><div id="recebidas" class="tblwrap" style="border:0;border-radius:0"><p class="vazio">Carregando…</p></div></div>
-  <div class="card cupom" style="margin-top:16px"><div class="cupom-tx"><span class="ic">${ICON.qr}</span><div><b style="font-size:16px">Compra com cupom fiscal</b><p class="mu sm" style="margin-top:4px">Atacarejo e supermercado que só dão cupom (NFC-e). Leia o QR code do cupom: os itens vêm da SEFAZ e entram na mesma conferência da nota.</p></div></div>
+ if(!S.nota){const celular=innerWidth<=700,cupomCard=`  <div class="card cupom" style="margin-top:${celular?0:16}px;margin-bottom:${celular?16:0}px"><div class="cupom-tx"><span class="ic">${ICON.qr}</span><div><b style="font-size:16px">Compra com cupom fiscal</b><p class="mu sm" style="margin-top:4px">Atacarejo e supermercado que só dão cupom (NFC-e). Leia o QR code do cupom: os itens vêm da SEFAZ e entram na mesma conferência da nota.</p></div></div>
    <div class="cupom-ac"><button class="btn pri" id="cupomCam">${ICON.qr}Ler QR code</button><label class="btn" for="cupomFoto">Foto do cupom<input type="file" accept="image/*" capture="environment" id="cupomFoto" hidden></label>
-   <div class="row cupom-in"><input id="cupomTx" placeholder="Ou cole o link do QR / digite a chave do cupom" autocomplete="off" spellcheck="false"><button class="btn" id="cupomIr">Buscar</button></div></div></div>
+   <div class="row cupom-in"><input id="cupomTx" placeholder="Chave do cupom ou link do QR" autocomplete="off" spellcheck="false"><button class="btn" id="cupomIr">Buscar</button></div></div></div>`;
+  M.innerHTML=`<div class="head"><div><h1>Entrada de NF-e e cupom</h1><p>Notas emitidas para o CNPJ da empresa vêm pelo "Atualizar notas". Compra com cupom fiscal entra pelo QR code.</p></div><button class="btn pri" id="sincr">Atualizar notas</button></div>
+  ${celular?cupomCard:''}<div class="card" style="padding:0;overflow:hidden"><div class="row" style="padding:16px 18px;border-bottom:1px solid var(--line)"><b style="font-size:16px">Notas emitidas para a empresa</b><span class="sp"></span><span class="mu sm" id="sincInfo"></span></div><div id="recebidas" class="tblwrap" style="border:0;border-radius:0"><p class="vazio">Carregando…</p></div></div>
+  ${celular?'':cupomCard}
   <div class="grid2" style="margin-top:16px"><div class="card"><b>Buscar pela chave de acesso</b><p class="mu sm" style="margin:6px 0 12px">Os 44 números do DANFE. O sistema baixa o XML direto da SEFAZ.</p><div class="row"><input id="chaveNf" inputmode="numeric" placeholder="0000 0000 0000 …" style="flex:1;min-width:0" maxlength="60"><button class="btn pri" id="buscarChave">Buscar</button></div></div>
    <label class="drop" id="drop" style="padding:22px;margin:0"><span class="ic">${ICON.up}</span><b>Ou arraste o XML da nota aqui</b><span class="mu sm">ou clique para escolher o arquivo (.xml)</span><input type="file" accept=".xml,text/xml,application/xml" id="fXml" hidden></label></div>
   <h2 style="font-size:18px;margin:28px 0 12px">Últimas notas lançadas</h2><div id="ultimas" class="tblwrap"><p class="vazio">Carregando…</p></div>`;
@@ -393,7 +411,7 @@ function telaNF(){const M=$('#main');
   ${n.jaLancada?`<div class="aviso" style="margin-bottom:14px"><span>⚠️</span><span><b>${cup?'Este cupom já foi lançado':'Esta nota já foi lançada'}</b> em ${new Date(n.jaLancada).toLocaleString('pt-BR')}. Lançar de novo duplicaria o estoque.</span></div>`:''}
   ${n.destCnpj&&S.emp.cnpj&&n.destCnpj!==S.emp.cnpj?`<div class="aviso" style="margin-bottom:14px"><span>⚠️</span><span>O destinatário desta nota (CNPJ ${esc(n.destCnpj)}) não é a ${esc(S.emp.nome_exibicao||'empresa')}. Confira se é a nota certa.</span></div>`:''}
   <div class="grid5" style="margin-bottom:16px"><div class="kpi"><span>${cup?'Valor do cupom':'Valor da nota'}</span><b class="num">${brl(n.total)}</b></div><div class="kpi"><span>Itens</span><b class="num">${L.length}</b></div><div class="kpi"><span>Produtos novos</span><b class="num" style="color:#7dd3fc">${novos}</b></div><div class="kpi"><span>Custo mudou</span><b class="num" style="color:${mudou?'#fbbf24':'inherit'}">${mudou}</b></div>${cup?`<div class="kpi"><span>Parecidos para confirmar</span><b class="num" style="color:${sugs?'#fbbf24':'inherit'}">${sugs}</b></div>`:`<div class="kpi"><span>Fiscal a corrigir</span><b class="num" style="color:${fiscal?'#fbbf24':'inherit'}">${fiscal}</b></div>`}</div>
-  <div class="tblwrap"><table class="tbl"><thead><tr><th>#</th><th>Produto</th><th>Situação</th><th class="n">Unidades</th><th class="n">Custo un.</th><th class="n">Preço de venda</th></tr></thead><tbody>
+  <div class="tblwrap"><table class="tbl conf"><thead><tr><th>#</th><th>Produto</th><th>Situação</th><th class="n">Unidades</th><th class="n">Custo un.</th><th class="n">Preço de venda</th></tr></thead><tbody>
   ${L.map((l,k)=>{const it=l.it,un=+(it.qCom*it.fator).toFixed(3);
    let sit,precoCel;
    if(!l.prod){const sg=l.sug?.[0];sit=sg?`<div class="stack sug"><span class="pill warn">Parece com</span><span class="sm"><b>${esc(bonito(sg.p.nome))}</b></span><span class="mu sm">${esc(sg.p.ean||'sem código')} · custo ${brl(sg.p.custo)}</span><span class="row" style="gap:6px"><button class="btn sm pri" data-eeste="${k}">É este</button>${l.sug.length>1?`<button class="btn sm" data-vinc="${k}">Ver outros</button>`:''}</span></div>`:`<span class="pill new">Produto novo</span>`;
@@ -404,8 +422,8 @@ function telaNF(){const M=$('#main');
    sit+=celFiscal(l,k);
    return `<tr><td class="mu num">${it.nItem}</td><td><div class="stack">${!l.prod?`<input type="text" data-k="${k}" data-f="nome" value="${esc(l.nome)}" aria-label="Nome do produto" style="min-height:36px">`:`<b>${esc(bonito(it.desc))}</b>`}<span class="mu sm">Cód. ${esc(it.codigo)}${it.eanUn||it.ean?(cup?' · é código de barras':' · EAN '+esc(it.eanUn||it.ean)):' · sem código de barras'}${cup?'':' · NCM '+esc(it.ncm||'—')}</span>
     <span class="row"><button class="btn sm" data-vinc="${k}">${l.prod?'Vincular a outro':'Vincular a um produto existente'}</button>${l.prod?`<button class="btn sm" data-novo="${k}">Cadastrar como novo</button>`:''}</span></div></td>
-    <td>${sit}</td><td class="n"><div class="stack" style="justify-items:end"><b class="num">${un.toLocaleString('pt-BR')}</b><span class="mu sm">${it.qCom.toLocaleString('pt-BR')} ${esc(it.uCom)} × <input class="inp-s num" style="width:58px!important" data-k="${k}" data-f="fator" value="${it.fator}" aria-label="Unidades por embalagem"></span></div></td>
-    <td class="n num">${brl(it.custoUn)}</td><td class="n">${precoCel}</td></tr>`}).join('')}</tbody></table></div>
+    <td>${sit}</td><td class="n" data-l="Unidades"><div class="stack" style="justify-items:end"><b class="num">${un.toLocaleString('pt-BR')}</b><span class="mu sm">${it.qCom.toLocaleString('pt-BR')} ${esc(it.uCom)} × <input class="inp-s num" style="width:58px!important" data-k="${k}" data-f="fator" value="${it.fator}" aria-label="Unidades por embalagem"></span></div></td>
+    <td class="n num" data-l="Custo un.">${brl(it.custoUn)}</td><td class="n" data-l="${l.prod?'Preço de venda':'Preço novo'}">${precoCel}</td></tr>`}).join('')}</tbody></table></div>
   ${novos&&S.portfolios.length?`<div class="card" style="margin-top:16px"><b>Produtos novos entram nos portfólios:</b><div class="row" style="margin-top:10px">${S.portfolios.map(p=>`<label class="chk"><input type="checkbox" data-pf="${p.id}" ${S.pfNovos.has(p.id)?'checked':''}> ${esc(p.nome)}</label>`).join('')}</div><p class="mu sm" style="margin-top:8px">As lojas que usam esses portfólios passam a vender e repor os produtos novos.</p></div>`:''}
   <div class="barra"><label class="f" style="min-width:240px">Destino do estoque<select id="destino"><option value="">Escolha o CD ou a loja</option>${locs.map(l=>`<option value="${l.id}" ${S.destino===l.id?'selected':''}>${esc(l.nome)}${l.tipo==='cd'?' (CD)':''}</option>`).join('')}</select></label>
    <span class="sp"></span><span class="mu sm">Preço de produto já cadastrado só muda se você digitar um novo.</span><button class="btn pri" id="lancar" ${S.destino&&!n.jaLancada?'':'disabled'}>${cup?'Lançar cupom':'Lançar nota'}</button></div>
