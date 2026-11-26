@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     const cont = l ? await contingencia(l.id, b.caixa) : false;
     if (!l || !(l.app_consulta || cont)) return erro("Esta loja ainda não liberou o app", 404);
     const { data: e } = await db.from("empresas").select("nome_exibicao, logo_path, cores").eq("id", l.empresa_id).single();
-    return json({ loja: { id: l.id, nome: l.nome }, empresa: e?.nome_exibicao ?? "", logo: await logoAssinado(e?.logo_path), cor: e?.cores?.principal ?? null, contingencia: cont });
+    return json({ loja: { id: l.id, nome: l.nome }, empresa: e?.nome_exibicao ?? "", logo: await logoAssinado(e?.logo_path), cor: e?.cores?.principal ?? null, tema: e?.cores?.tema ?? null, contingencia: cont });
   }
 
   if (acao === "cadastrar") {
@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
 
   if (acao === "me") {
     const { data: e } = await db.from("empresas").select("nome_exibicao, logo_path, cores").eq("id", s.c.empresa_id).single();
-    return json({ cliente: { nome: s.c.nome, unidade: s.c.unidade, cpf: s.c.cpf_mascara }, loja: { id: s.l.id, nome: s.l.nome, empresa: e?.nome_exibicao ?? "", logo: await logoAssinado(e?.logo_path), cor: e?.cores?.principal ?? null }, perm: s.perm, pagamento_teste: false, termos_ok: s.c.termos_versao === TERMOS_V });
+    return json({ cliente: { nome: s.c.nome, unidade: s.c.unidade, cpf: s.c.cpf_mascara }, loja: { id: s.l.id, nome: s.l.nome, empresa: e?.nome_exibicao ?? "", logo: await logoAssinado(e?.logo_path), cor: e?.cores?.principal ?? null, tema: e?.cores?.tema ?? null }, perm: s.perm, pagamento_teste: false, termos_ok: s.c.termos_versao === TERMOS_V });
   }
 
   // o app pergunta de tempos em tempos: a contingência começou ou acabou?
