@@ -475,7 +475,7 @@ function relatorio(lote) {
   const lojas = C.S.locais.filter(l => (r.lojas || []).includes(l.id)).map(l => l.nome);
   const cats = Object.entries(rel.categorias || {}).sort((a, b) => b[1] - a[1]);
   const conf = rel.conferir || [], ncm = rel.ncm || [], semNcm = ncm.filter(x => !x.ncm).length;
-  M.innerHTML = `<div class="head"><div><h1>Relatório da importação</h1><p>${esc(nomeOrig)} · ${esc(dataHora(lote.criado_em))}${lote.desfeito_em ? ' · <b style="color:#f87171">desfeita em ' + esc(dataHora(lote.desfeito_em)) + '</b>' : ''}</p></div>
+  M.innerHTML = `<div class="head"><div><h1>Relatório da importação</h1><p>${esc(nomeOrig)} · ${esc(dataHora(lote.criado_em))}${lote.desfeito_em ? ' · <b style="color:var(--badt)">desfeita em ' + esc(dataHora(lote.desfeito_em)) + '</b>' : ''}</p></div>
    <div class="row"><button class="btn" id="agIni">Voltar</button><button class="btn" onclick="print()">Imprimir</button>${!org && ncm.length ? '<button class="btn" id="agCsv">Lista para o contador</button>' : ''}${lote.desfeito_em ? '' : '<button class="btn dang" id="agUndo">Desfazer esta importação</button>'}</div></div>
   <div class="grid2 agrel">
    <div class="card"><h2 class="agh">O que o PagNow fez</h2><ul class="aglist">
@@ -575,7 +575,7 @@ function css() {
   if (document.getElementById('agCss')) return;
   const s = document.createElement('style'); s.id = 'agCss';
   s.textContent = `.agopts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.agopt{display:grid;gap:12px;align-content:start}.agopt h3{font-size:18px}
-.agic{width:44px;height:44px;border-radius:12px;background:rgba(255,214,10,.1);color:var(--y);display:grid;place-items:center}
+.agic{width:44px;height:44px;border-radius:12px;background:rgba(255,214,10,.1);color:var(--yt);display:grid;place-items:center}
 .agdrop{padding:22px 14px;gap:6px}.agnum{display:flex;align-items:baseline;gap:8px;padding:14px 0}.agnum b{font:800 34px Manrope,Inter,sans-serif}
 .wzbanner{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:16px 18px;border-radius:16px;border:1px solid rgba(255,214,10,.3);background:rgba(255,214,10,.05)}.agpbar{flex:1;min-width:260px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.agpbar span{display:grid;gap:6px;font-size:12px;font-weight:600;color:var(--mu)}.agpbar i{height:6px;border-radius:99px;background:var(--p3)}.agpbar .ok i{background:var(--ok)}.agpbar .ok{color:var(--ink)}
 .agmk{margin-top:14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}

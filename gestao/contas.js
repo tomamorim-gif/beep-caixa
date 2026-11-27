@@ -53,8 +53,8 @@ export async function telaContas(C) {
   const local = c => c.local_id ? (S.locais.find(l => l.id === c.local_id)?.nome || 'Local removido') : c.rateio === 'geral_igual' ? 'Geral (dividido igual)' : 'Geral (pelo faturamento)';
   const chip = (k, t) => `<button class="prchip${F.filtro === k ? ' on' : ''}" data-f="${k}">${t}<span class="num">${filtros[k].length}</span></button>`;
   el.innerHTML = `<div class="grid4" style="margin-bottom:16px">
-    <div class="kpi"><span>Vencidas</span><b class="num" style="color:${venc.length ? '#f87171' : 'inherit'}">${brl(soma(venc))}</b><small class="mu">${venc.length} ${venc.length === 1 ? 'conta' : 'contas'}</small></div>
-    <div class="kpi"><span>Vencem hoje</span><b class="num" style="color:${hj.length ? '#fbbf24' : 'inherit'}">${brl(soma(hj))}</b><small class="mu">${hj.length} ${hj.length === 1 ? 'conta' : 'contas'}</small></div>
+    <div class="kpi"><span>Vencidas</span><b class="num" style="color:${venc.length ? 'var(--badt)' : 'inherit'}">${brl(soma(venc))}</b><small class="mu">${venc.length} ${venc.length === 1 ? 'conta' : 'contas'}</small></div>
+    <div class="kpi"><span>Vencem hoje</span><b class="num" style="color:${hj.length ? 'var(--warnt)' : 'inherit'}">${brl(soma(hj))}</b><small class="mu">${hj.length} ${hj.length === 1 ? 'conta' : 'contas'}</small></div>
     <div class="kpi"><span>Próximos 7 dias</span><b class="num">${brl(soma(sem))}</b><small class="mu">${sem.length} ${sem.length === 1 ? 'conta' : 'contas'}</small></div>
     <div class="kpi"><span>Em aberto, total</span><b class="num">${brl(soma(abertas))}</b><small class="mu">pago no mês: ${brl(pagasMes.reduce((s, c) => s + (c.valor_pago || 0), 0))}</small></div></div>
    <div class="row" style="gap:8px;margin-bottom:12px">${chip('aberto', 'Em aberto')}${chip('vencidas', 'Vencidas')}${chip('semana', 'Até 7 dias')}${chip('pagas', 'Pagas')}${chip('todas', 'Todas')}<span class="sp"></span><input type="search" id="cpQ" placeholder="Buscar fornecedor ou descrição" value="${esc(F.q)}" style="max-width:280px"></div>
@@ -114,7 +114,7 @@ async function editar(C, c, fornMap) {
     <label class="f">Centro de custo<select id="ceL">${locs.map(l => `<option value="${l.id}" ${sel(cc, l.id)}>${esc(l.nome)}${l.tipo === 'cd' ? ' (CD)' : ''}</option>`).join('')}<option value="geral_faturamento" ${sel(cc, 'geral_faturamento')}>Geral, dividido pelo faturamento das lojas</option><option value="geral_igual" ${sel(cc, 'geral_igual')}>Geral, dividido igual entre as lojas</option></select></label></div>
    <label class="f">Código de barras do boleto (opcional)<input id="ceB" inputmode="numeric" value="${esc(c?.codigo_barras || '')}" placeholder="Linha digitável"></label>
    <label class="f">Repetir<select id="ceRp"><option value="">Não repete</option><option value="mensal" ${sel(c?.recorrente, 'mensal')}>Todo mês (cria a próxima ao pagar)</option><option value="semanal" ${sel(c?.recorrente, 'semanal')}>Toda semana (cria a próxima ao pagar)</option></select></label>
-   <div class="row">${c && !c.nota_entrada_id ? '<button class="btn" id="ceX" style="color:#f87171">Excluir</button>' : ''}<span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="ceOk">Salvar</button></div>`);
+   <div class="row">${c && !c.nota_entrada_id ? '<button class="btn" id="ceX" style="color:var(--badt)">Excluir</button>' : ''}<span class="sp"></span><button class="btn" data-close>Cancelar</button><button class="btn pri" id="ceOk">Salvar</button></div>`);
   $('#ceOk').onclick = async () => {
     const descricao = $('#ceD').value.trim(), categoria = $('#ceC').value.trim() || 'Outros', vencimento = $('#ceV').value, valor = centavos($('#ceR').value), l = $('#ceL').value;
     if (!descricao) { toast('Dê uma descrição para a conta'); return; }
