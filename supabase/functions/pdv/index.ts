@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
 
   if (acao === "catalogo") {
     const [{ data: precos }, { data: emp }, { data: loja }] = await Promise.all([
-      db.from("precos_local").select("preco, ativo_no_mix, produtos!inner(id, nome, ean, unidade, ativo, idade_minima, produto_codigos(ean, quantidade))").eq("local_id", d.local_id).eq("ativo_no_mix", true),
+      db.from("precos_local").select("preco, ativo_no_mix, produtos!inner(id, nome, ean, unidade, ativo, idade_minima, categoria_id, produto_codigos(ean, quantidade))").eq("local_id", d.local_id).eq("ativo_no_mix", true),
       db.from("empresas").select("nome_exibicao, cores, gravacao, dias_video, logo_path").eq("id", d.empresa_id).single(),
       db.from("locais").select("nome, teste").eq("id", d.local_id).single(),
     ]);
@@ -142,9 +142,14 @@ Deno.serve(async (req) => {
     const produtos = ativos.map((p: any) => ({
       id: p.produtos.id, nome: p.produtos.nome, preco: p.preco, unidade: p.produtos.unidade, maior18: p.produtos.idade_minima === 18, foto: fotos.get(p.produtos.id) ?? null,
       codigos: [...new Set([p.produtos.ean, ...(p.produtos.produto_codigos ?? []).map((c: any) => c.ean)].filter(Boolean))],
+      categoria: p.produtos.categoria_id ?? null,
     }));
+    // categorias principais da empresa (cards da tela "Escolha os produtos"); se a leitura falhar, o caixa só não mostra os cards
+    const { data: cats, error: eCats } = await db.from("categorias").select("id, nome, ordem").eq("empresa_id", d.empresa_id).is("pai_id", null).order("ordem", { ascending: true, nullsFirst: false }).order("nome");
+    if (eCats) console.error("catalogo: categorias", eCats.message);
+    const categorias = (cats ?? []).map((c: any) => ({ id: c.id, nome: c.nome }));
     const gravacao = { modo: emp?.gravacao ?? "intercorrencias", dias: emp?.dias_video ?? 3 };
-    return json({ empresa: { nome_exibicao: emp?.nome_exibicao, cores: emp?.cores, logo: await logoAssinado(emp?.logo_path), logo_versao: emp?.logo_path ?? null }, loja: loja?.nome, loja_teste: !!loja?.teste, aparelho: d.nome, gravacao, produtos, midia: await midiaCaixa(d), quiosque: await quiosqueDoCaixa(d), atualizado: new Date().toISOString() });
+    return json({ empresa: { nome_exibicao: emp?.nome_exibicao, cores: emp?.cores, logo: await logoAssinado(emp?.logo_path), logo_versao: emp?.logo_path ?? null }, loja: loja?.nome, loja_teste: !!loja?.teste, aparelho: d.nome, gravacao, produtos, categorias, midia: await midiaCaixa(d), quiosque: await quiosqueDoCaixa(d), atualizado: new Date().toISOString() });
   }
 
   // preços sempre daqui: o aparelho nunca define o valor
