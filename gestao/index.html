@@ -32,6 +32,7 @@ label.f{display:grid;gap:6px;font-size:13px;color:var(--mu);font-weight:500}
 .tabs2{display:grid;grid-template-columns:1fr 1fr;background:var(--p2);border-radius:12px;padding:4px}
 .tabs2 button{min-height:38px;border-radius:9px;font-weight:600;color:var(--mu)}.tabs2 button.on{background:var(--p3);color:var(--ink)}
 .erro{color:#f87171;font-size:13px;min-height:18px}
+.lembrar{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mu,#9aa0a6);cursor:pointer;user-select:none}.lembrar input{width:18px;height:18px;accent-color:var(--y);margin:0;flex:none}
 /* app */
 .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
 .side{border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;overflow-y:auto}
@@ -237,7 +238,15 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SB_URL='https://gdnvjpmpfgautrmtkjmx.supabase.co', SB_KEY='sb_publishable_z-GGao9BiSTEUgMi1xAHCQ_5Vh5e3FY';
 // endereço do sistema (raiz do site), seja qual for o domínio: github.io/beep-caixa/ hoje, app.pagnow.com.br/ depois
 const BASE=location.origin+location.pathname.replace(/gestao\/?.*$/,'');
-const sb=createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+// link de "Esqueci minha senha" chega com #...type=recovery; guarda antes do cliente limpar o endereço
+let RECUPERAR=/type=recovery/.test(location.hash);
+// "Manter conectado": sessão no localStorage (fica) ou no sessionStorage (sai ao fechar o navegador)
+const ls=(f,d)=>{try{return f()}catch(e){return d}};
+const LEMBRAR=()=>ls(()=>localStorage.getItem('pn-lembrar')!=='0',true);
+const ARMAZ={getItem:k=>ls(()=>localStorage.getItem(k)??sessionStorage.getItem(k),null),
+ setItem:(k,v)=>ls(()=>{(LEMBRAR()?localStorage:sessionStorage).setItem(k,v)}),
+ removeItem:k=>ls(()=>{localStorage.removeItem(k);sessionStorage.removeItem(k)})};
+const sb=createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storage:ARMAZ}});
 const $=s=>document.querySelector(s);
 const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const brl=c=>((c||0)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -272,18 +281,44 @@ function telaLogin(modo='entrar',msg=''){
   <div class="tabs2"><button class="${modo==='entrar'?'on':''}" data-m="entrar">Entrar</button><button class="${modo==='convite'?'on':''}" data-m="convite">Tenho um convite</button></div>
   <form id="fLogin" style="display:grid;gap:12px">
    ${modo==='convite'?`<label class="f">Código do convite<input type="text" name="codigo" placeholder="XXXX-XXXX" autocomplete="off" required style="text-transform:uppercase;letter-spacing:.12em"></label>`:''}
-   <label class="f">E-mail<input type="email" name="email" autocomplete="username" required></label>
-   <label class="f">${modo==='convite'?'Crie uma senha (mínimo 8 caracteres)':'Senha'}<input type="password" name="senha" autocomplete="${modo==='convite'?'new-password':'current-password'}" minlength="${modo==='convite'?8:1}" required></label>
+   <label class="f">E-mail<input type="email" name="email" id="lEmail" autocomplete="username" value="${esc(ls(()=>localStorage.getItem('pn-email'),'')||'')}" required></label>
+   <label class="f">${modo==='convite'?'Crie uma senha (mínimo 8 caracteres)':'Senha'}<input type="password" name="senha" id="lSenha" autocomplete="${modo==='convite'?'new-password':'current-password'}" minlength="${modo==='convite'?8:1}" required></label>
+   <label class="lembrar"><input type="checkbox" name="lembrar" ${LEMBRAR()?'checked':''}> Manter conectado e guardar a senha neste aparelho</label>
    <p class="erro" id="lErro">${esc(msg)}</p>
    <button class="btn pri" type="submit">${modo==='convite'?'Criar meu acesso':'Entrar'}</button>
+   ${modo==='entrar'?`<button class="lnk" type="button" id="lEsq" style="justify-self:center">Esqueci minha senha</button><p class="mu sm" id="lOk" style="text-align:center;min-height:0"></p>`:''}
   </form></div></div>`;
  document.querySelectorAll('.tabs2 button').forEach(b=>b.onclick=()=>telaLogin(b.dataset.m));
+ if($('#lEsq'))$('#lEsq').onclick=async()=>{const em=$('#fLogin [name=email]'),email=em.value.trim();$('#lErro').textContent='';$('#lOk').textContent='';
+  if(!em.checkValidity()||!email){$('#lErro').textContent='Digite seu e-mail acima e toque de novo em "Esqueci minha senha".';em.focus();return}
+  const b=$('#lEsq');b.disabled=true;const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:BASE+'gestao/'});b.disabled=false;
+  if(error){$('#lErro').textContent=/rate|seconds|once every/i.test(error.message)?'Aguarde um minuto e tente de novo.':error.message;return}
+  $('#lOk').textContent='Se este e-mail tiver acesso, enviamos um link para criar uma nova senha. Confira também o spam.'};
  $('#fLogin').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),bt=e.target.querySelector('button');bt.disabled=true;$('#lErro').textContent='';
   try{const email=String(f.get('email')).trim(),senha=String(f.get('senha'));
    if(modo==='convite'){const r=await fetch(SB_URL+'/functions/v1/gestao',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({acao:'aceitar_convite',codigo:f.get('codigo'),email,senha})});const j=await r.json();if(!r.ok)throw new Error(j.erro||'Não foi possível criar o acesso')}
+   const lembrar=!!f.get('lembrar');ls(()=>{localStorage.setItem('pn-lembrar',lembrar?'1':'0');if(lembrar)localStorage.setItem('pn-email',email);else{localStorage.removeItem('pn-email');Object.keys(localStorage).filter(k=>/^sb-.*auth-token/.test(k)).forEach(k=>localStorage.removeItem(k))}});
    const {error}=await sb.auth.signInWithPassword({email,password:senha});if(error)throw new Error(error.message.includes('Invalid')?'E-mail ou senha incorretos':error.message);
+   // pede ao navegador para guardar a senha (Chrome/Android); nos outros o próprio navegador oferece ao enviar o formulário
+   if(lembrar&&window.PasswordCredential)try{await navigator.credentials.store(new PasswordCredential({id:email,password:senha,name:email}))}catch(e){}
    await iniciar()}catch(err){$('#lErro').textContent=err.message;bt.disabled=false}};
 }
+
+function telaNovaSenha(){
+ $('#raiz').innerHTML=`<div class="login"><div class="card">
+  <img src="../logo-claro.png" alt="PagNow">
+  <div><h1 style="font-size:24px">Crie uma nova senha</h1><p class="mu sm">Ela passa a valer no lugar da antiga.</p></div>
+  <form id="fNova" style="display:grid;gap:12px">
+   <label class="f">Nova senha (mínimo 8 caracteres)<input type="password" name="s1" autocomplete="new-password" minlength="8" required></label>
+   <label class="f">Repita a nova senha<input type="password" name="s2" autocomplete="new-password" minlength="8" required></label>
+   <p class="erro" id="nErro"></p>
+   <button class="btn pri" type="submit">Salvar e entrar</button>
+  </form></div></div>`;
+ $('#fNova').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),bt=e.target.querySelector('button');$('#nErro').textContent='';
+  if(f.get('s1')!==f.get('s2')){$('#nErro').textContent='As duas senhas não são iguais.';return}
+  bt.disabled=true;const {error}=await sb.auth.updateUser({password:String(f.get('s1'))});
+  if(error){bt.disabled=false;$('#nErro').textContent=/different|same/i.test(error.message)?'Escolha uma senha diferente da antiga.':/expired|invalid|session/i.test(error.message)?'O link expirou. Volte e peça outro em "Esqueci minha senha".':error.message;return}
+  RECUPERAR=false;history.replaceState(null,'',location.pathname);toast('Senha alterada');await iniciar()}};
 
 // ---------- carga ----------
 async function carregar(){const e=S.emp.id;
@@ -293,7 +328,7 @@ async function carregar(){const e=S.emp.id;
  for(const r of [lc,pr,cd,cf,pc,pf,pi,gf])if(r.error)throw r.error;
  S.locais=lc.data;S.produtos=pr.data;S.codigos=cd.data;S.codForn=cf.data;S.precos=pc.data;S.portfolios=pf.data;S.pitens=pi.data;S.grupos=gf.data}
 async function iniciar(){const kit=(location.hash.match(/kit=([A-Za-z0-9]{8})/)||[])[1];if(kit){try{const m=await import('./kit.js?v=3');return m.telaKit({sb,$,esc,bonito,SB_URL,iniciar},kit)}catch(e){}}
- const {data:{session}}=await sb.auth.getSession();if(!session){telaLogin();return}S.user=session.user;
+ const {data:{session}}=await sb.auth.getSession();if(!session){telaLogin('entrar',RECUPERAR?'O link expirou ou já foi usado. Peça outro em "Esqueci minha senha".':'');RECUPERAR=false;return}if(RECUPERAR){telaNovaSenha();return}S.user=session.user;
  const {data:m}=await sb.from('membros').select('empresa_id,papel').eq('user_id',S.user.id).eq('ativo',true).in('papel',['dono','gerente']).limit(1);
  if(!m?.length){await sb.auth.signOut();telaLogin('entrar','Este login não tem acesso de dono ou gerente.');return}
  S.papel=m[0].papel;const {data:emp}=await sb.from('empresas').select('id,nome_exibicao,razao_social,cnpj,regra_preco,gravacao,dias_video,logo_path').eq('id',m[0].empresa_id).single();S.emp=emp;
@@ -1281,7 +1316,7 @@ window.beep={
   const r=await fetch(SB_URL+'/functions/v1/gestao',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+session.access_token},body:JSON.stringify({acao:'importar_foto',produto_id:produtoId,url})});const j=await r.json();if(!r.ok)throw new Error(j.erro||'Falhou');return j},
  async sugerirNcm(produtoId,ncm,fonte){if(!S.emp)throw new Error('Faça login no painel');if(!/^\d{8}$/.test(String(ncm)))throw new Error('NCM precisa ter 8 dígitos');const r=await sb.from('produtos').update({ncm_sugerido:String(ncm),ncm_fonte:String(fonte||'assistente').slice(0,200)}).eq('id',produtoId).eq('empresa_id',S.emp.id).select('id');if(r.error)throw r.error;if(!r.data.length)throw new Error('Produto não encontrado');return {ok:true}}
 };
-sb.auth.onAuthStateChange((ev)=>{if(ev==='SIGNED_OUT')telaLogin()});
+sb.auth.onAuthStateChange((ev)=>{if(ev==='SIGNED_OUT')telaLogin();if(ev==='PASSWORD_RECOVERY'&&!RECUPERAR){RECUPERAR=true;telaNovaSenha()}});
 iniciar();
 </script>
 </body>
