@@ -35,6 +35,7 @@ label.f{display:grid;gap:6px;font-size:13px;color:var(--mu);font-weight:500}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--p3);color:var(--mu);white-space:nowrap}
 .pill.ok{background:rgba(34,197,94,.12);color:var(--okt)}.pill.warn{background:rgba(245,158,11,.13);color:var(--warnt)}.pill.bad{background:rgba(239,68,68,.13);color:var(--badt)}.pill.new{background:rgba(56,189,248,.13);color:var(--newt)}
 .conf tr.semcad td{background:rgba(245,158,11,.07)}.conf tr.semcad td:first-child{box-shadow:inset 3px 0 #f59e0b}
+.pgt input,.pgt select{height:42px!important;min-height:42px!important;box-sizing:border-box}.falta{border-color:var(--warn)!important}.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.kpi small{display:block;margin-top:4px;font-size:12px}.cpt tr.cpv td{background:rgba(239,68,68,.06)}.cpt tr.cpv td:first-child{box-shadow:inset 3px 0 var(--badt)}.pgt td{vertical-align:middle}.pgt input[type=date]{min-height:36px}
 .mg{font-weight:600}.mg.baixa{color:var(--badt)}.mg.media{color:var(--warnt)}.mg.boa{color:var(--okt)}
 .mu{color:var(--mu)}.sm{font-size:13px}
 /* login */
@@ -239,7 +240,9 @@ input[type=file]{font-size:13px;color:var(--mu)}input[type=file]::file-selector-
  .conf tr:last-child{border-bottom:0}
  .conf td{display:block;padding:0;border:0;text-align:left!important;min-width:0}
  .conf td:first-child{display:none}.conf td:nth-child(2),.conf td:nth-child(3){grid-column:1/-1}
- .conf td[data-l]::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mu);margin-bottom:6px}
+ .grid4{grid-template-columns:1fr 1fr}.cpt thead{display:none}.cpt,.cpt tbody{display:block}.cpt tr{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;border-bottom:1px solid var(--line)}.cpt td{display:block;padding:0;border:0;text-align:left!important;min-width:0}.cpt td:nth-child(2),.cpt td:last-child{grid-column:1/-1}.cpt td:last-child .row{justify-content:flex-start!important}.cpt tr.cpv{background:rgba(239,68,68,.06);box-shadow:inset 3px 0 #ef4444}.cpt tr.cpv td{background:none!important;box-shadow:none!important}
+ .pgt thead{display:none}.pgt,.pgt tbody{display:block}.pgt tr{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;border-bottom:1px solid var(--line)}.pgt td{display:block;padding:0;border:0;text-align:left!important;min-width:0}.pgt td[data-l="Código de barras"]{grid-column:1/-1}.pgt td:last-child{grid-column:1/-1}
+ .cpt td[data-l]::before,.pgt td[data-l]::before,.conf td[data-l]::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mu);margin-bottom:6px}
  .conf .stack{justify-items:start!important}
  .conf td:nth-child(2) input[type=text]{width:100%}
  .conf td[data-l="Preço de venda"]{grid-column:span 2}
@@ -297,7 +300,7 @@ const ICON={qr:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stro
  up:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>'};
 
 // ---------- estado ----------
-const TELAS=['ini','ag','vend','fin','prod','est','abs','nf','pf','cx','app','ads','vid','cfg'];
+const TELAS=['ini','ag','vend','fin','cp','prod','est','abs','nf','pf','cx','app','ads','vid','cfg'];
 // troca de tela pelo menu ou pelos atalhos do Início; o endereço (#vend…) deixa o botão Voltar funcionar
 function ir(t){if(!TELAS.includes(t))t='ini';if(S.tela===t&&location.hash==='#'+t){render();return}S.tela=t;history.pushState(null,'','#'+t);render();window.scrollTo(0,0)}
 addEventListener('popstate',()=>{const t=location.hash.slice(1);S.tela=TELAS.includes(t)?t:'ini';if($('#main'))render()});
@@ -376,6 +379,7 @@ function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img
   <div class="navsec">Dia a dia</div>
   <button class="nav" data-t="vend"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Vendas</button>
   <button class="nav" data-t="fin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>Financeiro</button>
+  <button class="nav" data-t="cp"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 14h3M8 17h6"/></svg>Contas a pagar</button>
   <button class="nav" data-t="est"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Estoque e reposição</button>
   <button class="nav" data-t="abs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Abastecimento</button>
   <button class="nav" data-t="nf">${ICON.nf}Entrada de NF-e</button>
@@ -391,7 +395,7 @@ function shell(){$('#raiz').innerHTML=`<div class="app"><aside class="side"><img
   <button class="nav" data-t="cfg">${ICON.cfg}Configurações</button>
   <div class="quem"><b style="color:var(--ink)">${esc(S.emp.nome_exibicao||S.emp.razao_social)}</b><br>${esc(S.user.email)} · ${S.papel==='dono'?'Dono':'Gerente'}<br>${seletorTema()}<button class="btn sm" id="sair" style="margin-top:10px">Sair</button></div></aside><main id="main"></main></div>`;
  document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{if(S.tela==='abs'&&b.dataset.t!=='abs'&&AB.ed.size){if(!confirmar('Há alterações de mínimo e máximo não salvas. Descartar?'))return;AB.ed.clear()}ir(b.dataset.t)});$('#navCmd').onclick=()=>abrirCmd();talvezAssistente();$('#sair').onclick=async()=>{await sb.auth.signOut();location.reload()};render()}
-function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({ini:telaIni,ag:telaAg,vend:telaVend,fin:telaFin,prod:telaProd,est:telaEst,abs:telaAbs,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
+function render(){document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tela));({ini:telaIni,ag:telaAg,vend:telaVend,fin:telaFin,cp:telaCp,prod:telaProd,est:telaEst,abs:telaAbs,nf:telaNF,pf:telaPF,cx:telaCx,app:telaApp,ads:telaAds,vid:telaVid,cfg:telaCfg})[S.tela]()}
 
 // ---------- agente "Configurar minha loja" (arquivo próprio, carregado só quando abre a tela) ----------
 const ctxBeep=()=>({sb,S,$,esc,brl,toast,modal,fechar,bonito,lerNFe,grupoDe,precoSugerido,regra,lojas,carregar,render,
@@ -422,7 +426,11 @@ function lerNFe(xml){if(xml.length>5e6)throw new Error('Arquivo grande demais');
   const total=nr(tx(p,'vProd'))-nr(tx(p,'vDesc'))+nr(tx(p,'vFrete'))+nr(tx(p,'vSeg'))+nr(tx(p,'vOutro'))+impostos,ct=centavos(total),un=qCom*fator;
   const fis=lerFiscalItem(imp);
   return {...fis,cfop:tx(p,'CFOP'),nItem:+det.getAttribute('nItem'),codigo:tx(p,'cProd'),ean:eanOk(tx(p,'cEAN')),eanUn:eanOk(tx(p,'cEANTrib')),desc:tx(p,'xProd'),ncm:tx(p,'NCM'),cest:tx(p,'CEST')||null,uCom:tx(p,'uCom'),qCom,fator,custoTotal:ct,custoUn:un>0?Math.round(ct/un):ct}});
- return {chave,numero:tx(ide,'nNF'),serie:tx(ide,'serie'),emissao:tx(ide,'dhEmi')||tx(ide,'dEmi'),fornCnpj:tx(emit,'CNPJ')||tx(emit,'CPF'),fornNome:tx(emit,'xNome'),destCnpj:tx(dest,'CNPJ'),total:centavos(nr(tx(inf.getElementsByTagName('ICMSTot')[0],'vNF'))),itens,xml}}
+ return {chave,numero:tx(ide,'nNF'),serie:tx(ide,'serie'),emissao:tx(ide,'dhEmi')||tx(ide,'dEmi'),fornCnpj:tx(emit,'CNPJ')||tx(emit,'CPF'),fornNome:tx(emit,'xNome'),destCnpj:tx(dest,'CNPJ'),total:centavos(nr(tx(inf.getElementsByTagName('ICMSTot')[0],'vNF'))),itens,xml,pag:lerPagNFe(inf)}}
+// pagamento da nota: duplicatas (boletos com vencimento) e forma de pagamento
+function lerPagNFe(inf){const cobr=inf.getElementsByTagName('cobr')[0];
+ const dups=cobr?[...cobr.getElementsByTagName('dup')].map(d=>({n:tx(d,'nDup'),venc:tx(d,'dVenc').slice(0,10),valor:centavos(nr(tx(d,'vDup')))})).filter(d=>d.valor>0):[];
+ return {dups,tPag:[...inf.getElementsByTagName('detPag')].map(d=>tx(d,'tPag')).filter(Boolean),fatura:cobr?tx(cobr.getElementsByTagName('fat')[0],'nFat'):''}}
 
 // ICMS do item na nota do fornecedor: diz se a mercadoria já veio com ST (retida ou cobrada antes)
 const CST_ST=new Set(['10','30','60','70']),CSOSN_ST=new Set(['201','202','203','500']);
@@ -481,7 +489,7 @@ function telaNF(){const M=$('#main');
   ${n.jaLancada?`<div class="aviso" style="margin-bottom:14px"><span>⚠️</span><span><b>${cup?'Este cupom já foi lançado':'Esta nota já foi lançada'}</b> em ${new Date(n.jaLancada).toLocaleString('pt-BR')}. Lançar de novo duplicaria o estoque.</span></div>`:''}
   ${n.destCnpj&&S.emp.cnpj&&n.destCnpj!==S.emp.cnpj?`<div class="aviso" style="margin-bottom:14px"><span>⚠️</span><span>O destinatário desta nota (CNPJ ${esc(n.destCnpj)}) não é a ${esc(S.emp.nome_exibicao||'empresa')}. Confira se é a nota certa.</span></div>`:''}
   <div class="grid5" style="margin-bottom:16px"><div class="kpi"><span>${cup?'Valor do cupom':'Valor da nota'}</span><b class="num">${brl(n.total)}</b></div><div class="kpi"><span>Itens</span><b class="num">${L.length}</b></div><div class="kpi"><span>Sem cadastro</span><b class="num" style="color:${novos?'var(--warnt)':'inherit'}">${novos}</b></div><div class="kpi"><span>Custo mudou</span><b class="num" style="color:${mudou?'var(--warnt)':'inherit'}">${mudou}</b></div>${cup?`<div class="kpi"><span>Parecidos para confirmar</span><b class="num" style="color:${sugs?'var(--warnt)':'inherit'}">${sugs}</b></div>`:`<div class="kpi"><span>Fiscal a corrigir</span><b class="num" style="color:${fiscal?'var(--warnt)':'inherit'}">${fiscal}</b></div>`}</div>
-  <div class="tblwrap"><table class="tbl conf"><thead><tr><th>#</th><th>Produto</th><th>Situação</th><th class="n">Unidades</th><th class="n">Custo antigo</th><th class="n">Custo atual</th><th class="n">Preço de venda</th><th class="n">Margem</th></tr></thead><tbody>
+  <div class="tblwrap"><table class="tbl conf"><thead><tr><th>#</th><th>Produto</th><th>Situação</th><th class="n">Unidades</th><th class="n">Custo antigo</th><th class="n">Custo atual</th><th class="n">Preço de venda</th><th class="n">Margem / Lucro</th></tr></thead><tbody>
   ${L.map((l,k)=>{const it=l.it,un=+(it.qCom*it.fator).toFixed(3);
    let sit,precoCel;
    if(!l.prod){const sg=l.sug?.[0];sit=sg?`<div class="stack sug"><span class="pill warn">Parece com</span><span class="sm"><b>${esc(bonito(sg.p.nome))}</b></span><span class="mu sm">${esc(sg.p.ean||'sem código')} · custo ${brl(sg.p.custo)}</span><span class="row" style="gap:6px"><button class="btn sm pri" data-eeste="${k}">É este</button>${l.sug.length>1?`<button class="btn sm" data-vinc="${k}">Ver outros</button>`:''}</span></div>`:`<div class="stack"><span class="pill warn">Não está no cadastro</span><span class="mu sm">Confira o nome e o preço: entra como produto novo ao lançar, ou vincule a um produto existente.</span></div>`;
@@ -494,7 +502,8 @@ function telaNF(){const M=$('#main');
     <span class="row"><button class="btn sm" data-vinc="${k}">${l.prod?'Vincular a outro':'Vincular a um produto existente'}</button>${l.prod?`<button class="btn sm" data-novo="${k}">Cadastrar como novo</button>`:''}</span></div></td>
     <td>${sit}</td><td class="n" data-l="Unidades"><div class="stack" style="justify-items:end"><b class="num">${un.toLocaleString('pt-BR')}</b><span class="mu sm">${it.qCom.toLocaleString('pt-BR')} ${esc(it.uCom)} × <input class="inp-s num" style="width:58px!important" data-k="${k}" data-f="fator" value="${it.fator}" aria-label="Unidades por embalagem"></span></div></td>
     <td class="n num" data-l="Custo antigo">${l.prod?brl(l.prod.custo):'<span class="mu">—</span>'}</td>
-    <td class="n" data-l="Custo atual">${custoCel(l)}</td><td class="n" data-l="Preço de venda">${precoCel}</td><td class="n" data-l="Margem">${margemCel(l,k)}</td></tr>`}).join('')}</tbody></table></div>
+    <td class="n" data-l="Custo atual">${custoCel(l)}</td><td class="n" data-l="Preço de venda">${precoCel}</td><td class="n" data-l="Margem / Lucro">${margemCel(l,k)}</td></tr>`}).join('')}</tbody></table></div>
+  ${cardPagamento()}
   ${novos&&S.portfolios.length?`<div class="card" style="margin-top:16px"><b>Produtos novos entram nos portfólios:</b><div class="row" style="margin-top:10px">${S.portfolios.map(p=>`<label class="chk"><input type="checkbox" data-pf="${p.id}" ${S.pfNovos.has(p.id)?'checked':''}> ${esc(p.nome)}</label>`).join('')}</div><p class="mu sm" style="margin-top:8px">As lojas que usam esses portfólios passam a vender e repor os produtos novos.</p></div>`:''}
   <div class="barra"><label class="f" style="min-width:240px">Destino do estoque<select id="destino"><option value="">Escolha o CD ou a loja</option>${locs.map(l=>`<option value="${l.id}" ${S.destino===l.id?'selected':''}>${esc(l.nome)}${l.tipo==='cd'?' (CD)':''}</option>`).join('')}</select></label>
    <span class="sp"></span><span class="mu sm">Preço de produto já cadastrado só muda se você digitar um novo.</span><button class="btn pri" id="lancar" ${S.destino&&!n.jaLancada?'':'disabled'}>${cup?'Lançar cupom':'Lançar nota'}</button></div>
@@ -512,18 +521,74 @@ function telaNF(){const M=$('#main');
  M.querySelectorAll('[data-vinc]').forEach(b=>b.onclick=()=>vincular(+b.dataset.vinc));
  M.querySelectorAll('[data-eeste]').forEach(b=>b.onclick=()=>{const l=S.linhas[+b.dataset.eeste];l.prod=l.sug[0].p;l.por='nome';l.fis=sugerirFiscal(l.it,l.prod,n);render()});
  M.querySelectorAll('[data-novo]').forEach(b=>b.onclick=()=>{const l=S.linhas[+b.dataset.novo];l.prod=null;l.por=null;l.sug=null;l.preco=precoSugerido(l.it.custoUn);l.fis=sugerirFiscal(l.it,null,n);render()});
+ ligarPagamento(M);
  $('#lancar').onclick=confirmarLancamento}
 // custo da nota comparado com o do cadastro
 function custoCel(l){const c=l.it.custoUn,ant=l.prod?.custo;if(!l.prod||!(ant>0)||ant===c)return `<span class="num">${brl(c)}</span>${l.prod&&ant===c?'<div class="mu sm">igual</div>':''}`;const v=(c-ant)/ant;return `<span class="num">${brl(c)}</span><div><span class="pill ${v>0?'warn':'ok'}">${v>0?'subiu':'caiu'} ${pct(v)}</span></div>`}
 // margem sobre o preço de venda: o preço digitado, senão o atual (ou o da regra, se for produto novo)
 function margemCel(l,k,digitado=null){const c=l.it.custoUn,p=digitado??(l.prod?(l.novoPreco?Math.round(parseFloat(l.novoPreco.replace(',','.'))*100):precoRef(l.prod.id)):l.preco);
  if(!(p>0))return `<span class="mu" data-mg="${k}">—</span>`;const m=margem(p,c),alvo=1-regra().divisor,cls=m>=alvo-.03?'boa':m>=alvo/2?'media':'baixa';
- return `<span data-mg="${k}" class="stack" style="justify-items:end"><span class="mg num ${cls}">${(m*100).toFixed(0)}%</span><span class="mu sm">${brl(p-c)} por un.</span></span>`}
+ return `<span data-mg="${k}" class="stack" style="justify-items:end"><span class="mg num ${cls}">${(m*100).toFixed(0)}%</span><span class="mu sm">lucro ${brl(p-c)}/un.</span></span>`}
 // fiscal do item: o que a nota diz e o que muda no cadastro
 function celFiscal(l,k){if(S.nota?.tipo==='cupom')return l.prod||l.sug?.length?'':'<div class="fis"><span class="mu sm">Entra sem NCM: vai para a lista do contador</span></div>';const it=l.it,f=l.fis,st=it.st?'<span class="pill ok" title="ICMS '+esc(it.icmsCst||'—')+' na nota do fornecedor">Veio com ST</span>':'<span class="pill" title="ICMS '+esc(it.icmsCst||'—')+' na nota do fornecedor">Sem ST na nota</span>';
  if(!l.prod)return `<div class="fis">${st}<span class="mu sm">Entra como ${esc(grupoNome(f.grupo))}</span>${!it.st?'<span class="pill warn">CSOSN 201 aguarda o contador: NFC-e deste item fica bloqueada</span>':''}</div>`;
  const muda=[];if(f.mudaNcm)muda.push(`NCM ${esc(l.prod.ncm||'vazio')} → <b>${esc(f.ncm)}</b>`);if(f.mudaGrupo)muda.push(`${esc(grupoNome(l.prod.grupo_fiscal_id))} → <b>Com ST</b>`);
  return `<div class="fis">${st}${muda.length?`<label class="chk sm"><input type="checkbox" data-fis="${k}" ${f.aplicar?'checked':''}> Corrigir cadastro: ${muda.join(' · ')}</label>`:'<span class="mu sm">Fiscal confere com o cadastro</span>'}${f.stSemCadastro?'<span class="mu sm">Cadastro está Com ST e a nota veio sem ST. Mantido até o contador confirmar.</span>':''}</div>`}
+// ---------- pagamento da compra (vai para Contas a pagar) ----------
+const FORMAS_PAG=[['boleto','Boleto'],['pix','Pix'],['transferencia','Transferência'],['cartao','Cartão'],['dinheiro','Dinheiro'],['debito_automatico','Débito automático']];
+const TPAG={'01':'dinheiro','03':'cartao','04':'cartao','15':'boleto','16':'transferencia','17':'pix','18':'transferencia'},AVISTA=new Set(['01','03','04','17']);
+const diaIso=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
+const somaDias=(iso,n)=>diaIso(new Date(new Date(iso+'T12:00:00').getTime()+n*864e5));
+const dataCurta=iso=>iso?iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4):'—';
+// o que a nota diz do pagamento; sem boleto na nota, usa o prazo cadastrado do fornecedor
+function montarPagamento(n,prazo){const pg=n.pag||{dups:[],tPag:[]},forma=pg.tPag.map(t=>TPAG[t]).find(Boolean)||'',emis=n.emissao?diaIso(n.emissao):diaIso(new Date());
+ if(pg.dups.length)return {veio:'nota',paga:false,sem:false,fatura:pg.fatura,parcelas:pg.dups.map((d,i)=>({n:d.n||String(i+1).padStart(3,'0'),venc:d.venc,valor:d.valor,forma:['pix','transferencia'].includes(forma)?forma:'boleto',codigo:''}))};
+ if(pg.tPag.some(t=>AVISTA.has(t)))return {veio:'avista',paga:true,sem:false,parcelas:[{n:'1',venc:emis,valor:n.total,forma:forma||'dinheiro',codigo:''}]};
+ if(n.tipo==='cupom')return {veio:'cupom',paga:true,sem:false,parcelas:[{n:'1',venc:emis,valor:n.total,forma:'',codigo:''}]};
+ return {veio:prazo>0?'prazo':'manual',paga:false,sem:false,parcelas:[{n:'1',venc:prazo>0?somaDias(emis,prazo):'',valor:n.total,forma:forma||'boleto',codigo:''}]}}
+const somaTxt=(s,t)=>s===t?`<span class="mu">Soma ${brl(s)}, igual ao valor da nota</span>`:`<span style="color:var(--warnt)">Soma ${brl(s)} · nota ${brl(t)} · diferença ${brl(Math.abs(s-t))}</span>`;
+function cardPagamento(){const P=S.pag;if(!P)return '';const n=S.nota,soma=P.parcelas.reduce((a,p)=>a+(p.valor||0),0);
+ const msg={nota:`<span class="pill ok">Veio na nota</span><span class="mu sm">${P.parcelas.length} ${P.parcelas.length===1?'boleto/parcela':'boletos/parcelas'}${P.fatura?' · fatura '+esc(P.fatura):''}. Confira e ajuste se precisar.</span>`,
+  avista:`<span class="pill ok">Pago na hora da compra</span><span class="mu sm">A nota diz que foi pago à vista. Entra em Contas a pagar já como paga.</span>`,
+  cupom:`<span class="pill">Compra com cupom</span><span class="mu sm">Escolha como foi pago. Entra em Contas a pagar já como paga.</span>`,
+  prazo:`<span class="pill warn">Vencimento pelo prazo do fornecedor</span><span class="mu sm">A nota não trouxe boleto: usei o prazo cadastrado deste fornecedor. Confira.</span>`,
+  manual:`<span class="pill warn">A nota não trouxe o pagamento</span><span class="mu sm">Informe a forma e o vencimento. Dá para dividir em parcelas.</span>`}[P.veio];
+ return `<div class="card pagto" style="margin-top:16px"><div class="row" style="align-items:flex-start;gap:12px"><div><b style="font-size:16px">Pagamento</b><p class="mu sm" style="margin-top:4px">Vai para Contas a pagar, que avisa no Início quando estiver perto de vencer.</p></div><span class="sp"></span><label class="chk sm"><input type="checkbox" id="pgSem" ${P.sem?'checked':''}> Não gera conta a pagar (bonificação, troca)</label></div>
+ ${P.sem?'':`<div class="row" style="gap:8px;margin:14px 0 12px">${msg}</div>
+ <div class="tblwrap"><table class="tbl pgt"><thead><tr><th>Parcela</th><th>Vencimento</th><th class="n">Valor</th><th>Forma</th><th>Código de barras do boleto</th><th></th></tr></thead><tbody>
+ ${P.parcelas.map((p,i)=>`<tr><td data-l="Parcela"><input class="inp-s" style="width:76px!important" data-pg="${i}" data-c="n" value="${esc(p.n)}" aria-label="Parcela"></td>
+  <td data-l="Vencimento"><input type="date" data-pg="${i}" data-c="venc" value="${esc(p.venc)}" class="${p.venc?'':'falta'}" aria-label="Vencimento"></td>
+  <td class="n" data-l="Valor"><input class="inp-s num" data-pg="${i}" data-c="valor" value="${p.valor?(p.valor/100).toFixed(2).replace('.',','):''}" aria-label="Valor"></td>
+  <td data-l="Forma"><select data-pg="${i}" data-c="forma" class="${p.forma?'':'falta'}" aria-label="Forma de pagamento"><option value="">Escolha</option>${FORMAS_PAG.map(([v,t])=>`<option value="${v}" ${p.forma===v?'selected':''}>${t}</option>`).join('')}</select></td>
+  <td data-l="Código de barras">${p.forma==='boleto'?`<input data-pg="${i}" data-c="codigo" value="${esc(p.codigo)}" placeholder="Opcional: linha digitável" inputmode="numeric" style="width:100%;min-width:180px" aria-label="Código de barras do boleto">`:'<span class="mu sm">—</span>'}</td>
+  <td class="n">${P.parcelas.length>1?`<button class="btn sm" data-pgdel="${i}" aria-label="Tirar parcela">✕</button>`:''}</td></tr>`).join('')}</tbody></table></div>
+ <div class="row" style="margin-top:12px;gap:10px"><button class="btn sm" id="pgMais">+ Parcela</button><select id="pgDiv" style="width:auto;min-height:34px" aria-label="Dividir o total"><option value="">Dividir o total em…</option>${[2,3,4,5,6].map(k=>`<option value="${k}">${k} vezes, a cada 30 dias</option>`).join('')}</select>
+  <label class="chk sm"><input type="checkbox" id="pgPaga" ${P.paga?'checked':''}> Já está paga</label><span class="sp"></span><span class="sm" id="pgSoma">${somaTxt(soma,n.total)}</span></div>`}</div>`}
+function ligarPagamento(M){const P=S.pag;if(!P)return;const n=S.nota,valorDe=v=>{const c=Math.round(parseFloat(String(v).trim().replace(/\./g,'').replace(',','.'))*100);return c>0?c:0};
+ const $s=M.querySelector('#pgSem');if($s)$s.onchange=()=>{P.sem=$s.checked;render()};
+ const $p=M.querySelector('#pgPaga');if($p)$p.onchange=()=>{P.paga=$p.checked};
+ M.querySelectorAll('[data-pg]').forEach(el=>{const atual=()=>{const p=P.parcelas[+el.dataset.pg],c=el.dataset.c;
+   if(c==='valor')p.valor=valorDe(el.value);else p[c]=el.value.trim();el.classList.toggle('falta',(c==='venc'||c==='forma')&&!el.value);
+   const so=M.querySelector('#pgSoma');if(so)so.innerHTML=somaTxt(P.parcelas.reduce((a,x)=>a+(x.valor||0),0),n.total)};
+  el.oninput=atual;el.onchange=()=>{atual();if(el.dataset.c==='forma'||el.dataset.c==='valor')render()}});
+ M.querySelectorAll('[data-pgdel]').forEach(b=>b.onclick=()=>{P.parcelas.splice(+b.dataset.pgdel,1);render()});
+ const $m=M.querySelector('#pgMais');if($m)$m.onclick=()=>{const u=P.parcelas[P.parcelas.length-1],soma=P.parcelas.reduce((a,x)=>a+(x.valor||0),0);
+  P.parcelas.push({n:String(P.parcelas.length+1),venc:u?.venc?somaDias(u.venc,30):'',valor:Math.max(0,n.total-soma),forma:u?.forma||'boleto',codigo:''});render()};
+ const $d=M.querySelector('#pgDiv');if($d)$d.onchange=()=>{const k=+$d.value;if(!k)return;const base=Math.floor(n.total/k),resto=n.total-base*k,u=P.parcelas[0];
+  const ini=u?.venc||somaDias(n.emissao?diaIso(n.emissao):diaIso(new Date()),30);
+  P.parcelas=Array.from({length:k},(_,i)=>({n:`${i+1}/${k}`,venc:somaDias(ini,30*i),valor:base+(i===0?resto:0),forma:u?.forma||'boleto',codigo:''}));render()}}
+// grava as parcelas em Contas a pagar depois que a nota foi lançada (não trava o lançamento se falhar)
+async function gravarContas(notaId,n){const P=S.pag;if(!P||P.sem)return '';try{const e=S.emp.id;
+ const {data:ja}=await sb.from('contas_pagar').select('id').eq('empresa_id',e).eq('nota_entrada_id',notaId).limit(1);if(ja?.length)return ' As contas a pagar desta nota já existiam e foram mantidas.';
+ let fid=null;const cnpj=String(n.fornCnpj||'').replace(/\D/g,'');
+ if(cnpj.length===14){const {data:f}=await sb.from('fornecedores').select('id').eq('empresa_id',e).eq('cnpj',cnpj).maybeSingle();fid=f?.id||null;
+  if(!fid){const r=await sb.from('fornecedores').insert({empresa_id:e,cnpj,razao_social:String(n.fornNome||'Fornecedor').slice(0,200)}).select('id').single();fid=r.data?.id||null}}
+ const doc=n.tipo==='cupom'?'Cupom':'NF',nome=bonito(n.fornNome||'Fornecedor'),hoje=diaIso(new Date());
+ const linhas=P.parcelas.map((p,i)=>({empresa_id:e,descricao:`${doc} ${n.numero}${P.parcelas.length>1?' · parc. '+(p.n||i+1):''} · ${nome}`.slice(0,120),fornecedor_id:fid,categoria:'Compra de mercadoria',local_id:S.destino,rateio:'loja',
+  vencimento:p.venc,valor:p.valor,forma:p.forma||null,codigo_barras:(p.codigo||'').replace(/\D/g,'')||null,nota_entrada_id:notaId,...(P.paga?{pago_em:p.venc>hoje?hoje:p.venc,valor_pago:p.valor}:{})}));
+ const r=await sb.from('contas_pagar').insert(linhas);if(r.error)throw r.error;
+ return P.paga?' Pagamento registrado em Contas a pagar como pago.':` ${linhas.length===1?'1 conta lançada':linhas.length+' contas lançadas'} em Contas a pagar.`}
+ catch(err){return ` ⚠️ Não consegui gravar em Contas a pagar (${esc(err.message||String(err))}). Lance o pagamento à mão em Contas a pagar.`}}
 const fmtCnpj=c=>{const d=String(c||'').replace(/\D/g,'');return d.length===14?d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5'):d};
 const hora=iso=>iso?new Date(iso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
 async function apiEnt(acao,corpo={}){const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Entre no painel de novo');const r=await fetch(SB_URL+'/functions/v1/nfe-entrada',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+session.access_token},body:JSON.stringify({acao,...corpo})});const j=await r.json().catch(()=>({erro:'Resposta inválida'}));if(!r.ok)throw new Error(j.erro||'Erro');return j}
@@ -559,6 +624,8 @@ async function abrirTexto(xml){try{await abrirNota(lerNFe(xml))}catch(e){toast(e
 async function abrirNota(n){try{
   const {data:ja}=await sb.from('notas_entrada').select('id,status,lancada_em').eq('empresa_id',S.emp.id).eq('chave',n.chave).maybeSingle();
   n.notaId=ja?.id||null;n.jaLancada=ja?.status==='lancada'?ja.lancada_em:null;S.nota=n;S.linhas=conferir(n);S.pfNovos=new Set(S.portfolios.map(p=>p.id));
+  let prazo=0;try{const {data:fo}=await sb.from('fornecedores').select('prazo_pagamento_dias').eq('empresa_id',S.emp.id).eq('cnpj',String(n.fornCnpj||'').replace(/\D/g,'')).maybeSingle();prazo=+fo?.prazo_pagamento_dias||0}catch(e){}
+  S.pag=montarPagamento(n,prazo);
   // destino: o mesmo da última nota deste fornecedor (ex.: sorvete entregue direto na loja); senão o CD
   const {data:ult}=await sb.from('notas_entrada').select('local_destino_id').eq('empresa_id',S.emp.id).eq('fornecedor_cnpj',n.fornCnpj).eq('status','lancada').order('lancada_em',{ascending:false}).limit(1);
   const cd=S.locais.find(l=>l.tipo==='cd'&&l.ativo),antes=ult?.[0]?.local_destino_id&&S.locais.find(l=>l.id===ult[0].local_destino_id&&l.ativo);
@@ -584,12 +651,15 @@ function vincular(k){const l=S.linhas[k];let q='';$('#modal').classList.add('wid
   document.querySelectorAll('[data-esc]').forEach(b=>b.onclick=()=>{l.prod=S.produtos.find(p=>p.id===b.dataset.esc);l.por='manual';l.fis=sugerirFiscal(l.it,l.prod,S.nota);fechar();render()})};desenha()}
 function confirmarLancamento(){const n=S.nota,L=S.linhas,dest=S.locais.find(l=>l.id===S.destino),novos=L.filter(l=>!l.prod),precos=L.filter(l=>l.prod&&l.novoPreco),sem=novos.filter(l=>!l.nome.trim());
  if(sem.length){toast('Dê nome a todos os produtos novos');return}
+ const P=S.pag;if(P&&!P.sem&&P.parcelas.some(p=>!/^\d{4}-\d{2}-\d{2}$/.test(p.venc||'')||!(p.valor>0)||!p.forma)){toast('Pagamento: preencha vencimento, valor e forma de cada parcela, ou marque "Não gera conta a pagar"');document.querySelector('.pagto')?.scrollIntoView({behavior:'smooth',block:'center'});return}
+ const pv=P&&!P.sem?[...P.parcelas].sort((a,b)=>a.venc<b.venc?-1:1):[],linhaPag=!P||P.sem?'Não gera conta a pagar':P.paga?`Pagamento de ${brl(pv.reduce((a,p)=>a+p.valor,0))} entra em Contas a pagar como pago`:`${pv.length===1?'1 conta':pv.length+' contas'} em Contas a pagar (${brl(pv.reduce((a,p)=>a+p.valor,0))}), ${pv.length===1?'vence':'a primeira vence'} em ${dataCurta(pv[0].venc)}`;
  modal(`<h2>Lançar ${n.tipo==='cupom'?'o cupom':'a nota'} ${esc(n.numero)}?</h2><div class="stack mu">
   <span>• ${L.length} itens entram no estoque de <b style="color:var(--ink)">${esc(dest.nome)}</b></span>
   <span>• ${novos.length} produtos novos serão cadastrados${novos.length?' e entram à venda nas lojas dos portfólios marcados':''}</span>
   <span>• ${L.filter(l=>l.prod&&l.fis.aplicar&&(l.fis.mudaNcm||l.fis.mudaGrupo)).length} produtos terão NCM ou ST corrigidos pela nota</span>${n.tipo==='cupom'&&novos.length?`<span>• Produtos novos entram sem NCM, para o contador completar</span>`:''}
   <span>• ${precos.length?precos.length+' preços alterados por você':'Nenhum preço de produto existente será alterado'}</span>
-  <span>• Custo atualizado em ${L.filter(l=>l.prod&&l.prod.custo!==l.it.custoUn).length} produtos</span></div>
+  <span>• Custo atualizado em ${L.filter(l=>l.prod&&l.prod.custo!==l.it.custoUn).length} produtos</span>
+  <span>• ${linhaPag}</span></div>
   <p class="mu sm">Não dá para desfazer pelo painel: confira as quantidades antes.</p>
   <div class="row"><span class="sp"></span><button class="btn" data-close>Voltar</button><button class="btn pri" id="okLancar">${n.tipo==='cupom'?'Lançar cupom':'Lançar nota'}</button></div>`);
  $('#okLancar').onclick=lancar}
@@ -605,6 +675,7 @@ async function lancar(){const bt=$('#okLancar');bt.disabled=true;bt.textContent=
    if(!l.prod){o.novo={ean:it.eanUn||it.ean||'',nome:l.nome.trim().slice(0,120),ncm:it.ncm,cest:it.cest||'',unidade:'UN'};o.preco_aprovado=l.preco;o.lojas_preco=lojasNovos}
    else if(l.novoPreco){o.preco_aprovado=Math.round(parseFloat(l.novoPreco.replace(',','.'))*100)}return o});
   const r=await sb.rpc('lancar_nota_entrada',{p_nota:notaId,p_itens:itens});if(r.error)throw r.error;const res=r.data||{};
+  const avisoCp=await gravarContas(notaId,n);
   // produtos novos: entram nos portfólios escolhidos e as lojas de cada portfólio são atualizadas
   const novosCod=S.linhas.filter(l=>!l.prod).map(l=>l.it.codigo);let avisoPf='';
   if(novosCod.length&&S.pfNovos.size){const {data:cf}=await sb.from('produto_codigos_fornecedor').select('produto_id,codigo').eq('empresa_id',e).eq('fornecedor_cnpj',n.fornCnpj).in('codigo',novosCod);
@@ -612,10 +683,10 @@ async function lancar(){const bt=$('#okLancar');bt.disabled=true;bt.textContent=
    if(linhasPf.length){const ins=await sb.from('portfolio_itens').upsert(linhasPf,{onConflict:'portfolio_id,produto_id',ignoreDuplicates:true});if(ins.error)avisoPf=' (portfólios: '+ins.error.message+')'}}
   await carregar();
   const alertas=S.linhas.filter(l=>l.prod&&l.prod.custo!==l.it.custoUn&&!l.novoPreco);
-  modal(`<h2>${n.tipo==='cupom'?'Cupom':'Nota'} ${esc(n.numero)} lançad${n.tipo==='cupom'?'o':'a'} ✓</h2><p class="mu">${S.linhas.length} itens entraram no estoque de ${esc(S.locais.find(l=>l.id===S.destino)?.nome||'destino')}${res.novos?`, ${res.novos} produtos novos cadastrados`:''}${res.fiscal?`, fiscal corrigido em ${res.fiscal} produtos`:''}${avisoPf}.</p>
+  modal(`<h2>${n.tipo==='cupom'?'Cupom':'Nota'} ${esc(n.numero)} lançad${n.tipo==='cupom'?'o':'a'} ✓</h2><p class="mu">${S.linhas.length} itens entraram no estoque de ${esc(S.locais.find(l=>l.id===S.destino)?.nome||'destino')}${res.novos?`, ${res.novos} produtos novos cadastrados`:''}${res.fiscal?`, fiscal corrigido em ${res.fiscal} produtos`:''}${avisoPf}.${avisoCp}</p>
    ${alertas.length?`<div class="aviso"><span>⚠️</span><span><b>Custo mudou e o preço não foi alterado:</b><br>${alertas.map(l=>`${esc(bonito(l.prod.nome))}: custo ${brl(l.prod.custo)} → ${brl(l.it.custoUn)}, preço ${brl(precoRef(l.prod.id))}`).join('<br>')}</span></div>`:''}
    <div class="row"><span class="sp"></span><button class="btn pri" data-close>Concluir</button></div>`);
-  S.nota=null;S.linhas=[];render()}catch(err){bt.disabled=false;bt.textContent=n.tipo==='cupom'?'Lançar cupom':'Lançar nota';toast('Erro: '+(err.message||err))}}
+  S.nota=null;S.linhas=[];S.pag=null;render()}catch(err){bt.disabled=false;bt.textContent=n.tipo==='cupom'?'Lançar cupom':'Lançar nota';toast('Erro: '+(err.message||err))}}
 
 // ---------- tela: produtos (cadastro) ----------
 const PR={q:'',filtro:'todos',pag:0,fotos:null,urls:{},grupos:null,det:null};
@@ -832,7 +903,7 @@ async function telaIni(){const M=$('#main'),h=new Date().getHours(),saud=h<12?'B
  // saldos passam de 1.000 linhas (limite do servidor por consulta): busca em páginas
  const saldosTodos=async()=>{const out=[];for(let de=0;;de+=1000){const r=await sb.from('saldos_estoque').select('produto_id,local_id,saldo').eq('empresa_id',e).range(de,de+999);if(r.error)return r;out.push(...r.data);if(r.data.length<1000)return {data:out}}};
  const seguro=p=>Promise.resolve(p).then(r=>r,err=>({erro:err}));
- const [vd,dp,nf,sl,vi,av,stNf,stMp,nfc]=await Promise.all([
+ const [vd,dp,nf,sl,vi,av,stNf,stMp,nfc,cpg]=await Promise.all([
   seguro(sb.from('vendas').select('local_id,total,teste,finalizada_em,observacao').eq('empresa_id',e).eq('status','paga').gte('finalizada_em',semAnt0.toISOString()).limit(5000)),
   seguro(sb.from('dispositivos').select('id,nome,local_id,ultimo_sinal,mp_terminal_id').eq('empresa_id',e).eq('ativo',true)),
   seguro(sb.from('nfe_recebidas').select('id',{count:'exact',head:true}).eq('empresa_id',e).eq('status','xml')),
@@ -840,7 +911,8 @@ async function telaIni(){const M=$('#main'),h=new Date().getHours(),saud=h<12?'B
   seguro(sb.from('videos_seguranca').select('id',{count:'exact',head:true}).eq('empresa_id',e).eq('enviado',true).neq('motivo','paga').gte('inicio',hoje0.toISOString())),
   seguro(sb.from('avisos_estoque').select('produto_id',{count:'exact',head:true}).eq('empresa_id',e).is('avisado_em',null)),
   seguro(apiNf('status')),seguro(apiPag('status')),
-  seguro(sb.from('nfce').select('status,criado_em').eq('empresa_id',e).in('status',['rejeitada','fila','contingencia']).limit(500))]);
+  seguro(sb.from('nfce').select('status,criado_em').eq('empresa_id',e).in('status',['rejeitada','fila','contingencia']).limit(500)),
+  seguro(import('./contas.js?v=1').then(m=>m.avisosContas(ctxBeep())))]);
  if(S.tela!=='ini'||!$('#iLj'))return;
  $('#iHora').textContent='Atualizado às '+hora(new Date().toISOString());
 
@@ -872,6 +944,9 @@ async function telaIni(){const M=$('#main'),h=new Date().getHours(),saud=h<12?'B
  const lojaComOnline=new Set(online.map(d=>d.local_id)),lojasParadas=lojas().filter(l=>lojasCaixa.has(l.id)&&!lojaComOnline.has(l.id)&&disp.some(d=>d.local_id===l.id&&min(d)<1440));
  if(lojasParadas.length)add('bad',IC.caixa,vez(lojasParadas.length,'1 loja com o caixa sem sinal agora','# lojas com o caixa sem sinal agora'),lojasParadas.map(l=>l.nome).join(', ')+'. Confira se o tablet está ligado e com internet. As vendas sem internet ficam guardadas e sobem quando a conexão volta.','Ver caixas','cx');
  if(semSinal.length)add('warn',IC.caixa,vez(semSinal.length,'1 caixa sem sinal há mais de um dia','# caixas sem sinal há mais de um dia'),'Se o aparelho não é mais usado, desative. Assim ninguém vende com ele.','Ver caixas','cx');
+ const cpa=cpg&&!cpg.erro?cpg:null;
+ if(cpa?.vencidas)add('bad',IC.alerta,vez(cpa.vencidas,'1 conta a pagar vencida','# contas a pagar vencidas'),`${brl(cpa.vencidasValor)} em atraso. Pague ou marque como paga em Contas a pagar.`,'Ver contas','cp');
+ if(cpa?.proximas)add('warn',IC.alerta,cpa.hoje?vez(cpa.hoje,'1 conta vence hoje','# contas vencem hoje')+(cpa.proximas>cpa.hoje?` e ${cpa.proximas-cpa.hoje} nos próximos 3 dias`:''):vez(cpa.proximas,'1 conta vence nos próximos 3 dias','# contas vencem nos próximos 3 dias'),`${brl(cpa.proximasValor)} a pagar até ${new Date(Date.now()+3*864e5).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}.`,'Ver contas','cp');
  if(nf.count)add('warn',ICON.nf,vez(nf.count,'1 nota de compra esperando conferência','# notas de compra esperando conferência'),'Confira e lance no estoque. Se a mercadoria já foi contada, marque "Ignorar".','Conferir notas','nf');
  if(vi.count)add('warn',IC.video,vez(vi.count,'1 ocorrência gravada hoje','# ocorrências gravadas hoje'),'Compras canceladas, abandonadas ou com pagamento recusado. Vale dar uma olhada.','Assistir','vid');
  const saldos=sl.data||[],porLoja=new Map();saldos.forEach(r=>{(porLoja.get(r.local_id)||porLoja.set(r.local_id,new Map()).get(r.local_id)).set(r.produto_id,+r.saldo)});
@@ -922,6 +997,7 @@ async function telaVend(){const M=$('#main');VD.dia=VD.dia||hojeISO();
   try{const r=await apiPag('estornar',{venda_id:b.dataset.estornar});toast(r.status==='estornado'?'Estorno feito':'Estorno pedido ao Mercado Pago. Confirma em instantes.');telaVend()}catch(err){toast(err.message);b.disabled=false;b.textContent='Estornar'}}}
 
 // ---------- tela: financeiro (arquivo próprio, carregado só quando abre a tela) ----------
+async function telaCp(){try{const m=await import('./contas.js?v=1');await m.telaContas(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
 async function telaFin(){try{const m=await import('./financeiro.js?v=3');await m.telaFinanceiro(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
 
 // ---------- tela: estoque e reposição ----------
@@ -1142,7 +1218,6 @@ function novaTravada(cid){const c=S.clientes.find(x=>x.id===cid),itens=new Map()
 // ---------- tela: anúncios de parceiros (app do cliente) ----------
 const ADS={};
 const hojeD=()=>new Date(Date.now()-3*36e5).toISOString().slice(0,10);
-const somaDias=(d,n)=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+n);return x.toISOString().slice(0,10)};
 const dataBR=d=>d?new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}).replace('.',''):'—';
 function situacao(c){const h=hojeD();if(c.status==='encerrada')return ['Encerrada',''];if(c.status==='pausada')return ['Pausada','warn'];if(c.status==='rascunho')return ['Rascunho',''];if(c.fim<h)return ['Terminou','' ];if(c.inicio>h)return ['Agendada','new'];return ['No ar','ok']}
 const diasAte=d=>Math.round((new Date(d+'T12:00:00')-new Date(hojeD()+'T12:00:00'))/864e5);
