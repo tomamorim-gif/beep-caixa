@@ -241,7 +241,7 @@ export function analisar(base, cad, cfgIn = {}) {
     fonteSac: sac?.data || null,
   };
 
-  return { cfg, hoje, lojas, cd, itensLoja, compra, parados, semVendaRede, margemBaixa, essencial, abc, resumo, infoLoja, ajustes, falta, acaba, sumiram, confianca };
+  return { saldoDe, cfg, hoje, lojas, cd, itensLoja, compra, parados, semVendaRede, margemBaixa, essencial, abc, resumo, infoLoja, ajustes, falta, acaba, sumiram, confianca };
 }
 
 // ---- frases do "O que fazer hoje" e do cérebro (ordem = urgência)

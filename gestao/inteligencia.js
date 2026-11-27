@@ -1,9 +1,9 @@
 // Tela "Inteligência" do Painel: o cérebro do negócio.
 // Os números vêm do banco (rpc inteligencia_base) e as contas ficam no motor (inteligencia-motor.js), sem IA externa.
 
-import { analisar, insights, quandoTxt, ritmoTxt, CFG_PADRAO } from './inteligencia-motor.js?v=2';
+import { analisar, insights, quandoTxt, ritmoTxt, CFG_PADRAO } from './inteligencia-motor.js?v=3';
 
-const ABAS = [['loja', 'Lojas'], ['compra', 'Compras do CD'], ['minmax', 'Mín. e máx.'], ['essencial', 'Não pode faltar'], ['parado', 'Parados'], ['margem', 'Margem']];
+const ABAS = [['abs', 'Abastecimento'], ['loja', 'Lojas'], ['compra', 'Compras do CD'], ['minmax', 'Mín. e máx.'], ['essencial', 'Não pode faltar'], ['parado', 'Parados'], ['margem', 'Margem']];
 const G = { aba: 'loja', loja: '', filtro: 'atencao', q: '', A: null, base: null, cfg: null, timer: null, feedI: 0 };
 const nf = (v, c = 0) => (+v || 0).toLocaleString('pt-BR', { maximumFractionDigits: c, minimumFractionDigits: 0 });
 const mil = c => { const r = c / 100; return r >= 1e6 ? nf(r / 1e6, 1) + ' mi' : r >= 1e4 ? nf(r / 1e3, 0) + ' mil' : nf(r, 0); };
@@ -230,6 +230,7 @@ async function carregar(C) {
     sb.from('contas_pagar').select('id', { count: 'exact', head: true }).eq('empresa_id', S.emp.id),
   ]).catch(() => [{}, {}]);
   G.cont = { notas: nf?.count ?? null, contas: cp?.count ?? null };
+  G.carregadoEm = Date.now();
 }
 
 // ---------------- tela ----------------
@@ -237,6 +238,7 @@ export async function telaInteligencia(C) {
   estilo();
   const { $, esc } = C, M = $('#main');
   clearInterval(G.timer);
+  try { const a = sessionStorage.getItem('igAba'); if (a) { G.aba = a; sessionStorage.removeItem('igAba'); } } catch (e) { /* sem sessionStorage */ }
   M.innerHTML = `<div class="head"><div><h1>Inteligência</h1><p>O cérebro do negócio: cruza vendas, estoque, compras e margem de todas as lojas e diz o que fazer.</p></div>
     <div class="row"><button class="btn sm" id="igCfg">${svg('cfg', 16)}Ajustes</button></div></div>
     <section class="ig-hero"><div class="ig-net" id="igNet"></div><div class="ig-feed"><div class="ig-feed-h"><b>Pensando agora</b><span class="ig-live"><i></i>ao vivo</span></div><div class="ig-pens"><i></i><i></i><i></i>Lendo vendas, estoque e notas…</div></div></section>
@@ -334,12 +336,99 @@ function feed(C) {
 
 // ---------------- abas ----------------
 function aba(C) {
-  const f = { loja: abaLoja, compra: abaCompra, minmax: abaMinmax, essencial: abaEssencial, parado: abaParado, margem: abaMargem }[G.aba];
+  const f = { abs: abaAbs, loja: abaLoja, compra: abaCompra, minmax: abaMinmax, essencial: abaEssencial, parado: abaParado, margem: abaMargem }[G.aba];
   C.$('#igCtl').innerHTML = '';
   f(C);
 }
 const nomeP = (C, p, ess) => `<span class="ig-pn">${ess ? `<span class="ig-st" title="Não pode faltar">${svg('star', 14)}</span>` : ''}<b>${C.esc(C.bonito(p.nome))}</b></span>`;
 const vazio = (t) => `<tr><td colspan="9" class="vazio">${t}</td></tr>`;
+
+// ---------------- abastecimento pela inteligência ----------------
+// Monta a lista de cada loja pelo que ela vende e pelo que tem, confere com o CD e já diz o que comprar.
+// "Registrar" tira do CD e põe na loja (duas linhas em estoque_mov com a mesma referência).
+function listaAbs(A, lojaId) {
+  const ord = { sumiu: 0, falta: 0, acaba: 1, ok: 2, sem_saldo: 2, parado: 3 };
+  const L = A.itensLoja.filter(x => x.loja.id === lojaId && x.levar > 0 && x.status !== 'parado')
+    .map(x => ({ ...x, q: G.absQ.get(lojaId + '|' + x.p.id) ?? x.levar }));
+  L.sort((a, b) => (ord[a.status] - ord[b.status]) || (!!b.essencial - !!a.essencial) || (b.r - a.r));
+  return L;
+}
+function cdDe(A, pid) {
+  if (!A.cd) return { q: null };
+  const s = A.saldoDe(A.cd.id, pid);
+  return { q: s.q, incerto: s.fonte === 'incerto' };
+}
+function abaAbs(C) {
+  const { $, esc, brl } = C, A = G.A;
+  G.absQ = G.absQ || new Map();
+  if (!A.lojas.some(l => l.id === G.loja)) G.loja = (A.lojas.find(l => A.infoLoja.has(l.id)) || A.lojas[0])?.id || '';
+  const conta = new Map(A.lojas.map(l => [l.id, A.itensLoja.filter(x => x.loja.id === l.id && x.levar > 0 && x.status !== 'parado').length]));
+  $('#igCtl').innerHTML = `<select id="igLojaA" style="width:240px">${A.lojas.map(l => `<option value="${l.id}" ${l.id === G.loja ? 'selected' : ''}>${esc(l.nome)} (${conta.get(l.id)})</option>`).join('')}</select>
+    <button class="btn sm" id="igAbsCop">Copiar lista</button><button class="btn sm" id="igAbsImp">Imprimir</button><button class="btn sm pri" id="igAbsReg">Registrar abastecimento</button>`;
+  $('#igLojaA').onchange = e => { G.loja = e.target.value; aba(C); };
+  const loja = A.lojas.find(l => l.id === G.loja), L = listaAbs(A, G.loja), conf = A.confianca.get(G.loja);
+  // o que o CD não cobre (desta lista) e o pedido sugerido para esses produtos
+  const comp = new Map(A.compra.map(x => [x.p.id, x]));
+  const faltaCD = L.map(x => ({ x, cd: cdDe(A, x.p.id) })).filter(o => o.cd.q != null && o.cd.q < o.x.q);
+  const semCD = L.filter(x => cdDe(A, x.p.id).q == null).length;
+  const incerta = conf?.ok === false;
+  const unid = L.reduce((s, x) => s + x.q, 0);
+  $('#igAba').innerHTML = `${incerta ? `<div class="ig-aviso">${svg('bad', 18)}<div>O estoque da ${esc(loja.nome)} ainda não está organizado no PagNow, então esta lista repõe o que a loja vendeu em ${A.cfg.ciclo_abastecimento} dias. Quando o estoque da loja estiver certo, ela passa a completar cada produto até o ideal.</div></div>` : ''}
+    <div class="grid4 ig-kpi">
+      <div class="kpi"><span>Produtos para levar</span><b class="num">${nf(L.length)}</b><small>${nf(unid)} unidades no total</small></div>
+      <div class="kpi"><span>Urgentes</span><b class="num" style="color:${L.some(x => x.status === 'falta' || x.status === 'sumiu') ? 'var(--badt)' : 'inherit'}">${nf(L.filter(x => x.status === 'falta' || x.status === 'sumiu').length)}</b><small>em falta ou pararam de vender</small></div>
+      <div class="kpi"><span>O CD não cobre</span><b class="num" style="color:${faltaCD.length ? 'var(--warnt)' : 'inherit'}">${nf(faltaCD.length)}</b><small>${faltaCD.length ? 'veja a compra abaixo' : semCD ? `${nf(semCD)} sem saldo confiável no CD` : 'o CD tem tudo'}</small></div>
+      <div class="kpi"><span>Próximo abastecimento</span><b class="num" style="font-size:20px">em ${A.cfg.ciclo_abastecimento} dias</b><small>muda em Ajustes</small></div>
+    </div>
+    <div class="tblwrap"><table class="tbl ig-tbl"><thead><tr><th>Produto</th><th class="n">Vende</th><th class="n">Na loja</th><th class="n">No CD</th><th class="n">Levar</th><th class="ig-hm">Por quê</th></tr></thead><tbody>
+    ${L.map(x => { const cd = cdDe(A, x.p.id), curto = cd.q != null && cd.q < x.q;
+      const why = x.status === 'sumiu' ? 'Parou de vender: provável falta' : x.status === 'falta' ? 'Em falta' : x.status === 'acaba' ? `Acaba ${quandoTxt(x.dias, A.hoje)}` : x.saldo == null ? `Vendido em ${A.cfg.ciclo_abastecimento} dias` : 'Completa até o ideal';
+      return `<tr class="${x.status === 'falta' || x.status === 'sumiu' ? 'ig-x' : x.status === 'acaba' ? 'ig-w' : ''}"><td>${nomeP(C, x.p, x.essencial)}</td><td class="n num">${ritmoTxt(x.status === 'sumiu' ? x.rPrev : x.r)}</td>
+      <td class="n num">${x.saldo == null ? '<span class="mu">—</span>' : nf(x.saldo)}</td><td class="n num">${cd.q == null ? '<span class="mu">—</span>' : `<span style="color:${curto ? 'var(--warnt)' : 'inherit'}">${nf(cd.q)}</span>`}</td>
+      <td class="n"><input class="inp-s num" style="width:64px;text-align:right" inputmode="numeric" data-absq="${x.p.id}" value="${x.q}" aria-label="Levar"></td><td class="ig-hm ig-why">${why}</td></tr>`; }).join('') || vazio('Nada para levar a esta loja agora.')}
+    </tbody></table></div>
+    ${faltaCD.length ? `<h2 style="font-size:17px;margin:22px 0 10px">Comprar para o CD</h2><p class="mu sm" style="margin:-4px 0 10px">O CD não tem o suficiente para esta lista. A quantidade já inclui o que a rede toda vai precisar até a próxima compra.</p>
+    <div class="tblwrap"><table class="tbl ig-tbl"><thead><tr><th>Produto</th><th class="n">Precisa levar</th><th class="n">CD tem</th><th class="n">Comprar</th><th class="n ig-hm">Valor</th></tr></thead><tbody>
+    ${faltaCD.map(({ x, cd }) => { const c = comp.get(x.p.id), q = c ? c.qtd : Math.ceil(x.q - Math.max(cd.q, 0));
+      return `<tr><td>${nomeP(C, x.p, x.essencial)}${c?.fornecedor ? `<div class="ig-why">${esc(c.fornecedor)}</div>` : ''}</td><td class="n num">${nf(x.q)}</td><td class="n num">${nf(cd.q)}</td><td class="n num"><b>${nf(q)}</b>${c && c.fator > 1 ? ` <span class="mu">(${nf(c.caixas)} cx)</span>` : ''}</td><td class="n num ig-hm">${c ? brl(Math.round(c.valor)) : x.custo ? brl(Math.round(q * x.custo)) : '<span class="mu">sem custo</span>'}</td></tr>`; }).join('')}
+    </tbody></table></div>` : ''}`;
+  $('#igAba').querySelectorAll('[data-absq]').forEach(i => i.onchange = () => { const v = Math.max(0, Math.round(+String(i.value).replace(',', '.') || 0)); i.value = v; G.absQ.set(G.loja + '|' + i.dataset.absq, v); });
+  const texto = () => { const l = listaAbs(A, G.loja).filter(x => x.q > 0); return `Abastecimento ${loja.nome} (${new Date().toLocaleDateString('pt-BR')})\n` + l.map(x => `${C.bonito(x.p.nome)}: ${x.q}`).join('\n') + `\nTotal: ${l.length} produtos, ${l.reduce((s, x) => s + x.q, 0)} unidades`; };
+  $('#igAbsCop').onclick = async () => { try { await navigator.clipboard.writeText(texto()); C.toast('Lista copiada'); } catch (e) { C.toast('Não foi possível copiar'); } };
+  $('#igAbsImp').onclick = () => window.print();
+  $('#igAbsReg').onclick = () => registrarAbs(C, loja);
+}
+function registrarAbs(C, loja) {
+  const { esc, modal, fechar, toast, sb, S } = C, A = G.A;
+  if (!A.cd) { toast('Cadastre um CD para registrar o abastecimento'); return; }
+  const l = listaAbs(A, loja.id).filter(x => x.q > 0);
+  if (!l.length) { toast('Nada para levar nesta lista'); return; }
+  const curtos = l.filter(x => { const c = cdDe(A, x.p.id); return c.q != null && c.q < x.q; }).length;
+  modal(`<h2>Registrar abastecimento</h2><p class="mu">Tira ${l.reduce((s, x) => s + x.q, 0)} unidades de ${l.length} produtos do ${esc(A.cd.nome)} e coloca na ${esc(loja.nome)}.</p>
+    ${curtos ? `<div class="ig-aviso" style="margin-top:12px">${svg('bad', 18)}<div>${curtos} ${curtos === 1 ? 'produto fica' : 'produtos ficam'} negativo no CD (falta lançar a nota de compra ou ajustar o estoque).</div></div>` : ''}
+    <p class="mu sm" style="margin-top:10px">Confira o que realmente saiu antes de confirmar. Se errar, dá para corrigir depois com um ajuste de estoque.</p>
+    <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn" id="igRegN">Cancelar</button><button class="btn pri" id="igRegS">Confirmar</button></div>`);
+  document.getElementById('igRegN').onclick = fechar;
+  document.getElementById('igRegS').onclick = async e => {
+    e.target.disabled = true; e.target.textContent = 'Registrando…';
+    const ref = crypto.randomUUID(), linhas = [];
+    for (const x of l) {
+      linhas.push({ empresa_id: S.emp.id, local_id: A.cd.id, produto_id: x.p.id, tipo: 'transferencia_saida', quantidade: -x.q, custo_unit: x.custo || null, referencia: ref });
+      linhas.push({ empresa_id: S.emp.id, local_id: loja.id, produto_id: x.p.id, tipo: 'transferencia_entrada', quantidade: x.q, custo_unit: x.custo || null, referencia: ref });
+    }
+    const r = await sb.from('estoque_mov').insert(linhas);
+    if (r.error) { e.target.disabled = false; e.target.textContent = 'Confirmar'; toast('Não foi possível registrar: ' + r.error.message); return; }
+    fechar(); toast(`Abastecimento da ${loja.nome} registrado`);
+    for (const x of l) G.absQ.delete(loja.id + '|' + x.p.id);
+    try { await carregar(C); desenhar(C); } catch (er) { /* a tela recarrega na próxima abertura */ }
+  };
+}
+
+// usado pelos avisos do Painel: análise atual (carrega uma vez a cada 30 min)
+export async function analiseParaAvisos(C) {
+  if (!G.A || !G.carregadoEm || Date.now() - G.carregadoEm > 30 * 60 * 1000) { await carregar(C); }
+  return { A: G.A, ins: insights(G.A, C.brl, C.bonito) };
+}
 
 function abaLoja(C) {
   const { $, esc } = C, A = G.A;
