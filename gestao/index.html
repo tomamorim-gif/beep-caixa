@@ -999,7 +999,7 @@ async function telaVend(){const M=$('#main');VD.dia=VD.dia||hojeISO();
 
 // ---------- tela: financeiro (arquivo próprio, carregado só quando abre a tela) ----------
 async function telaCp(){try{const m=await import('./contas.js?v=1');await m.telaContas(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
-async function telaInt(){try{const m=await import('./inteligencia.js?v=2');await m.telaInteligencia(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
+async function telaInt(){try{const m=await import('./inteligencia.js?v=3');await m.telaInteligencia(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
 async function telaFin(){try{const m=await import('./financeiro.js?v=3');await m.telaFinanceiro(ctxBeep())}catch(e){$('#main').innerHTML=`<p class="vazio">Não foi possível abrir: ${esc(e.message)}</p>`}}
 
 // ---------- tela: estoque e reposição ----------
