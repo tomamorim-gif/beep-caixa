@@ -25,45 +25,48 @@ const svg = (k, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" 
 
 // ---------------- estilo (só desta tela) ----------------
 const CSS = `
-.ig-hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:0;border:1px solid var(--line);border-radius:var(--r);background:var(--p1);overflow:hidden;margin-bottom:18px}
-.ig-net{position:relative;min-height:300px;border-right:1px solid var(--line);background:radial-gradient(ellipse 60% 70% at 50% 50%,rgba(255,214,10,.07),transparent 70%)}
+.ig-hero{display:grid;grid-template-columns:minmax(0,1fr);border:1px solid var(--line);border-radius:var(--r);background:var(--p1);overflow:hidden;margin-bottom:18px}
+.ig-net{position:relative;height:380px;border-bottom:1px solid var(--line);background:radial-gradient(ellipse 34% 62% at 50% 50%,rgba(255,214,10,.08),transparent 72%)}
+.ig-net.cp{height:auto;aspect-ratio:560/300}
 .ig-net svg{position:absolute;inset:0;width:100%;height:100%}
-.ig-ln{fill:none;stroke:var(--hl);stroke-width:1.25}
-.ig-ln.on{stroke:rgba(255,214,10,.45)}
-.ig-dot{fill:var(--yt)}.ig-dot.out{fill:#38bdf8}
-html[data-tema=claro] .ig-ln.on{stroke:rgba(138,101,0,.35)}html[data-tema=claro] .ig-dot.out{fill:#0369a1}
+.ig-lane{fill:none;stroke:rgba(255,214,10,.32);stroke-width:1.1}
+.ig-lane.in{stroke:rgba(56,189,248,.3)}
+.ig-pad{fill:var(--p1);stroke:rgba(255,214,10,.6);stroke-width:1.2}.ig-pad.in{stroke:rgba(56,189,248,.6)}
+.ig-dec{fill:none;stroke:rgba(255,214,10,.14);stroke-width:1}
+.ig-dec-p{fill:none;stroke:rgba(255,214,10,.3);stroke-width:1}
+.ig-dec-d{fill:rgba(255,214,10,.55)}
+.ig-beam{fill:none;stroke:#ffe866;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:22 300;stroke-dashoffset:22;opacity:0;animation:igBeam 4.4s cubic-bezier(.35,0,.55,1) infinite}
+.ig-beam.fio{stroke:#fffbe0;stroke-width:1.2;stroke-dasharray:6 300}
+.ig-beam.in{stroke:#38bdf8}.ig-beam.in.fio{stroke:#e0f6ff}
+html[data-tema=claro] .ig-beam{stroke:#b88600}html[data-tema=claro] .ig-beam.fio{stroke:#8a6500}html[data-tema=claro] .ig-beam.in{stroke:#0369a1}html[data-tema=claro] .ig-beam.in.fio{stroke:#075985}
+html[data-tema=claro] .ig-lane{stroke:rgba(138,101,0,.35)}html[data-tema=claro] .ig-lane.in{stroke:rgba(3,105,161,.3)}html[data-tema=claro] .ig-dec{stroke:rgba(138,101,0,.18)}
+@keyframes igBeam{0%{stroke-dashoffset:22;opacity:0}3%{opacity:1}28%{opacity:1}31%{stroke-dashoffset:-100;opacity:0}100%{stroke-dashoffset:-100;opacity:0}}
 .ig-node rect{fill:var(--p2);stroke:var(--line);animation:igHit 4.4s ease-out infinite}
-.ig-dot{opacity:.55}
-.ig-beam{fill:none;stroke:#ffe866;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:22 300;stroke-dashoffset:-100;opacity:0;animation:igBeam 4.4s cubic-bezier(.35,0,.55,1) infinite}
-.ig-beam2{stroke:#fffbe0;stroke-width:1.2;stroke-dasharray:6 300}
-html[data-tema=claro] .ig-beam{stroke:#b88600}html[data-tema=claro] .ig-beam2{stroke:#8a6500}
-@keyframes igBeam{0%{stroke-dashoffset:-100;opacity:0}3%{opacity:1}28%{opacity:1}31%{stroke-dashoffset:22;opacity:0}100%{stroke-dashoffset:22;opacity:0}}
 @keyframes igHit{0%,26%{stroke:var(--line)}31%{stroke:rgba(255,214,10,.9);filter:drop-shadow(0 0 6px rgba(255,214,10,.45))}50%,100%{stroke:var(--line);filter:none}}
-.ig-node text{fill:var(--ink);font:600 12.5px Inter,sans-serif}
-.ig-node .ig-sub{fill:var(--mu);font:500 11px Inter,sans-serif}
+.ig-node text{fill:var(--ink);font:600 13px Inter,sans-serif}
+.ig-node .ig-sub{fill:var(--mu);font:500 11.5px Inter,sans-serif}
 .ig-node .ig-ic{color:var(--yt)}
-.ig-node .ig-led{fill:var(--ok)}
-.ig-halo{fill:none;stroke:rgba(255,214,10,.28);stroke-width:1}
-.ig-ring{fill:none;stroke:rgba(255,214,10,.35);stroke-width:1;transform-origin:280px 150px}
-.ig-ring.r1{stroke-dasharray:2 7;animation:igRot 18s linear infinite}
-.ig-ring.r2{stroke:rgba(255,214,10,.22);stroke-dasharray:46 14 6 14;animation:igRot 30s linear infinite reverse}
-.ig-ring.r3{stroke:rgba(56,189,248,.28);stroke-dasharray:1 5;animation:igRot 44s linear infinite}
-.ig-syn-l{stroke:rgba(255,214,10,.2);stroke-width:.8}
-.ig-neu{fill:var(--yt);animation:igSyn 2.6s ease-in-out infinite}
+.ig-node .ig-led{fill:var(--ok);animation:igLed 1.8s ease-in-out infinite}
+.ig-esf{fill:url(#igEsfG);stroke:rgba(255,214,10,.4);stroke-width:1.2}
+.ig-halo{fill:none;stroke:rgba(255,214,10,.3);stroke-width:1}
+.ig-ring{fill:none;stroke:rgba(255,214,10,.4);stroke-width:1}
+.ig-ring.r1{stroke-width:5;stroke-dasharray:1.2 3.8;stroke:rgba(255,214,10,.3);animation:igRot 50s linear infinite}
+.ig-ring.r2{stroke-width:2;stroke-dasharray:70 18 12 18;animation:igRot 26s linear infinite reverse}
+.ig-ring.r3{stroke:rgba(56,189,248,.35);stroke-dasharray:1 5;animation:igRot 40s linear infinite}
+.ig-ring.r4{stroke-width:7;stroke:rgba(255,214,10,.13);stroke-dasharray:34 120;animation:igRot 18s linear infinite}
+.ig-syn-l{stroke:rgba(255,214,10,.24);stroke-width:.8}
+.ig-neu{fill:var(--yt);animation:igSyn 1.8s ease-in-out infinite}
 .ig-fire{fill:#fff7c2}
-.ig-core{transform-origin:280px 150px;animation:igCore 2.2s ease-in-out infinite}
-.ig-nuc{fill:var(--yt)}
-.ig-clu{transform-origin:280px 150px;animation:igRot 60s linear infinite}
-.ig-neu{animation:igSyn 1.8s ease-in-out infinite}
-html[data-tema=claro] .ig-halo,html[data-tema=claro] .ig-ring{stroke:rgba(138,101,0,.35)}html[data-tema=claro] .ig-syn-l{stroke:rgba(138,101,0,.25)}html[data-tema=claro] .ig-fire{fill:#8a6500}
-@keyframes igHalo{0%{r:58;opacity:.9}100%{r:122;opacity:0}}
+.ig-core{animation:igCore 2.2s ease-in-out infinite}
+.ig-clu{animation:igRot 70s linear infinite}
+html[data-tema=claro] .ig-halo,html[data-tema=claro] .ig-ring,html[data-tema=claro] .ig-esf{stroke:rgba(138,101,0,.35)}html[data-tema=claro] .ig-syn-l{stroke:rgba(138,101,0,.28)}html[data-tema=claro] .ig-fire{fill:#8a6500}
 @keyframes igSyn{0%,100%{opacity:.25}50%{opacity:1}}
 @keyframes igLed{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes igRot{to{transform:rotate(360deg)}}
-@keyframes igCore{0%,100%{transform:scale(.86);opacity:.75}50%{transform:scale(1.12);opacity:1}}
-.ig-halo{animation:igHalo 3s ease-out infinite}.ig-halo.h2{animation-delay:1s}.ig-halo.h3{animation-delay:2s}
-.ig-node .ig-led{animation:igLed 1.8s ease-in-out infinite}
-.ig-feed{display:flex;flex-direction:column;padding:20px 22px;min-width:0}
+@keyframes igCore{0%,100%{transform:scale(.86);opacity:.6}50%{transform:scale(1.12);opacity:1}}
+.ig-feed{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:28px;align-content:start;padding:18px 22px;min-width:0}
+.ig-feed>.ig-feed-h,.ig-feed>.ig-stat,.ig-feed>.ig-pens{grid-column:1/-1}
+.ig-feed>.ig-hist{margin-top:0}
 .ig-feed-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .ig-feed-h b{font:700 13px Inter,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--mu)}
 .ig-live{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--okt);font-weight:600}.ig-live i{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:igLed 1.4s infinite}
@@ -84,7 +87,7 @@ html[data-tema=claro] .ig-halo,html[data-tema=claro] .ig-ring{stroke:rgba(138,10
 .ig-hist button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .ig-hist .ig-b{flex:none;width:8px;height:8px;border-radius:3px}
 .ig-b.bad{background:var(--bad)}.ig-b.warn{background:var(--warn)}.ig-b.info{background:var(--blue)}
-.ig-stat{margin-top:auto;padding-top:12px;font-size:12px;color:var(--mu2);border-top:1px dashed var(--line)}
+.ig-stat{margin-top:12px;padding-top:12px;font-size:12px;color:var(--mu2);border-top:1px dashed var(--line)}
 .ig-kpi{margin-bottom:18px}
 .ig-kpi .kpi{min-height:104px;display:flex;flex-direction:column}
 .ig-kpi .kpi small{margin-top:auto;padding-top:6px}
@@ -106,75 +109,105 @@ html[data-tema=claro] .ig-halo,html[data-tema=claro] .ig-ring{stroke:rgba(138,10
 .ig-aviso svg{color:var(--warnt);flex:none;margin-top:1px}
 .ig-cfg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .ig-tot td{font-weight:700;background:var(--p2)}
-@media(prefers-reduced-motion:reduce){.ig-halo,.ig-ring,.ig-neu,.ig-core,.ig-clu,.ig-fire,.ig-led,.ig-node rect,.ig-car,.ig-live i,.ig-pens i{animation:none!important}.ig-dot,.ig-beam{display:none}}
-@media(max-width:1000px){.ig-hero{grid-template-columns:minmax(0,1fr)}.ig-net{border-right:0;border-bottom:1px solid var(--line);min-height:250px}}
+@media(prefers-reduced-motion:reduce){.ig-ring,.ig-neu,.ig-core,.ig-clu,.ig-led,.ig-node rect,.ig-car,.ig-live i,.ig-pens i{animation:none!important}.ig-beam,.ig-fire,.ig-halo,.ig-dec-d{display:none}}
+@media(max-width:900px){.ig-feed{grid-template-columns:minmax(0,1fr)}.ig-feed>.ig-hist{margin-top:12px}}
 @media(max-width:900px){.ig-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}.ig-cfg{grid-template-columns:1fr}.ig-hm{display:none}}
 `;
 function estilo() { if (document.getElementById('igcss')) return; const s = document.createElement('style'); s.id = 'igcss'; s.textContent = CSS; document.head.appendChild(s); }
 
 // ---------------- o cérebro (SVG) ----------------
-// 5 conexões fixas, cada uma com um número real ao lado. Pontos amarelos chegam (dados), azuis saem (sugestões).
-function rede(st) {
-  const W = 560, H = 300, cx = 280, cy = 150;
-  const nos = [
-    { k: 'loja', t: 'Lojas', s: st.lojas, x: 90, y: 64 },
-    { k: 'cd', t: 'CD', s: st.cd, x: 90, y: 236 },
-    { k: 'fin', t: 'Financeiro', s: st.fin, x: 280, y: 28 },
-    { k: 'sefaz', t: 'SEFAZ', s: st.sefaz, x: 470, y: 64 },
-    { k: 'forn', t: 'Fornecedores', s: st.forn, x: 470, y: 236 },
+// Esfera de neurônios no centro, ligada a 5 cartões com números reais. Cada ligação tem duas vias:
+// a amarela leva (o núcleo manda), a azul traz (o cartão devolve dados). Tela estreita usa o modo compacto.
+function rede(st, cp) {
+  const f = v => v.toFixed(1);
+  const W = cp ? 560 : 1000, H = cp ? 300 : 380, cx = W / 2, cy = H / 2, R = cp ? 46 : 104, RR = R + (cp ? 30 : 40);
+  const cw = cp ? 162 : 196, ch = cp ? 46 : 52;
+  const nos = cp ? [
+    { k: 'loja', t: 'Lojas', x: 90, y: 64 }, { k: 'cd', t: 'CD', x: 90, y: 236 }, { k: 'fin', t: 'Financeiro', x: 280, y: 28 },
+    { k: 'sefaz', t: 'SEFAZ', x: 470, y: 64 }, { k: 'forn', t: 'Fornecedores', x: 470, y: 236 },
+  ] : [
+    { k: 'loja', t: 'Lojas', x: 122, y: 72 }, { k: 'cd', t: 'CD', x: 122, y: 308 }, { k: 'fin', t: 'Financeiro', x: 122, y: 190 },
+    { k: 'sefaz', t: 'SEFAZ', x: 878, y: 112 }, { k: 'forn', t: 'Fornecedores', x: 878, y: 268 },
   ];
-  const caminho = n => {
-    // sai da órbita externa e curva até o nó
-    const ang = Math.atan2(n.y - cy, n.x - cx), bx = cx + Math.cos(ang) * 78, by = cy + Math.sin(ang) * 78;
-    const mx = (bx + n.x) / 2, my = (by + n.y) / 2;
-    const c1x = n.x === cx ? bx : mx, c1y = n.x === cx ? my : by, c2x = n.x === cx ? n.x : mx, c2y = n.x === cx ? my : n.y;
-    return `M${n.x.toFixed(1)} ${n.y.toFixed(1)} C${c2x.toFixed(1)} ${c2y.toFixed(1)} ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${bx.toFixed(1)} ${by.toFixed(1)}`;
+  nos.forEach(n => { n.s = st[{ loja: 'lojas', cd: 'cd', fin: 'fin', sefaz: 'sefaz', forn: 'forn' }[n.k]]; });
+  const naBorda = (y, lado) => cx + lado * Math.sqrt(Math.max(RR * RR - (y - cy) ** 2, 0));
+  // trilha de circuito: sai da borda, anda reto, dobra a 45° e segue reto até o cartão
+  const trilha = (yAlvo, xFim, lado, off) => {
+    const y0 = cy + (yAlvo - cy) * 0.5 + off, x0 = naBorda(y0, lado), xa = x0 + lado * 26, dy = yAlvo + off - y0;
+    return [[x0, y0], [xa, y0], [xa + lado * Math.abs(dy), yAlvo + off], [xFim, yAlvo + off]];
   };
-  // envios: a cada batida do núcleo sai um impulso pela linha até o cartão, que acende quando ele chega.
-  // Batidas alternadas: Lojas, Financeiro e Fornecedores numa; CD e SEFAZ na seguinte.
-  const atraso = i => (1.1 + (i % 2) * 2.2).toFixed(2) + 's';
+  const curva = (n, off) => {
+    const ang = Math.atan2(n.y - cy, n.x - cx), bx = cx + Math.cos(ang) * RR + off, by = cy + Math.sin(ang) * RR;
+    const ex = n.x + off, ey = n.y + (n.y < cy ? ch / 2 : -ch / 2) * (n.x === cx ? 1 : 0);
+    return { c: true, p: [[bx, by], [n.x === cx ? bx : (bx + ex) / 2, n.x === cx ? (by + ey) / 2 : by], [n.x === cx ? ex : (bx + ex) / 2, n.x === cx ? (by + ey) / 2 : ey], [ex, ey]] };
+  };
+  const dPts = (o, rev) => { const p = rev ? [...o.p].reverse() : o.p; return o.c ? `M${f(p[0][0])} ${f(p[0][1])}C${p.slice(1).map(q => f(q[0]) + ' ' + f(q[1])).join(' ')}` : 'M' + p.map(q => f(q[0]) + ' ' + f(q[1])).join('L'); };
+  const vias = n => {
+    const lado = n.x < cx ? -1 : n.x > cx ? 1 : 0, borda = n.x - lado * cw / 2;
+    if (cp) return [curva(n, -3), curva(n, 3)];
+    return [{ p: trilha(n.y, borda, lado, -4) }, { p: trilha(n.y, borda, lado, 4) }];
+  };
+  // envios no ritmo do núcleo (batidas alternadas); o retorno vem entre uma batida e outra
+  const atraso = i => (1.1 + (i % 2) * 2.2).toFixed(2) + 's', volta = i => (2.4 + (i % 2) * 2.2).toFixed(2) + 's';
+  const feixe = (d, cls, dl) => `<path class="ig-beam${cls}" d="${d}" pathLength="100" filter="url(#igGlow)" style="animation-delay:${dl}"/><path class="ig-beam fio${cls}" d="${d}" pathLength="100" style="animation-delay:${dl}"/>`;
   const linhas = nos.map((n, i) => {
-    const d = caminho(n), id = 'igp' + i, dur = (3.2 + i * 0.35).toFixed(2);
-    return `<path id="${id}" class="ig-ln on" d="${d}"/>
-      <circle r="2" class="ig-dot"><animateMotion dur="${dur}s" repeatCount="indefinite" begin="-${(0.3 + i * 0.4).toFixed(1)}s"><mpath href="#${id}"/></animateMotion></circle>
-      <path class="ig-beam" d="${d}" pathLength="100" filter="url(#igGlow)" style="animation-delay:${atraso(i)}"/>
-      <path class="ig-beam ig-beam2" d="${d}" pathLength="100" style="animation-delay:${atraso(i)}"/>`;
+    const [vo, vi] = vias(n), dO = dPts(vo), dI = dPts(vi, true), fo = vo.p[3], fi = vi.p[3];
+    return `<path class="ig-lane" d="${dO}"/><path class="ig-lane in" d="${dI}"/>
+      <circle class="ig-pad" cx="${f(vo.p[0][0])}" cy="${f(vo.p[0][1])}" r="2.2"/><circle class="ig-pad in" cx="${f(vi.p[0][0])}" cy="${f(vi.p[0][1])}" r="2.2"/>
+      <circle class="ig-pad" cx="${f(fo[0])}" cy="${f(fo[1])}" r="2.2"/><circle class="ig-pad in" cx="${f(fi[0])}" cy="${f(fi[1])}" r="2.2"/>
+      ${feixe(dO, '', atraso(i))}${feixe(dI, ' in', volta(i))}`;
+  }).join('');
+  // trilhas decorativas entre os cartões, como numa placa de circuito
+  const dec = cp ? '' : [[-1, 131], [-1, 249], [1, 34], [1, 190], [1, 346]].map(([lado, y], k) => {
+    const pts = trilha(y, lado < 0 ? 26 : W - 26, lado, 0), d = 'M' + pts.map(q => f(q[0]) + ' ' + f(q[1])).join('L'), e = pts[3];
+    const tr = [0, 1, 2, 3].map(j => `<rect x="${f(e[0] - lado * (18 + j * 7) - 1.5)}" y="${f(e[1] - 1)}" width="3" height="2" class="ig-dec-d" opacity="${(0.25 + j * 0.15).toFixed(2)}"/>`).join('');
+    return `<path class="ig-dec" d="${d}"/><circle class="ig-dec-p" cx="${f(e[0])}" cy="${f(e[1])}" r="3"/>${tr}
+      <circle r="1.6" class="ig-dec-d"><animateMotion dur="${(3 + k * 0.6).toFixed(1)}s" repeatCount="indefinite" begin="-${(k * 0.9).toFixed(1)}s" path="${d}"/></circle>`;
   }).join('');
   const caixas = nos.map((n, i) => {
-    const w = 162, h = 46, x = n.x - w / 2, y = n.y - h / 2;
-    return `<g class="ig-node"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12" style="animation-delay:${atraso(i)}"/>
-      <g class="ig-ic" transform="translate(${x + 12} ${y + 14}) scale(.75)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${IC[n.k]}</svg></g>
-      <text x="${x + 38}" y="${y + 20}">${n.t}</text><text class="ig-sub" x="${x + 38}" y="${y + 35}">${n.s}</text>
-      <circle class="ig-led" cx="${x + w - 12}" cy="${y + 12}" r="3"/></g>`;
+    const x = n.x - cw / 2, y = n.y - ch / 2, ty = (ch - 30) / 2;
+    return `<g class="ig-node"><rect x="${x}" y="${y}" width="${cw}" height="${ch}" rx="12" style="animation-delay:${atraso(i)}"/>
+      <g class="ig-ic" transform="translate(${x + 12} ${y + ch / 2 - 9}) scale(.75)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${IC[n.k]}</svg></g>
+      <text x="${x + 40}" y="${y + ty + 12}">${n.t}</text><text class="ig-sub" x="${x + 40}" y="${y + ty + 27}">${n.s}</text>
+      <circle class="ig-led" cx="${x + cw - 12}" cy="${y + 12}" r="3"/></g>`;
   }).join('');
-  // núcleo: uma alusão a um cérebro, não um desenho. Neurônios em espiral, ligados aos vizinhos,
-  // com impulsos correndo entre eles, órbitas girando e ondas saindo do centro.
-  const N = 22, P = [];
-  for (let i = 0; i < N; i++) { const r = 14 + 44 * Math.sqrt((i + 0.5) / N), a = i * 2.39996 + 0.4; P.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.86]); }
+  // esfera: neurônios espalhados (girassol), ligados aos vizinhos, cada um passeando num laço próprio
+  const N = cp ? 24 : 48, P = [];
+  for (let i = 0; i < N; i++) { const r = (R - (cp ? 6 : 10)) * Math.sqrt((i + 0.5) / N), a = i * 2.39996 + 0.4; P.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); }
   const E = [], vis = new Set();
   P.forEach((p, i) => {
-    P.map((q, j) => [j, Math.hypot(p[0] - q[0], p[1] - q[1])]).filter(x => x[0] !== i).sort((x, y) => x[1] - y[1]).slice(0, 2)
+    P.map((q, j) => [j, Math.hypot(p[0] - q[0], p[1] - q[1])]).filter(x => x[0] !== i).sort((x, y) => x[1] - y[1]).slice(0, 3)
       .forEach(([j]) => { const k = i < j ? i + '-' + j : j + '-' + i; if (!vis.has(k)) { vis.add(k); E.push([i, j]); } });
   });
-  const f = v => v.toFixed(1);
-  // cada neurônio passeia num pequeno laço próprio; as ligações acompanham (mesmos valores e tempo)
+  const amp = cp ? 0.6 : 1;
   const mov = P.map((p, i) => {
-    const r = 3 + (i % 4) * 1.4, fase = i * 1.7, dur = (3.4 + (i % 5) * 0.9).toFixed(1), xs = [], ys = [];
+    const r = (3 + (i % 4) * 1.4) * amp, fase = i * 1.7, dur = (3.4 + (i % 5) * 0.9).toFixed(1), xs = [], ys = [];
     for (let k = 0; k <= 8; k++) { const t = fase + k * Math.PI / 4; xs.push(f(p[0] + Math.cos(t) * r)); ys.push(f(p[1] + Math.sin(t * 2) * r * 0.7)); }
     return { x: xs.join(';'), y: ys.join(';'), dur };
   });
   const an = (at, v, d) => `<animate attributeName="${at}" values="${v}" dur="${d}s" repeatCount="indefinite"/>`;
   const sin = E.map(([i, j]) => `<line class="ig-syn-l" x1="${f(P[i][0])}" y1="${f(P[i][1])}" x2="${f(P[j][0])}" y2="${f(P[j][1])}">${an('x1', mov[i].x, mov[i].dur)}${an('y1', mov[i].y, mov[i].dur)}${an('x2', mov[j].x, mov[j].dur)}${an('y2', mov[j].y, mov[j].dur)}</line>`).join('');
-  const fogo = E.filter((_, k) => k % 2 === 0).map(([i, j], k) => `<circle r="1.7" class="ig-fire"><animateMotion dur="${(0.9 + (k % 4) * 0.25).toFixed(2)}s" repeatCount="indefinite" begin="-${(k * 0.29).toFixed(2)}s" path="M${f(P[i][0])} ${f(P[i][1])}L${f(P[j][0])} ${f(P[j][1])}"/></circle>`).join('');
-  const neu = P.map((p, i) => `<circle class="ig-neu" cx="${f(p[0])}" cy="${f(p[1])}" r="${(1.4 + (i % 3) * 0.5).toFixed(1)}" style="animation-delay:${((i * 0.41) % 2.6).toFixed(2)}s">${an('cx', mov[i].x, mov[i].dur)}${an('cy', mov[i].y, mov[i].dur)}</circle>`).join('');
-  const B = `<defs><radialGradient id="igCoreG"><stop offset="0" stop-color="#ffe866" stop-opacity=".95"/><stop offset=".35" stop-color="#ffd60a" stop-opacity=".45"/><stop offset="1" stop-color="#ffd60a" stop-opacity="0"/></radialGradient>
+  const fogo = E.filter((_, k) => k % 3 === 0).map(([i, j], k) => `<circle r="1.7" class="ig-fire"><animateMotion dur="${(0.9 + (k % 4) * 0.25).toFixed(2)}s" repeatCount="indefinite" begin="-${(k * 0.29).toFixed(2)}s" path="M${f(P[i][0])} ${f(P[i][1])}L${f(P[j][0])} ${f(P[j][1])}"/></circle>`).join('');
+  const neu = P.map((p, i) => `<circle class="ig-neu" cx="${f(p[0])}" cy="${f(p[1])}" r="${(1.4 + (i % 3) * 0.55).toFixed(1)}" style="animation-delay:${((i * 0.41) % 1.8).toFixed(2)}s">${an('cx', mov[i].x, mov[i].dur)}${an('cy', mov[i].y, mov[i].dur)}</circle>`).join('');
+  const org = `transform-origin:${cx}px ${cy}px`;
+  const halo = [0, 1, 2].map(k => `<circle class="ig-halo" cx="${cx}" cy="${cy}" r="${R}"><animate attributeName="r" values="${R};${RR + 50}" dur="3s" begin="-${k}s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="3s" begin="-${k}s" repeatCount="indefinite"/></circle>`).join('');
+  const k = cp ? 0.55 : 1;
+  const B = `<defs><radialGradient id="igCoreG"><stop offset="0" stop-color="#ffe866" stop-opacity=".7"/><stop offset=".4" stop-color="#ffd60a" stop-opacity=".25"/><stop offset="1" stop-color="#ffd60a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="igEsfG"><stop offset="0" stop-color="#ffd60a" stop-opacity=".12"/><stop offset=".8" stop-color="#ffd60a" stop-opacity=".04"/><stop offset="1" stop-color="#ffd60a" stop-opacity=".1"/></radialGradient>
     <filter id="igGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-    <circle class="ig-ring r3" cx="${cx}" cy="${cy}" r="76"/><circle class="ig-ring r2" cx="${cx}" cy="${cy}" r="68"/><circle class="ig-ring r1" cx="${cx}" cy="${cy}" r="60"/>
-    <circle class="ig-core" cx="${cx}" cy="${cy}" r="34" fill="url(#igCoreG)"/>
-    <g filter="url(#igGlow)"><g class="ig-clu">${sin}${neu}${fogo}</g><circle class="ig-nuc" cx="${cx}" cy="${cy}" r="4.5"/></g>`;
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Núcleo da inteligência conectado às lojas, CD, financeiro, SEFAZ e fornecedores">
-    <circle class="ig-halo" cx="${cx}" cy="${cy}" r="58"/><circle class="ig-halo h2" cx="${cx}" cy="${cy}" r="58"/><circle class="ig-halo h3" cx="${cx}" cy="${cy}" r="58"/>
-    ${linhas}${B}${caixas}</svg>`;
+    <circle class="ig-ring r4" cx="${cx}" cy="${cy}" r="${f(R + 34 * k)}" style="${org}"/><circle class="ig-ring r3" cx="${cx}" cy="${cy}" r="${f(R + 26 * k)}" style="${org}"/>
+    <circle class="ig-ring r2" cx="${cx}" cy="${cy}" r="${f(R + 17 * k)}" style="${org}"/><circle class="ig-ring r1" cx="${cx}" cy="${cy}" r="${f(R + 8 * k)}" style="${org}"/>
+    <circle class="ig-esf" cx="${cx}" cy="${cy}" r="${R}"/>
+    <circle class="ig-core" cx="${cx}" cy="${cy}" r="${f(R * 0.55)}" fill="url(#igCoreG)" style="${org}"/>
+    <g filter="url(#igGlow)"><g class="ig-clu" style="${org}">${sin}${neu}${fogo}</g></g>`;
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Núcleo da inteligência trocando dados com lojas, CD, financeiro, SEFAZ e fornecedores">
+    ${halo}${dec}${linhas}${B}${caixas}</svg>`;
+}
+// desenha a rede no tamanho certo e redesenha só se a tela mudar de largo para estreito (ou o contrário)
+function pintarRede(C, st) {
+  const el = C.$('#igNet'); if (!el) return;
+  G.st = st; const cp = el.clientWidth < 760; el.classList.toggle('cp', cp); G.cp = cp; el.innerHTML = rede(st, cp);
+  if (!G.rz) { G.rz = true; addEventListener('resize', () => { const e = document.getElementById('igNet'); if (!e || !G.st) return; if ((e.clientWidth < 760) !== G.cp) pintarRede(C, G.st); }); }
 }
 
 // ---------------- carga ----------------
@@ -208,7 +241,7 @@ export async function telaInteligencia(C) {
     <div class="row"><button class="btn sm" id="igCfg">${svg('cfg', 16)}Ajustes</button></div></div>
     <section class="ig-hero"><div class="ig-net" id="igNet"></div><div class="ig-feed"><div class="ig-feed-h"><b>Pensando agora</b><span class="ig-live"><i></i>ao vivo</span></div><div class="ig-pens"><i></i><i></i><i></i>Lendo vendas, estoque e notas…</div></div></section>
     <div id="igCorpo"></div>`;
-  $('#igNet').innerHTML = rede({ lojas: '…', cd: '…', fin: '…', sefaz: '…', forn: '…' });
+  pintarRede(C, { lojas: '…', cd: '…', fin: '…', sefaz: '…', forn: '…' });
   $('#igCfg').onclick = () => ajustes(C);
   try { await carregar(C); }
   catch (e) { $('#igCorpo').innerHTML = `<p class="vazio">Não foi possível montar a inteligência: ${esc(e.message)}</p>`; return; }
@@ -220,7 +253,7 @@ function desenhar(C) {
   const nLojas = A.lojas.length, comDados = A.lojas.filter(l => A.infoLoja.has(l.id)).length;
   const cdSaldo = A.cd ? A.itensLoja.length && (R.fonteSac || true) : 0;
   const itensCD = (G.intel.sac_estoque?.itens || []).filter(x => x[0] === A.cd?.id && x[2] > 0).length + (G.base.saldos || []).filter(s => s.local_id === A.cd?.id && s.saldo > 0).length;
-  $('#igNet').innerHTML = rede({
+  pintarRede(C, {
     lojas: `${comDados} de ${nLojas} vendendo`,
     cd: itensCD ? `${nf(itensCD)} itens com saldo` : 'sem saldo ainda',
     fin: `${brl(R.bruto90).replace(/,\d\d$/, '')} em 90 dias`,
