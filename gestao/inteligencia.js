@@ -37,15 +37,23 @@ html[data-tema=claro] .ig-ln.on{stroke:rgba(138,101,0,.35)}html[data-tema=claro]
 .ig-node .ig-sub{fill:var(--mu);font:500 11px Inter,sans-serif}
 .ig-node .ig-ic{color:var(--yt)}
 .ig-node .ig-led{fill:var(--ok)}
-.ig-brain path{fill:none;stroke:var(--yt);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.ig-brain .ig-hemi{fill:rgba(255,214,10,.06)}
-.ig-brain .ig-syn{fill:var(--yt)}
-.ig-halo{fill:none;stroke:rgba(255,214,10,.22);stroke-width:1}
-@keyframes igHalo{0%{r:70;opacity:.9}100%{r:118;opacity:0}}
+.ig-halo{fill:none;stroke:rgba(255,214,10,.28);stroke-width:1}
+.ig-ring{fill:none;stroke:rgba(255,214,10,.35);stroke-width:1;transform-origin:280px 150px}
+.ig-ring.r1{stroke-dasharray:2 7;animation:igRot 18s linear infinite}
+.ig-ring.r2{stroke:rgba(255,214,10,.22);stroke-dasharray:46 14 6 14;animation:igRot 30s linear infinite reverse}
+.ig-ring.r3{stroke:rgba(56,189,248,.28);stroke-dasharray:1 5;animation:igRot 44s linear infinite}
+.ig-syn-l{stroke:rgba(255,214,10,.2);stroke-width:.8}
+.ig-neu{fill:var(--yt);animation:igSyn 2.6s ease-in-out infinite}
+.ig-fire{fill:#fff7c2}
+.ig-core{transform-origin:280px 150px;animation:igCore 2.2s ease-in-out infinite}
+.ig-nuc{fill:var(--yt)}
+html[data-tema=claro] .ig-halo,html[data-tema=claro] .ig-ring{stroke:rgba(138,101,0,.35)}html[data-tema=claro] .ig-syn-l{stroke:rgba(138,101,0,.25)}html[data-tema=claro] .ig-fire{fill:#8a6500}
+@keyframes igHalo{0%{r:58;opacity:.9}100%{r:122;opacity:0}}
 @keyframes igSyn{0%,100%{opacity:.25}50%{opacity:1}}
 @keyframes igLed{0%,100%{opacity:1}50%{opacity:.35}}
-.ig-halo{animation:igHalo 3.2s ease-out infinite}.ig-halo.h2{animation-delay:1.6s}
-.ig-brain .ig-syn{animation:igSyn 2.4s ease-in-out infinite}
+@keyframes igRot{to{transform:rotate(360deg)}}
+@keyframes igCore{0%,100%{transform:scale(.86);opacity:.75}50%{transform:scale(1.12);opacity:1}}
+.ig-halo{animation:igHalo 3s ease-out infinite}.ig-halo.h2{animation-delay:1s}.ig-halo.h3{animation-delay:2s}
 .ig-node .ig-led{animation:igLed 1.8s ease-in-out infinite}
 .ig-feed{display:flex;flex-direction:column;padding:20px 22px;min-width:0}
 .ig-feed-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
@@ -90,7 +98,7 @@ html[data-tema=claro] .ig-ln.on{stroke:rgba(138,101,0,.35)}html[data-tema=claro]
 .ig-aviso svg{color:var(--warnt);flex:none;margin-top:1px}
 .ig-cfg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .ig-tot td{font-weight:700;background:var(--p2)}
-@media(prefers-reduced-motion:reduce){.ig-halo,.ig-syn,.ig-led,.ig-car,.ig-live i,.ig-pens i{animation:none!important}.ig-dot{display:none}}
+@media(prefers-reduced-motion:reduce){.ig-halo,.ig-ring,.ig-neu,.ig-core,.ig-fire,.ig-led,.ig-car,.ig-live i,.ig-pens i{animation:none!important}.ig-dot{display:none}}
 @media(max-width:1000px){.ig-hero{grid-template-columns:minmax(0,1fr)}.ig-net{border-right:0;border-bottom:1px solid var(--line);min-height:250px}}
 @media(max-width:900px){.ig-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}.ig-cfg{grid-template-columns:1fr}.ig-hm{display:none}}
 `;
@@ -108,8 +116,8 @@ function rede(st) {
     { k: 'forn', t: 'Fornecedores', s: st.forn, x: 470, y: 236 },
   ];
   const caminho = n => {
-    // sai da borda do cérebro e curva até o nó
-    const ang = Math.atan2(n.y - cy, n.x - cx), bx = cx + Math.cos(ang) * 80, by = cy + Math.sin(ang) * 62;
+    // sai da órbita externa e curva até o nó
+    const ang = Math.atan2(n.y - cy, n.x - cx), bx = cx + Math.cos(ang) * 78, by = cy + Math.sin(ang) * 78;
     const mx = (bx + n.x) / 2, my = (by + n.y) / 2;
     const c1x = n.x === cx ? bx : mx, c1y = n.x === cx ? my : by, c2x = n.x === cx ? n.x : mx, c2y = n.x === cx ? my : n.y;
     return `M${n.x.toFixed(1)} ${n.y.toFixed(1)} C${c2x.toFixed(1)} ${c2y.toFixed(1)} ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${bx.toFixed(1)} ${by.toFixed(1)}`;
@@ -121,24 +129,32 @@ function rede(st) {
       <circle r="2.4" class="ig-dot out"><animateMotion dur="${(+dur + 0.9).toFixed(2)}s" repeatCount="indefinite" begin="-${(1.1 + i * 0.5).toFixed(1)}s" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#${id}"/></animateMotion></circle>`;
   }).join('');
   const caixas = nos.map(n => {
-    const w = 150, h = 46, x = n.x - w / 2, y = n.y - h / 2;
+    const w = 162, h = 46, x = n.x - w / 2, y = n.y - h / 2;
     return `<g class="ig-node"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12"/>
       <g class="ig-ic" transform="translate(${x + 12} ${y + 14}) scale(.75)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${IC[n.k]}</svg></g>
       <text x="${x + 38}" y="${y + 20}">${n.t}</text><text class="ig-sub" x="${x + 38}" y="${y + 35}">${n.s}</text>
       <circle class="ig-led" cx="${x + w - 12}" cy="${y + 12}" r="3"/></g>`;
   }).join('');
-  // cérebro desenhado à mão: dois hemisférios e sulcos, com sinapses piscando
-  const B = `<g class="ig-brain" transform="translate(${cx - 75} ${cy - 60}) scale(1.5)">
-    <path class="ig-hemi" d="M50 8C38 3 25 7 21 16 11 16 5 26 8 35 2 42 3 55 11 59 11 69 22 75 32 72 37 78 46 78 50 73Z"/>
-    <path class="ig-hemi" d="M50 8C62 3 75 7 79 16 89 16 95 26 92 35 98 42 97 55 89 59 89 69 78 75 68 72 63 78 54 78 50 73Z"/>
-    <path d="M50 8v65"/>
-    <path d="M21 16c6 5 5 12 13 14M8 35c9 0 13 8 21 6M11 59c8-4 14 0 18-7M36 18c6 6 2 15 8 19M32 72c2-9 9-11 11-17M24 46c5-2 9 1 13-3"/>
-    <path d="M79 16c-6 5-5 12-13 14M92 35c-9 0-13 8-21 6M89 59c-8-4-14 0-18-7M64 18c-6 6-2 15-8 19M68 72c-2-9-9-11-11-17M76 46c-5-2-9 1-13-3"/>
-    <circle class="ig-syn" cx="34" cy="30" r="2"/><circle class="ig-syn" cx="29" cy="41" r="2" style="animation-delay:.5s"/><circle class="ig-syn" cx="44" cy="37" r="2" style="animation-delay:1.1s"/>
-    <circle class="ig-syn" cx="66" cy="30" r="2" style="animation-delay:.8s"/><circle class="ig-syn" cx="71" cy="41" r="2" style="animation-delay:1.4s"/><circle class="ig-syn" cx="56" cy="37" r="2" style="animation-delay:.3s"/>
-    <circle class="ig-syn" cx="43" cy="55" r="2" style="animation-delay:1.7s"/><circle class="ig-syn" cx="57" cy="55" r="2" style="animation-delay:.9s"/></g>`;
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Cérebro conectado às lojas, CD, financeiro, SEFAZ e fornecedores">
-    <circle class="ig-halo" cx="${cx}" cy="${cy}" r="70"/><circle class="ig-halo h2" cx="${cx}" cy="${cy}" r="70"/>
+  // núcleo: uma alusão a um cérebro, não um desenho. Neurônios em espiral, ligados aos vizinhos,
+  // com impulsos correndo entre eles, órbitas girando e ondas saindo do centro.
+  const N = 22, P = [];
+  for (let i = 0; i < N; i++) { const r = 14 + 44 * Math.sqrt((i + 0.5) / N), a = i * 2.39996 + 0.4; P.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.86]); }
+  const E = [], vis = new Set();
+  P.forEach((p, i) => {
+    P.map((q, j) => [j, Math.hypot(p[0] - q[0], p[1] - q[1])]).filter(x => x[0] !== i).sort((x, y) => x[1] - y[1]).slice(0, 2)
+      .forEach(([j]) => { const k = i < j ? i + '-' + j : j + '-' + i; if (!vis.has(k)) { vis.add(k); E.push([i, j]); } });
+  });
+  const f = v => v.toFixed(1);
+  const sin = E.map(([i, j]) => `<line class="ig-syn-l" x1="${f(P[i][0])}" y1="${f(P[i][1])}" x2="${f(P[j][0])}" y2="${f(P[j][1])}"/>`).join('');
+  const fogo = E.filter((_, k) => k % 3 === 0).map(([i, j], k) => `<circle r="1.6" class="ig-fire"><animateMotion dur="${(1.1 + (k % 4) * 0.3).toFixed(1)}s" repeatCount="indefinite" begin="-${(k * 0.37).toFixed(2)}s" path="M${f(P[i][0])} ${f(P[i][1])}L${f(P[j][0])} ${f(P[j][1])}"/></circle>`).join('');
+  const neu = P.map((p, i) => `<circle class="ig-neu" cx="${f(p[0])}" cy="${f(p[1])}" r="${(1.4 + (i % 3) * 0.5).toFixed(1)}" style="animation-delay:${((i * 0.41) % 2.6).toFixed(2)}s"/>`).join('');
+  const B = `<defs><radialGradient id="igCoreG"><stop offset="0" stop-color="#ffe866" stop-opacity=".95"/><stop offset=".35" stop-color="#ffd60a" stop-opacity=".45"/><stop offset="1" stop-color="#ffd60a" stop-opacity="0"/></radialGradient>
+    <filter id="igGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    <circle class="ig-ring r3" cx="${cx}" cy="${cy}" r="76"/><circle class="ig-ring r2" cx="${cx}" cy="${cy}" r="68"/><circle class="ig-ring r1" cx="${cx}" cy="${cy}" r="60"/>
+    <circle class="ig-core" cx="${cx}" cy="${cy}" r="34" fill="url(#igCoreG)"/>
+    <g filter="url(#igGlow)">${sin}${neu}${fogo}<circle class="ig-nuc" cx="${cx}" cy="${cy}" r="4.5"/></g>`;
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Núcleo da inteligência conectado às lojas, CD, financeiro, SEFAZ e fornecedores">
+    <circle class="ig-halo" cx="${cx}" cy="${cy}" r="58"/><circle class="ig-halo h2" cx="${cx}" cy="${cy}" r="58"/><circle class="ig-halo h3" cx="${cx}" cy="${cy}" r="58"/>
     ${linhas}${B}${caixas}</svg>`;
 }
 
