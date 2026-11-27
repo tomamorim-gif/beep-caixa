@@ -1,13 +1,15 @@
 // Busca das notas de compra na SEFAZ (Ambiente Nacional), rodando no GitHub Actions quando o painel pede.
 // Por que aqui e não no Supabase: o Ambiente Nacional pede o certificado por renegociação TLS,
 // que o servidor do Supabase (Deno/rustls) não suporta; o Node (OpenSSL) suporta.
+// Tudo numa ida só: busca as notas novas, dá ciência nas que vieram só com resumo e já baixa o XML
+// pela chave, para o usuário conferir sem precisar de outra busca (a SEFAZ só deixa repetir depois de 1 hora).
 // Fluxo: pede à função nfe-entrada o que fazer (ponte_inicio), conversa com a SEFAZ e devolve o resultado (ponte_resultado).
 // O repositório é público: este script NÃO imprime certificado, chave, CNPJ, fornecedor nem conteúdo de nota. Só contagens.
 // Rodar: BEEP_PONTE=... node --experimental-strip-types scripts/nfe-recebidas.ts
 import https from "node:https";
 import forge from "node-forge";
 import { agoraBR, assinar, campo, envEvento, soap } from "../supabase/functions/_shared/nfce.ts";
-import { AN, distPorChave, distPorNsu, gunzipB64, infEventoCiencia, lerDist, soapDist } from "../supabase/functions/_shared/dfe.ts";
+import { AN, distPorChave, distPorNsu, gunzipB64, infEventoCiencia, lerDist, lerDoc, soapDist } from "../supabase/functions/_shared/dfe.ts";
 
 const FUNC = "https://gdnvjpmpfgautrmtkjmx.supabase.co/functions/v1/nfe-entrada";
 const TOKEN = process.env.BEEP_PONTE ?? "";
@@ -65,33 +67,67 @@ async function ciencia(c: Cred, cnpj: string, chave: string) {
   return { chave, cStat: Number(campo(ret, "cStat")), motivo: campo(ret, "xMotivo") ?? "" };
 }
 
+const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const MAX_POR_CHAVE = 20; // consultas pela chave por rodada (evita bloqueio por excesso)
+
 async function empresa(e: any) {
   const c = lerPfx(e.pfx, e.senha);
   const out: any = { empresa_id: e.empresa_id, ult_nsu: e.ult_nsu, docs: [], ciencias: [], erro: null, espera_horas: 1 };
   const inicio = Date.now();
+  const pegarPorChave = new Set<string>(e.consultar ?? []); // chaves cujo XML vamos baixar nesta rodada
+  const temXml = new Set<string>();
+  const darCiencia = async (chave: string) => {
+    const r = await ciencia(c, e.cnpj, chave);
+    out.ciencias.push(r);
+    if ([135, 136, 573].includes(r.cStat)) pegarPorChave.add(chave); // 573 = ciência já registrada antes
+  };
+  const guardar = async (doc: { nsu: string | null; schema: string; b64: string }) => {
+    const xml = await gunzipB64(doc.b64);
+    out.docs.push({ nsu: doc.nsu, schema: doc.schema, xml });
+    return { xml, info: lerDoc(doc.schema, xml) };
+  };
   try {
-    // 1) ciência das notas que só têm resumo (libera o XML)
-    for (const chave of e.ciencia ?? []) out.ciencias.push(await ciencia(c, e.cnpj, chave));
-    // 2) notas pedidas pela chave no painel
-    for (const chave of e.consultar ?? []) {
-      const d = lerDist(await post(c, AN.producao.dist, soapDist(distPorChave({ tpAmb: 1, cUF: e.cUF, cnpj: e.cnpj, chave })), DIST));
-      if (d.cStat === 656) { out.erro = "SEFAZ pediu para esperar 1 hora (consumo indevido)"; return out; }
-      for (const doc of d.docs) out.docs.push({ nsu: null, schema: doc.schema, xml: await gunzipB64(doc.b64) });
-    }
-    // 3) documentos novos por NSU (até 50 por vez)
+    // 1) ciência das notas que ficaram só com resumo em rodadas anteriores
+    for (const chave of e.ciencia ?? []) await darCiencia(chave);
+    // 2) documentos novos por NSU (até 50 por vez)
+    const resumosNovos: string[] = [];
     for (let volta = 0; volta < 30; volta++) {
       const d = lerDist(await post(c, AN.producao.dist, soapDist(distPorNsu({ tpAmb: 1, cUF: e.cUF, cnpj: e.cnpj, ultNsu: out.ult_nsu })), DIST));
       if (d.cStat === 656) { out.erro = "SEFAZ pediu para esperar 1 hora (consumo indevido)"; break; }
       if (d.cStat !== 137 && d.cStat !== 138) { out.erro = `SEFAZ ${d.cStat}: ${d.motivo}`; break; }
       if (d.ultNsu) out.ult_nsu = d.ultNsu;
-      for (const doc of d.docs) out.docs.push({ nsu: doc.nsu, schema: doc.schema, xml: await gunzipB64(doc.b64) });
+      for (const doc of d.docs) {
+        const { info } = await guardar(doc);
+        if (info.tipo === "nota" && info.chave) temXml.add(info.chave);
+        if (info.tipo === "resumo" && info.chave && info.situacao === "1") resumosNovos.push(info.chave);
+      }
       if (d.cStat === 137 || !d.maxNsu || out.ult_nsu >= d.maxNsu) break;
       if (Date.now() - inicio > 4 * 60_000) { out.espera_horas = 0.02; break; } // continua na próxima rodada
+    }
+    // 3) ciência já nesta rodada para as notas novas que vieram só com resumo
+    for (const chave of resumosNovos) if (!temXml.has(chave) && !pegarPorChave.has(chave)) await darCiencia(chave);
+    // 4) baixa o XML completo pela chave, sem esperar outra busca
+    let fila = [...pegarPorChave].filter((k) => !temXml.has(k)).slice(0, MAX_POR_CHAVE);
+    for (let tentativa = 0; tentativa < 2 && fila.length; tentativa++) {
+      await espera(tentativa === 0 ? 8_000 : 20_000); // a SEFAZ leva alguns segundos para liberar o XML depois da ciência
+      const faltam: string[] = [];
+      for (const chave of fila) {
+        const d = lerDist(await post(c, AN.producao.dist, soapDist(distPorChave({ tpAmb: 1, cUF: e.cUF, cnpj: e.cnpj, chave })), DIST));
+        if (d.cStat === 656) { out.erro = out.erro ?? "SEFAZ pediu para esperar antes de baixar mais XML"; fila = []; break; }
+        let veio = false;
+        for (const doc of d.docs) {
+          const { info } = await guardar({ ...doc, nsu: null });
+          if (info.tipo === "nota" && info.chave === chave) { veio = true; temXml.add(chave); }
+        }
+        if (!veio) faltam.push(chave);
+      }
+      fila = fila.length ? faltam : [];
     }
   } catch (err) {
     out.erro = String((err as Error).message).slice(0, 300);
     out.espera_horas = 0.25;
   }
+  out.xml_pela_chave = temXml.size;
   return out;
 }
 
