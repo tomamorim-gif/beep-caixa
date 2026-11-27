@@ -109,7 +109,7 @@ html[data-tema=claro] .ig-halo,html[data-tema=claro] .ig-ring,html[data-tema=cla
 .ig-aviso svg{color:var(--warnt);flex:none;margin-top:1px}
 .ig-cfg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .ig-tot td{font-weight:700;background:var(--p2)}
-@media(prefers-reduced-motion:reduce){.ig-ring,.ig-neu,.ig-core,.ig-clu,.ig-led,.ig-node rect,.ig-car,.ig-live i,.ig-pens i{animation:none!important}.ig-beam,.ig-fire,.ig-halo,.ig-dec-d{display:none}}
+/* O topo animado é a identidade da tela: continua animado mesmo com "efeitos de animação" desligados no Windows. */
 @media(max-width:900px){.ig-feed{grid-template-columns:minmax(0,1fr)}.ig-feed>.ig-hist{margin-top:12px}}
 @media(max-width:900px){.ig-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}.ig-cfg{grid-template-columns:1fr}.ig-hm{display:none}}
 `;
