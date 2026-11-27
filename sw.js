@@ -1,5 +1,5 @@
 // Guarda o app no aparelho para abrir sem internet. Chamadas à API nunca são cacheadas.
-const V = 'beep-caixa-v33';
+const V = 'beep-caixa-v34';
 const FOTOS = 'beep-fotos'; // fotos dos produtos: guardadas no aparelho por 7 dias
 const SETE_DIAS = 7 * 24 * 60 * 60 * 1000;
 const ARQ = ['./', './index.html', './manifest.webmanifest', './site/marca/logo-fundo-escuro.svg', './icon-192.png', './icon-512.png', './vendor/qrcode.js'];
