@@ -76,8 +76,8 @@ async function ponteInicio() {
       db.rpc("fiscal_ler_segredos", { p_empresa: emp }),
       db.from("nfe_recebidas").select("chave").eq("empresa_id", emp).eq("status", "resumo").eq("situacao_sefaz", "1")
         .is("ultimo_erro", null).order("emissao", { ascending: false, nullsFirst: true }).limit(25),
-      // pedidas pela chave no painel (sem NSU): depois da ciência, consulta direta
-      db.from("nfe_recebidas").select("chave").eq("empresa_id", emp).eq("status", "ciencia").is("nsu", null).is("xml_path", null).limit(5),
+      // já com ciência e ainda sem XML: o script baixa pela chave na mesma rodada
+      db.from("nfe_recebidas").select("chave").eq("empresa_id", emp).eq("status", "ciencia").is("xml_path", null).order("emissao", { ascending: false }).limit(20),
     ]);
     const s = Array.isArray(seg) ? seg[0] : seg;
     if (!s?.pfx || !s?.senha) continue;
@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
     await registrar(emp, { tipo: "resumo", chave }, { situacao_sefaz: "1", status: "resumo", ultimo_erro: null });
     const d = await disparar(emp);
     return json({ ok: false, situacao: "fila", ...d, mensagem: d.disparado
-      ? "Nota pedida à SEFAZ. Em 1 a 2 minutos ela aparece na lista; o XML completo costuma vir na busca seguinte."
+      ? "Nota pedida à SEFAZ. Em 1 a 3 minutos ela aparece na lista, já com o XML para conferir."
       : `Nota pedida à SEFAZ. ${d.mensagem}` });
   }
   if (b.acao === "cupom") {
