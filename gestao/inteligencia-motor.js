@@ -259,13 +259,15 @@ export const ritmoTxt = r => (r >= 1 ? nf(r, 1) + ' por dia' : r > 0 ? nf(r * 7,
 
 export function insights(A, brl, bonito) {
   const out = [], nome = p => bonito(p.nome);
-  const ess = A.falta.filter(x => x.essencial).sort((a, b) => b.r * b.preco - a.r * a.preco);
-  for (const x of ess.slice(0, 3)) out.push({ nivel: 'bad', tipo: 'falta', titulo: `${nome(x.p)} está em falta na ${x.loja.nome}`, texto: `Vende ${ritmoTxt(x.r)} e não tem na prateleira. Perde cerca de ${brl(Math.round(x.r * x.preco))} por dia.`, ir: 'loja', loja: x.loja.id });
-  const sum = A.sumiram.slice().sort((a, b) => (!!b.essencial - !!a.essencial) || (b.rPrev * b.preco - a.rPrev * a.preco));
-  for (const x of sum.slice(0, 3)) out.push({ nivel: 'bad', tipo: 'falta', titulo: `${nome(x.p)} parou de vender na ${x.loja.nome}`, texto: `Vendia ${ritmoTxt(x.rPrev)} e não vendeu nada nos últimos 7 dias. Provável falta na prateleira: confira e leve ${nf(x.levar, 0)}.`, ir: 'loja', loja: x.loja.id });
-  if (sum.length > 3) out.push({ nivel: 'bad', tipo: 'falta', titulo: `Mais ${sum.length - 3} produtos pararam de vender de repente`, texto: `Juntos vendiam cerca de ${brl(Math.round(sum.slice(3).reduce((s, x) => s + x.rPrev * x.preco, 0)))} por dia. Veja a lista de cada loja.`, ir: 'falta' });
-  const outrasF = A.falta.filter(x => !x.essencial);
-  if (outrasF.length) out.push({ nivel: 'bad', tipo: 'falta', titulo: `${outrasF.length} ${outrasF.length === 1 ? 'produto' : 'produtos'} em falta nas lojas`, texto: `Juntos, deixam de vender cerca de ${brl(Math.round(outrasF.reduce((s, x) => s + x.r * x.preco, 0)))} por dia.`, ir: 'falta' });
+  // faltas (pelo estoque ou porque parou de vender), da que mais custa por dia para a que menos custa
+  const perda = x => (x.status === 'sumiu' ? x.rPrev : x.r) * x.preco * (x.essencial ? 1.5 : 1);
+  const faltas = [...A.falta, ...A.sumiram].sort((a, b) => perda(b) - perda(a));
+  for (const x of faltas.slice(0, 3)) {
+    if (x.status === 'sumiu') out.push({ nivel: 'bad', tipo: 'falta', titulo: `${nome(x.p)} parou de vender na ${x.loja.nome}`, texto: `Vendia ${ritmoTxt(x.rPrev)} e não vendeu nada nos últimos 7 dias. Provável falta na prateleira: confira e leve ${nf(x.levar, 0)}.`, ir: 'loja', loja: x.loja.id });
+    else out.push({ nivel: 'bad', tipo: 'falta', titulo: `${nome(x.p)} está em falta na ${x.loja.nome}`, texto: `Vende ${ritmoTxt(x.r)} e não tem na prateleira. Perde cerca de ${brl(Math.round(x.r * x.preco))} por dia.`, ir: 'loja', loja: x.loja.id });
+  }
+  const resto = faltas.slice(3);
+  if (resto.length) out.push({ nivel: 'bad', tipo: 'falta', titulo: `Mais ${resto.length} ${resto.length === 1 ? 'produto em falta ou parado' : 'produtos em falta ou que pararam de vender'}`, texto: `Juntos deixam de vender cerca de ${brl(Math.round(resto.reduce((s, x) => s + (x.status === 'sumiu' ? x.rPrev : x.r) * x.preco, 0)))} por dia. Veja a lista de cada loja.`, ir: 'falta' });
   const urg = A.compra.filter(x => x.urgente);
   for (const x of urg.slice(0, 2)) out.push({ nivel: 'warn', tipo: 'compra', titulo: `Compre ${nf(x.qtd, 0)} ${x.fator > 1 ? `(${nf(x.caixas, 0)} cx)` : 'un.'} de ${nome(x.p)}`, texto: x.saldoCD > 0 ? `O CD cobre só ${quandoTxt(x.cobre, A.hoje) === 'hoje' ? 'hoje' : x.cobre + ' dias'} e a rede vende ${ritmoTxt(x.r)}.` : `O CD está sem estoque e a rede vende ${ritmoTxt(x.r)}.`, ir: 'compra' });
   if (urg.length > 2) out.push({ nivel: 'warn', tipo: 'compra', titulo: `Pedido de compra sugerido: ${brl(Math.round(A.resumo.compraValor))}`, texto: `${A.resumo.compraItens} produtos, ${urg.length} com urgência. Já em caixas fechadas.`, ir: 'compra' });
