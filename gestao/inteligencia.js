@@ -32,7 +32,13 @@ const CSS = `
 .ig-ln.on{stroke:rgba(255,214,10,.45)}
 .ig-dot{fill:var(--yt)}.ig-dot.out{fill:#38bdf8}
 html[data-tema=claro] .ig-ln.on{stroke:rgba(138,101,0,.35)}html[data-tema=claro] .ig-dot.out{fill:#0369a1}
-.ig-node rect{fill:var(--p2);stroke:var(--line)}
+.ig-node rect{fill:var(--p2);stroke:var(--line);animation:igHit 4.4s ease-out infinite}
+.ig-dot{opacity:.55}
+.ig-beam{fill:none;stroke:#ffe866;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:22 300;stroke-dashoffset:-100;opacity:0;animation:igBeam 4.4s cubic-bezier(.35,0,.55,1) infinite}
+.ig-beam2{stroke:#fffbe0;stroke-width:1.2;stroke-dasharray:6 300}
+html[data-tema=claro] .ig-beam{stroke:#b88600}html[data-tema=claro] .ig-beam2{stroke:#8a6500}
+@keyframes igBeam{0%{stroke-dashoffset:-100;opacity:0}3%{opacity:1}28%{opacity:1}31%{stroke-dashoffset:22;opacity:0}100%{stroke-dashoffset:22;opacity:0}}
+@keyframes igHit{0%,26%{stroke:var(--line)}31%{stroke:rgba(255,214,10,.9);filter:drop-shadow(0 0 6px rgba(255,214,10,.45))}50%,100%{stroke:var(--line);filter:none}}
 .ig-node text{fill:var(--ink);font:600 12.5px Inter,sans-serif}
 .ig-node .ig-sub{fill:var(--mu);font:500 11px Inter,sans-serif}
 .ig-node .ig-ic{color:var(--yt)}
@@ -47,6 +53,8 @@ html[data-tema=claro] .ig-ln.on{stroke:rgba(138,101,0,.35)}html[data-tema=claro]
 .ig-fire{fill:#fff7c2}
 .ig-core{transform-origin:280px 150px;animation:igCore 2.2s ease-in-out infinite}
 .ig-nuc{fill:var(--yt)}
+.ig-clu{transform-origin:280px 150px;animation:igRot 60s linear infinite}
+.ig-neu{animation:igSyn 1.8s ease-in-out infinite}
 html[data-tema=claro] .ig-halo,html[data-tema=claro] .ig-ring{stroke:rgba(138,101,0,.35)}html[data-tema=claro] .ig-syn-l{stroke:rgba(138,101,0,.25)}html[data-tema=claro] .ig-fire{fill:#8a6500}
 @keyframes igHalo{0%{r:58;opacity:.9}100%{r:122;opacity:0}}
 @keyframes igSyn{0%,100%{opacity:.25}50%{opacity:1}}
@@ -98,7 +106,7 @@ html[data-tema=claro] .ig-halo,html[data-tema=claro] .ig-ring{stroke:rgba(138,10
 .ig-aviso svg{color:var(--warnt);flex:none;margin-top:1px}
 .ig-cfg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .ig-tot td{font-weight:700;background:var(--p2)}
-@media(prefers-reduced-motion:reduce){.ig-halo,.ig-ring,.ig-neu,.ig-core,.ig-fire,.ig-led,.ig-car,.ig-live i,.ig-pens i{animation:none!important}.ig-dot{display:none}}
+@media(prefers-reduced-motion:reduce){.ig-halo,.ig-ring,.ig-neu,.ig-core,.ig-clu,.ig-fire,.ig-led,.ig-node rect,.ig-car,.ig-live i,.ig-pens i{animation:none!important}.ig-dot,.ig-beam{display:none}}
 @media(max-width:1000px){.ig-hero{grid-template-columns:minmax(0,1fr)}.ig-net{border-right:0;border-bottom:1px solid var(--line);min-height:250px}}
 @media(max-width:900px){.ig-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}.ig-cfg{grid-template-columns:1fr}.ig-hm{display:none}}
 `;
@@ -122,15 +130,19 @@ function rede(st) {
     const c1x = n.x === cx ? bx : mx, c1y = n.x === cx ? my : by, c2x = n.x === cx ? n.x : mx, c2y = n.x === cx ? my : n.y;
     return `M${n.x.toFixed(1)} ${n.y.toFixed(1)} C${c2x.toFixed(1)} ${c2y.toFixed(1)} ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${bx.toFixed(1)} ${by.toFixed(1)}`;
   };
+  // envios: a cada batida do núcleo sai um impulso pela linha até o cartão, que acende quando ele chega.
+  // Batidas alternadas: Lojas, Financeiro e Fornecedores numa; CD e SEFAZ na seguinte.
+  const atraso = i => (1.1 + (i % 2) * 2.2).toFixed(2) + 's';
   const linhas = nos.map((n, i) => {
-    const d = caminho(n), id = 'igp' + i, dur = (2.6 + i * 0.35).toFixed(2);
+    const d = caminho(n), id = 'igp' + i, dur = (3.2 + i * 0.35).toFixed(2);
     return `<path id="${id}" class="ig-ln on" d="${d}"/>
-      <circle r="3" class="ig-dot"><animateMotion dur="${dur}s" repeatCount="indefinite" begin="-${(0.3 + i * 0.4).toFixed(1)}s"><mpath href="#${id}"/></animateMotion></circle>
-      <circle r="2.4" class="ig-dot out"><animateMotion dur="${(+dur + 0.9).toFixed(2)}s" repeatCount="indefinite" begin="-${(1.1 + i * 0.5).toFixed(1)}s" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#${id}"/></animateMotion></circle>`;
+      <circle r="2" class="ig-dot"><animateMotion dur="${dur}s" repeatCount="indefinite" begin="-${(0.3 + i * 0.4).toFixed(1)}s"><mpath href="#${id}"/></animateMotion></circle>
+      <path class="ig-beam" d="${d}" pathLength="100" filter="url(#igGlow)" style="animation-delay:${atraso(i)}"/>
+      <path class="ig-beam ig-beam2" d="${d}" pathLength="100" style="animation-delay:${atraso(i)}"/>`;
   }).join('');
-  const caixas = nos.map(n => {
+  const caixas = nos.map((n, i) => {
     const w = 162, h = 46, x = n.x - w / 2, y = n.y - h / 2;
-    return `<g class="ig-node"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12"/>
+    return `<g class="ig-node"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12" style="animation-delay:${atraso(i)}"/>
       <g class="ig-ic" transform="translate(${x + 12} ${y + 14}) scale(.75)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${IC[n.k]}</svg></g>
       <text x="${x + 38}" y="${y + 20}">${n.t}</text><text class="ig-sub" x="${x + 38}" y="${y + 35}">${n.s}</text>
       <circle class="ig-led" cx="${x + w - 12}" cy="${y + 12}" r="3"/></g>`;
@@ -145,14 +157,21 @@ function rede(st) {
       .forEach(([j]) => { const k = i < j ? i + '-' + j : j + '-' + i; if (!vis.has(k)) { vis.add(k); E.push([i, j]); } });
   });
   const f = v => v.toFixed(1);
-  const sin = E.map(([i, j]) => `<line class="ig-syn-l" x1="${f(P[i][0])}" y1="${f(P[i][1])}" x2="${f(P[j][0])}" y2="${f(P[j][1])}"/>`).join('');
-  const fogo = E.filter((_, k) => k % 3 === 0).map(([i, j], k) => `<circle r="1.6" class="ig-fire"><animateMotion dur="${(1.1 + (k % 4) * 0.3).toFixed(1)}s" repeatCount="indefinite" begin="-${(k * 0.37).toFixed(2)}s" path="M${f(P[i][0])} ${f(P[i][1])}L${f(P[j][0])} ${f(P[j][1])}"/></circle>`).join('');
-  const neu = P.map((p, i) => `<circle class="ig-neu" cx="${f(p[0])}" cy="${f(p[1])}" r="${(1.4 + (i % 3) * 0.5).toFixed(1)}" style="animation-delay:${((i * 0.41) % 2.6).toFixed(2)}s"/>`).join('');
+  // cada neurônio passeia num pequeno laço próprio; as ligações acompanham (mesmos valores e tempo)
+  const mov = P.map((p, i) => {
+    const r = 3 + (i % 4) * 1.4, fase = i * 1.7, dur = (3.4 + (i % 5) * 0.9).toFixed(1), xs = [], ys = [];
+    for (let k = 0; k <= 8; k++) { const t = fase + k * Math.PI / 4; xs.push(f(p[0] + Math.cos(t) * r)); ys.push(f(p[1] + Math.sin(t * 2) * r * 0.7)); }
+    return { x: xs.join(';'), y: ys.join(';'), dur };
+  });
+  const an = (at, v, d) => `<animate attributeName="${at}" values="${v}" dur="${d}s" repeatCount="indefinite"/>`;
+  const sin = E.map(([i, j]) => `<line class="ig-syn-l" x1="${f(P[i][0])}" y1="${f(P[i][1])}" x2="${f(P[j][0])}" y2="${f(P[j][1])}">${an('x1', mov[i].x, mov[i].dur)}${an('y1', mov[i].y, mov[i].dur)}${an('x2', mov[j].x, mov[j].dur)}${an('y2', mov[j].y, mov[j].dur)}</line>`).join('');
+  const fogo = E.filter((_, k) => k % 2 === 0).map(([i, j], k) => `<circle r="1.7" class="ig-fire"><animateMotion dur="${(0.9 + (k % 4) * 0.25).toFixed(2)}s" repeatCount="indefinite" begin="-${(k * 0.29).toFixed(2)}s" path="M${f(P[i][0])} ${f(P[i][1])}L${f(P[j][0])} ${f(P[j][1])}"/></circle>`).join('');
+  const neu = P.map((p, i) => `<circle class="ig-neu" cx="${f(p[0])}" cy="${f(p[1])}" r="${(1.4 + (i % 3) * 0.5).toFixed(1)}" style="animation-delay:${((i * 0.41) % 2.6).toFixed(2)}s">${an('cx', mov[i].x, mov[i].dur)}${an('cy', mov[i].y, mov[i].dur)}</circle>`).join('');
   const B = `<defs><radialGradient id="igCoreG"><stop offset="0" stop-color="#ffe866" stop-opacity=".95"/><stop offset=".35" stop-color="#ffd60a" stop-opacity=".45"/><stop offset="1" stop-color="#ffd60a" stop-opacity="0"/></radialGradient>
     <filter id="igGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
     <circle class="ig-ring r3" cx="${cx}" cy="${cy}" r="76"/><circle class="ig-ring r2" cx="${cx}" cy="${cy}" r="68"/><circle class="ig-ring r1" cx="${cx}" cy="${cy}" r="60"/>
     <circle class="ig-core" cx="${cx}" cy="${cy}" r="34" fill="url(#igCoreG)"/>
-    <g filter="url(#igGlow)">${sin}${neu}${fogo}<circle class="ig-nuc" cx="${cx}" cy="${cy}" r="4.5"/></g>`;
+    <g filter="url(#igGlow)"><g class="ig-clu">${sin}${neu}${fogo}</g><circle class="ig-nuc" cx="${cx}" cy="${cy}" r="4.5"/></g>`;
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Núcleo da inteligência conectado às lojas, CD, financeiro, SEFAZ e fornecedores">
     <circle class="ig-halo" cx="${cx}" cy="${cy}" r="58"/><circle class="ig-halo h2" cx="${cx}" cy="${cy}" r="58"/><circle class="ig-halo h3" cx="${cx}" cy="${cy}" r="58"/>
     ${linhas}${B}${caixas}</svg>`;
