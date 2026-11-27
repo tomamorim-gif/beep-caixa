@@ -68,7 +68,7 @@ async function buscar(f) {
     if (!f.loja.value) f.loja.value = C.bonito(j.nome_fantasia || '');
     if (!f.end.value) f.end.value = [[j.descricao_tipo_de_logradouro, j.logradouro].filter(Boolean).join(' '), j.numero, j.bairro, j.municipio].filter(Boolean).map(x => C.bonito(String(x))).join(', ') + (j.uf ? '/' + j.uf : '');
     const ativa = !j.descricao_situacao_cadastral || /ativa/i.test(j.descricao_situacao_cadastral);
-    box.innerHTML = `<b>${C.esc(j.razao_social || '')}</b><span class="mu sm">${C.esc(C.bonito(j.municipio || ''))}${j.uf ? '/' + C.esc(j.uf) : ''} · ${ativa ? 'situação ativa' : '<span style="color:#f87171">situação ' + C.esc(j.descricao_situacao_cadastral) + '</span>'}</span>`;
+    box.innerHTML = `<b>${C.esc(j.razao_social || '')}</b><span class="mu sm">${C.esc(C.bonito(j.municipio || ''))}${j.uf ? '/' + C.esc(j.uf) : ''} · ${ativa ? 'situação ativa' : '<span style="color:var(--badt)">situação ' + C.esc(j.descricao_situacao_cadastral) + '</span>'}</span>`;
   } catch (e) { box.innerHTML = `<span class="mu sm">${C.esc(e.message)}</span>`; }
 }
 

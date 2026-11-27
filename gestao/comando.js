@@ -245,7 +245,7 @@ const ACOES = {
 
 function fichaProduto(R, p, loja) {
   const { esc, bonito, brl } = C, ps = precosDe(p.id).filter(x => C.lojas().some(l => l.id === x.local_id) && (!loja || x.local_id === loja.id));
-  R.innerHTML = cartao(esc(bonito(p.nome)), `<p class="mu sm num">${esc(p.ean || 'sem código de barras')} · custo ${brl(p.custo)} · NCM ${esc(p.ncm || 'falta')}${p.ativo ? '' : ' · <b style="color:#f87171">desativado</b>'}</p>
+  R.innerHTML = cartao(esc(bonito(p.nome)), `<p class="mu sm num">${esc(p.ean || 'sem código de barras')} · custo ${brl(p.custo)} · NCM ${esc(p.ncm || 'falta')}${p.ativo ? '' : ' · <b style="color:var(--badt)">desativado</b>'}</p>
     <table class="tbl" style="margin-top:8px"><thead><tr><th>Loja</th><th class="n">Preço</th><th class="n">Margem</th><th></th></tr></thead><tbody>${ps.map(x => `<tr><td>${esc(nomeLoja(x.local_id))}</td><td class="n num"><b>${brl(x.preco)}</b></td><td class="n num mu">${p.custo > 0 ? Math.round((x.preco - p.custo) / x.preco * 100) + '%' : '—'}</td><td>${x.ativo_no_mix ? '<span class="pill ok">à venda</span>' : '<span class="pill">fora do mix</span>'}</td></tr>`).join('') || '<tr><td colspan="4" class="vazio">Sem preço em nenhuma loja.</td></tr>'}</tbody></table>
     <div class="row" style="margin-top:10px"><input id="cmdNovo" inputmode="decimal" placeholder="Novo preço, ex.: 5,90" style="max-width:200px"><button class="btn sm pri" id="cmdMudar">Mudar preço</button></div>`,
     `<button class="btn sm" id="cmdEst">Ver estoque</button><button class="btn sm" id="cmdEd">Abrir cadastro</button><button class="btn sm" id="cmdAt">${p.ativo ? 'Desativar' : 'Reativar'}</button>`);
@@ -262,7 +262,7 @@ function confirmarPreco(R, p, valor, loja) {
   const alvo = atuais.length ? atuais.map(x => x.local_id) : lojas.map(l => l.id);
   const abaixo = p.custo > 0 && valor <= p.custo;
   R.innerHTML = cartao(`${esc(bonito(p.nome))} por ${brl(valor)}?`, `<div class="cmdlist">${lojas.map(l => { const x = atuais.find(a => a.local_id === l.id); return `<label class="chk" style="justify-content:space-between"><span><input type="checkbox" data-l="${l.id}" ${alvo.includes(l.id) ? 'checked' : ''}> ${esc(l.nome)}</span><span class="num mu">${x ? brl(x.preco) + ' → ' : 'novo: '}<b style="color:var(--ink)">${brl(valor)}</b></span></label>`; }).join('')}</div>
-    ${p.custo > 0 ? `<p class="sm ${abaixo ? '' : 'mu'}" style="margin-top:8px;${abaixo ? 'color:#f87171' : ''}">Custo ${brl(p.custo)} · margem ${Math.round((valor - p.custo) / valor * 100)}%${abaixo ? ' — abaixo do custo!' : ''}</p>` : ''}
+    ${p.custo > 0 ? `<p class="sm ${abaixo ? '' : 'mu'}" style="margin-top:8px;${abaixo ? 'color:var(--badt)' : ''}">Custo ${brl(p.custo)} · margem ${Math.round((valor - p.custo) / valor * 100)}%${abaixo ? ' — abaixo do custo!' : ''}</p>` : ''}
     ${!atuais.length ? '<p class="mu sm">Este produto ainda não tem preço nessas lojas: ele entra à venda nelas.</p>' : ''}`, `<button class="btn sm" data-close-cmd>Cancelar</button><button class="btn sm pri" id="cmdOk">Mudar preço</button>`);
   ligarCancelar(R);
   C.$('#cmdOk').onclick = async () => {
@@ -318,7 +318,7 @@ function css() {
 .cmdlist{display:grid;gap:8px;margin-top:6px}.cmdopt{display:grid;gap:2px;text-align:left;padding:10px 12px;border-radius:12px;background:var(--p2);border:1px solid var(--line)}.cmdopt:hover{border-color:var(--y)}
 .cmdkpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}.cmdkpis div{background:var(--p2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}.cmdkpis span{font-size:11px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.04em}.cmdkpis b{display:block;font:800 20px Manrope,Inter,sans-serif}
 .cmdscroll{max-height:46vh;overflow:auto}.cmdrow{cursor:pointer}.cmdrow:hover{background:var(--p2)}
-.navcmd{display:flex;align-items:center;gap:10px;margin:0 2px 14px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--p2);color:var(--mu);font-weight:500;font-size:14px;text-align:left}.navcmd:hover{border-color:var(--y);color:var(--ink)}.navcmd kbd{margin-left:auto;font:600 10px Inter,sans-serif;border:1px solid var(--line);border-radius:5px;padding:2px 5px}
-@media(max-width:900px){.cmdkpis{grid-template-columns:1fr}.navcmd kbd{display:none}}`;
+
+@media(max-width:900px){.cmdkpis{grid-template-columns:1fr}}`;
   document.head.appendChild(s);
 }
