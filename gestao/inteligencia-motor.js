@@ -46,11 +46,19 @@ export function analisar(base, cad, cfgIn = {}) {
   const sac = cad.sacEstoque || null; // { data, itens: [[local_id, produto_id, qtd]] }
   const saldoSac = new Map((sac?.itens || []).map(([l, p, q]) => [l + '|' + p, n(q)]));
   const locSac = new Set((sac?.itens || []).map(x => x[0]));
-  const saldoDe = (l, p) => {
+  const saldoBruto = (l, p) => {
     const k = l + '|' + p;
     if (locComMov.has(l)) return { q: saldoReal.get(k) ?? 0, fonte: 'pagnow' };
     if (locSac.has(l)) { const q = saldoSac.get(k) ?? 0; return { q: Math.max(0, q), fonte: 'sac', negativo: q < 0 }; }
     return { q: null, fonte: null };
+  };
+  // confiança do estoque de cada local: entre os produtos que vendem ali, quantos têm saldo positivo.
+  // Se menos da metade, o estoque não está sendo controlado (ex.: SAC só baixava a venda) e a previsão usa só o ritmo.
+  const confianca = new Map();
+  const saldoDe = (l, p) => {
+    const s = saldoBruto(l, p);
+    if (s.q != null && confianca.get(l)?.ok === false) return { q: null, fonte: 'incerto', bruto: s.q };
+    return s;
   };
 
   // ---- ritmo de venda por loja e produto
@@ -76,6 +84,16 @@ export function analisar(base, cad, cfgIn = {}) {
     }
     return 121;
   };
+
+  const vendeEm = new Map();
+  for (const v of base.produtos || []) if (n(v.q90) > 0) (vendeEm.get(v.local_id) ?? vendeEm.set(v.local_id, new Set()).get(v.local_id)).add(v.produto_id);
+  const todosVendidos = new Set((base.produtos || []).filter(v => n(v.q90) > 0).map(v => v.produto_id));
+  for (const l of cad.locais) {
+    const alvo = l.tipo === 'cd' ? todosVendidos : (vendeEm.get(l.id) || new Set());
+    let com = 0, tot = 0;
+    for (const pid of alvo) { const s = saldoBruto(l.id, pid); if (s.q == null) continue; tot++; if (s.q > 0) com++; }
+    if (tot) confianca.set(l.id, { ok: com / tot >= 0.5, com, tot });
+  }
 
   // ---- curva ABC e frequência (rede toda) => "não pode faltar"
   const porProd = new Map();
@@ -114,13 +132,19 @@ export function analisar(base, cad, cfgIn = {}) {
       const r = ritmo(l.id, p.id), s = saldoDe(l.id, p.id), v = vendas.get(l.id + '|' + p.id);
       const dias = s.q == null ? null : diasAte(s.q, r, i?.fator);
       const max = n(pl.estoque_max), min = n(pl.estoque_min);
+      // parou de vender: vendia bem antes e zerou na última semana = provável falta na prateleira
+      const dPrev = i ? Math.min(90, i.dias) - 7 : 0;
+      const rPrev = v && dPrev >= 14 ? (n(v.q90) - n(v.q7)) / dPrev : 0;
+      const sumiu = !!v && n(v.q7) === 0 && rPrev * 7 >= 3 && (s.q == null || s.q <= 0);
       let status = 'ok';
-      if (s.q == null) status = 'sem_saldo';
+      if (sumiu) status = 'sumiu';
+      else if (s.q == null) status = 'sem_saldo';
       else if (r > 0 && s.q <= 0) status = 'falta';
       else if (r > 0 && dias <= cfg.ciclo_abastecimento) status = 'acaba';
       else if (r === 0 && i && i.dias >= cfg.parado_dias && s.q > 0) status = 'parado';
       const alvo = Math.max(max, Math.ceil(r * (cfg.ciclo_abastecimento + cfg.seguranca)));
-      const levar = s.q == null ? 0 : Math.max(0, Math.ceil(alvo - s.q));
+      // sem saldo confiável: repõe o que foi vendido no ciclo (modo "pelo que foi vendido")
+      const levar = s.q == null ? Math.ceil((sumiu ? rPrev : r) * cfg.ciclo_abastecimento) : Math.max(0, Math.ceil(alvo - s.q));
       // aprende o mín/máx: falta antes do próximo abastecimento => sobe; sobra para mais de um mês => desce
       let ajuste = null;
       const ideal = Math.ceil(r * (cfg.ciclo_abastecimento + cfg.seguranca));
@@ -128,7 +152,7 @@ export function analisar(base, cad, cfgIn = {}) {
       else if (r > 0 && max > 0 && i && i.dias >= 28 && max > r * 30 && max - Math.max(ideal, min) >= 3) ajuste = { tipo: 'descer', de: max, para: Math.max(ideal, min, 1) };
       else if (r > 0 && !max) ajuste = { tipo: 'definir', de: 0, para: Math.max(ideal, 1) };
       itensLoja.push({
-        loja: l, p, r, saldo: s.q, fonte: s.fonte, negativo: !!s.negativo, dias, status, min, max, levar, ajuste,
+        loja: l, p, r, rPrev, saldo: s.q, fonte: s.fonte, negativo: !!s.negativo, dias, status, min, max, levar, ajuste,
         quando: Number.isFinite(dias) && dias != null ? new Date(hoje.getTime() + dias * DIA) : null,
         preco: n(pl.preco), custo: custo(p.id), q90: n(v?.q90), ultima: v?.ultima || null,
         essencial: essencial.get(p.id) || null, abc: abc.get(p.id) || null,
@@ -147,7 +171,8 @@ export function analisar(base, cad, cfgIn = {}) {
     for (const [pid, r] of consumo) {
       if (r <= 0) continue;
       const p = prod.get(pid), s = saldoDe(cd.id, pid);
-      const saldoCD = s.q ?? 0;
+      if (s.fonte === 'incerto' || s.q == null) continue; // sem estoque confiável no CD não dá para sugerir compra
+      const saldoCD = s.q;
       const cobre = diasAte(saldoCD, r, null);
       const alvo = r * (cfg.prazo_fornecedor + cfg.ciclo_compra + cfg.seguranca);
       const falta = alvo - saldoCD;
@@ -194,15 +219,16 @@ export function analisar(base, cad, cfgIn = {}) {
 
   // ---- resumo
   const falta = itensLoja.filter(x => x.status === 'falta');
+  const sumiram = itensLoja.filter(x => x.status === 'sumiu');
   const acaba = itensLoja.filter(x => x.status === 'acaba');
   const ajustes = itensLoja.filter(x => x.ajuste);
-  const perdaDia = falta.reduce((s, x) => s + x.r * x.preco, 0);
+  const perdaDia = falta.reduce((s, x) => s + x.r * x.preco, 0) + sumiram.reduce((s, x) => s + x.rPrev * x.preco, 0);
   const resumo = {
     vendas90: (base.produtos || []).reduce((s, v) => s + n(v.q90), 0),
     bruto90: totalBruto,
     lojasComDados: infoLoja.size,
     diasRede,
-    falta: falta.length, faltaEssencial: falta.filter(x => x.essencial).length,
+    falta: falta.length + sumiram.length, faltaEstoque: falta.length, sumiu: sumiram.length, faltaEssencial: falta.filter(x => x.essencial).length,
     acaba: acaba.length, acabaEssencial: acaba.filter(x => x.essencial).length,
     perdaDia,
     compraValor: compra.reduce((s, x) => s + x.valor, 0), compraItens: compra.length, compraUrgente: compra.filter(x => x.urgente).length,
@@ -211,10 +237,11 @@ export function analisar(base, cad, cfgIn = {}) {
     semVendaRede: semVendaRede.length,
     ajustes: ajustes.length,
     semSaldo: lojas.filter(l => !locComMov.has(l.id) && !locSac.has(l.id)).map(l => l.nome),
+    incerto: cad.locais.filter(l => confianca.get(l.id)?.ok === false).map(l => ({ nome: l.nome, ...confianca.get(l.id) })),
     fonteSac: sac?.data || null,
   };
 
-  return { cfg, hoje, lojas, cd, itensLoja, compra, parados, semVendaRede, margemBaixa, essencial, abc, resumo, infoLoja, ajustes, falta, acaba };
+  return { cfg, hoje, lojas, cd, itensLoja, compra, parados, semVendaRede, margemBaixa, essencial, abc, resumo, infoLoja, ajustes, falta, acaba, sumiram, confianca };
 }
 
 // ---- frases do "O que fazer hoje" e do cérebro (ordem = urgência)
@@ -234,6 +261,9 @@ export function insights(A, brl, bonito) {
   const out = [], nome = p => bonito(p.nome);
   const ess = A.falta.filter(x => x.essencial).sort((a, b) => b.r * b.preco - a.r * a.preco);
   for (const x of ess.slice(0, 3)) out.push({ nivel: 'bad', tipo: 'falta', titulo: `${nome(x.p)} está em falta na ${x.loja.nome}`, texto: `Vende ${ritmoTxt(x.r)} e não tem na prateleira. Perde cerca de ${brl(Math.round(x.r * x.preco))} por dia.`, ir: 'loja', loja: x.loja.id });
+  const sum = A.sumiram.slice().sort((a, b) => (!!b.essencial - !!a.essencial) || (b.rPrev * b.preco - a.rPrev * a.preco));
+  for (const x of sum.slice(0, 3)) out.push({ nivel: 'bad', tipo: 'falta', titulo: `${nome(x.p)} parou de vender na ${x.loja.nome}`, texto: `Vendia ${ritmoTxt(x.rPrev)} e não vendeu nada nos últimos 7 dias. Provável falta na prateleira: confira e leve ${nf(x.levar, 0)}.`, ir: 'loja', loja: x.loja.id });
+  if (sum.length > 3) out.push({ nivel: 'bad', tipo: 'falta', titulo: `Mais ${sum.length - 3} produtos pararam de vender de repente`, texto: `Juntos vendiam cerca de ${brl(Math.round(sum.slice(3).reduce((s, x) => s + x.rPrev * x.preco, 0)))} por dia. Veja a lista de cada loja.`, ir: 'falta' });
   const outrasF = A.falta.filter(x => !x.essencial);
   if (outrasF.length) out.push({ nivel: 'bad', tipo: 'falta', titulo: `${outrasF.length} ${outrasF.length === 1 ? 'produto' : 'produtos'} em falta nas lojas`, texto: `Juntos, deixam de vender cerca de ${brl(Math.round(outrasF.reduce((s, x) => s + x.r * x.preco, 0)))} por dia.`, ir: 'falta' });
   const urg = A.compra.filter(x => x.urgente);

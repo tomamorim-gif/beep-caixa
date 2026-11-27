@@ -1,7 +1,7 @@
 // Tela "Inteligência" do Painel: o cérebro do negócio.
 // Os números vêm do banco (rpc inteligencia_base) e as contas ficam no motor (inteligencia-motor.js), sem IA externa.
 
-import { analisar, insights, quandoTxt, ritmoTxt, CFG_PADRAO } from './inteligencia-motor.js?v=1';
+import { analisar, insights, quandoTxt, ritmoTxt, CFG_PADRAO } from './inteligencia-motor.js?v=2';
 
 const ABAS = [['loja', 'Lojas'], ['compra', 'Compras do CD'], ['minmax', 'Mín. e máx.'], ['essencial', 'Não pode faltar'], ['parado', 'Parados'], ['margem', 'Margem']];
 const G = { aba: 'loja', loja: '', filtro: 'atencao', q: '', A: null, base: null, cfg: null, timer: null, feedI: 0 };
@@ -200,12 +200,13 @@ function desenhar(C) {
 
   const aviso = [];
   if (!R.lojasComDados) aviso.push('Ainda não há vendas para aprender. Assim que as lojas venderem pelo PagNow (ou o histórico for importado), as previsões aparecem aqui.');
-  if (R.fonteSac) aviso.push(`O estoque das lojas que ainda não usam o PagNow vem da foto do SAC Varejo de ${R.fonteSac.split('-').reverse().join('/')}. Saldo negativo no SAC conta como zero. Confira as lojas com muitos itens negativos.`);
+  if (R.incerto.length) aviso.push(`Estoque sem controle em ${R.incerto.map(x => x.nome).join(', ')}: menos da metade dos produtos que vendem ali tem saldo positivo${R.fonteSac ? ' (foto do SAC Varejo, que só baixava as vendas)' : ''}. Nesses locais a previsão usa o ritmo de venda e avisa quando um produto para de vender de repente. Fica exata quando a loja começar a conferir o estoque pelo PagNow.`);
+  else if (R.fonteSac) aviso.push(`Parte do estoque vem da foto do SAC Varejo de ${R.fonteSac.split('-').reverse().join('/')}. Saldo negativo no SAC conta como zero.`);
   if (R.semSaldo.length) aviso.push(`Sem saldo de estoque para: ${R.semSaldo.join(', ')}. Para essas lojas a previsão mostra só o ritmo de venda.`);
 
   $('#igCorpo').innerHTML = `${aviso.map(t => `<div class="ig-aviso">${svg('bad', 18)}<div>${esc(t)}</div></div>`).join('')}
     <div class="grid4 ig-kpi">
-      <div class="kpi"><span>Em falta agora</span><b class="num" style="color:${R.falta ? 'var(--badt)' : 'inherit'}">${nf(R.falta)}</b><small>${R.falta ? `deixa de vender ~${brl(Math.round(R.perdaDia))} por dia` : 'nenhum produto que vende está zerado'}</small></div>
+      <div class="kpi"><span>Em falta agora</span><b class="num" style="color:${R.falta ? 'var(--badt)' : 'inherit'}">${nf(R.falta)}</b><small>${R.falta ? `${R.sumiu ? `${nf(R.sumiu)} pararam de vender · ` : ''}~${brl(Math.round(R.perdaDia))} por dia` : 'nenhum produto que vende está zerado'}</small></div>
       <div class="kpi"><span>Acabam até o abastecimento</span><b class="num" style="color:${R.acaba ? 'var(--warnt)' : 'inherit'}">${nf(R.acaba)}</b><small>${R.acabaEssencial ? `${R.acabaEssencial} são "não pode faltar"` : `nos próximos ${A.cfg.ciclo_abastecimento} dias`}</small></div>
       <div class="kpi"><span>Pedido de compra sugerido</span><b class="num">${brl(Math.round(R.compraValor))}</b><small>${R.compraItens ? `${R.compraItens} produtos, ${R.compraUrgente} urgentes` : 'o CD está coberto'}</small></div>
       <div class="kpi"><span>Dinheiro parado</span><b class="num">${brl(Math.round(R.parado))}</b><small>${R.paradoItens ? `${R.paradoItens} itens sem venda há ${A.cfg.parado_dias}+ dias` : 'nenhum item parado'}</small></div>
@@ -280,18 +281,18 @@ function abaLoja(C) {
   $('#igLoja').onchange = e => { G.loja = e.target.value; aba(C); };
   $('#igFil').querySelectorAll('button').forEach(b => b.onclick = () => { G.filtro = b.dataset.f; aba(C); });
   let L = A.itensLoja.filter(x => x.loja.id === G.loja);
-  if (G.filtro === 'atencao') L = L.filter(x => x.status === 'falta' || x.status === 'acaba');
+  if (G.filtro === 'atencao') L = L.filter(x => x.status === 'falta' || x.status === 'sumiu' || x.status === 'acaba');
   else if (G.filtro === 'vende') L = L.filter(x => x.r > 0);
-  const ord = { falta: 0, acaba: 1, ok: 2, sem_saldo: 3, parado: 4 };
+  const ord = { falta: 0, sumiu: 0, acaba: 1, ok: 2, sem_saldo: 3, parado: 4 };
   L.sort((a, b) => (ord[a.status] - ord[b.status]) || ((a.dias ?? 999) - (b.dias ?? 999)) || (b.r - a.r));
   const info = A.infoLoja.get(G.loja);
   $('#igAba').innerHTML = `<div class="tblwrap"><table class="tbl ig-tbl"><thead><tr><th>Produto</th><th class="n">Vende</th><th class="n">Tem</th><th class="n">Acaba</th><th class="n">Levar</th><th class="n ig-hm">Máx.</th></tr></thead><tbody>
-    ${L.slice(0, 300).map(x => `<tr class="${x.status === 'falta' ? 'ig-x' : x.status === 'acaba' ? 'ig-w' : ''}"><td>${nomeP(C, x.p, x.essencial)}</td>
-      <td class="n num">${ritmoTxt(x.r)}</td><td class="n num">${x.saldo == null ? '—' : nf(x.saldo)}${x.negativo ? ' <span class="ig-tag" title="Negativo no SAC">SAC −</span>' : ''}</td>
-      <td class="n">${x.status === 'falta' ? '<b style="color:var(--badt)">em falta</b>' : x.r > 0 && x.saldo != null ? `<span style="color:${x.status === 'acaba' ? 'var(--warnt)' : 'inherit'};font-weight:${x.status === 'acaba' ? 700 : 400}">${quandoTxt(x.dias, A.hoje)}</span>` : '<span class="mu">—</span>'}</td>
+    ${L.slice(0, 300).map(x => `<tr class="${x.status === 'falta' || x.status === 'sumiu' ? 'ig-x' : x.status === 'acaba' ? 'ig-w' : ''}"><td>${nomeP(C, x.p, x.essencial)}</td>
+      <td class="n num">${x.status === 'sumiu' ? `<span class="mu">era ${ritmoTxt(x.rPrev)}</span>` : ritmoTxt(x.r)}</td><td class="n num">${x.saldo == null ? '<span class="mu">—</span>' : nf(x.saldo)}${x.negativo ? ' <span class="ig-tag" title="Negativo no SAC">SAC −</span>' : ''}</td>
+      <td class="n">${x.status === 'sumiu' ? '<b style="color:var(--badt)" title="Vendia e não vendeu nada nos últimos 7 dias">parou de vender</b>' : x.status === 'falta' ? '<b style="color:var(--badt)">em falta</b>' : x.r > 0 && x.saldo != null ? `<span style="color:${x.status === 'acaba' ? 'var(--warnt)' : 'inherit'};font-weight:${x.status === 'acaba' ? 700 : 400}">${quandoTxt(x.dias, A.hoje)}</span>` : '<span class="mu">—</span>'}</td>
       <td class="n num">${x.levar ? '<b>' + nf(x.levar) + '</b>' : '<span class="mu">—</span>'}</td><td class="n num ig-hm">${x.max || '<span class="mu">—</span>'}</td></tr>`).join('') || vazio(G.filtro === 'atencao' ? 'Nada em falta nem acabando nesta loja.' : 'Nenhum produto neste filtro.')}
     </tbody></table></div>
-    <p class="mu sm" style="margin-top:10px">${info ? `Ritmo calculado com ${info.dias} dias de vendas, pesando mais a última semana${info.dias >= 28 ? ' e o dia da semana' : ''}.` : 'Esta loja ainda não tem vendas registradas.'} "Levar" completa até o máximo ou até cobrir ${A.cfg.ciclo_abastecimento + A.cfg.seguranca} dias, o que for maior.</p>`;
+    <p class="mu sm" style="margin-top:10px">${info ? `Ritmo calculado com ${info.dias} dias de vendas, pesando mais a última semana${info.dias >= 28 ? ' e o dia da semana' : ''}.` : 'Esta loja ainda não tem vendas registradas.'} ${A.confianca.get(G.loja)?.ok === false ? `Estoque desta loja sem controle: "Levar" repõe o que vende em ${A.cfg.ciclo_abastecimento} dias.` : `"Levar" completa até o máximo ou até cobrir ${A.cfg.ciclo_abastecimento + A.cfg.seguranca} dias, o que for maior.`}</p>`;
 }
 
 function abaCompra(C) {
@@ -336,7 +337,7 @@ function abaEssencial(C) {
   const { $, esc } = C, A = G.A;
   const L = [...A.essencial.entries()].map(([id, motivos]) => {
     const it = A.itensLoja.filter(x => x.p.id === id);
-    return { p: it[0]?.p || C.S.produtos.find(p => p.id === id), motivos, falta: it.filter(x => x.status === 'falta').length, acaba: it.filter(x => x.status === 'acaba').length, lojas: it.length, abc: A.abc.get(id), mao: (G.cfg.essenciais || []).includes(id) };
+    return { p: it[0]?.p || C.S.produtos.find(p => p.id === id), motivos, falta: it.filter(x => x.status === 'falta' || x.status === 'sumiu').length, acaba: it.filter(x => x.status === 'acaba').length, lojas: it.length, abc: A.abc.get(id), mao: (G.cfg.essenciais || []).includes(id) };
   }).filter(x => x.p).sort((a, b) => (b.falta - a.falta) || (b.acaba - a.acaba) || (a.abc || 'Z').localeCompare(b.abc || 'Z'));
   $('#igCtl').innerHTML = `<button class="btn sm" id="igMarcar">Marcar produto</button>`;
   $('#igAba').innerHTML = `<div class="tblwrap"><table class="tbl ig-tbl"><thead><tr><th>Produto</th><th class="ig-hm">Por quê</th><th class="n">Lojas</th><th class="n">Em falta</th><th class="n">Acabando</th><th></th></tr></thead><tbody>
