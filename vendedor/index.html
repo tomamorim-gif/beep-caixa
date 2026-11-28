@@ -31,7 +31,8 @@ svg{flex:none}
 .topo{height:var(--top);flex:none;display:flex;align-items:center;gap:14px;padding:0 var(--g);border-bottom:1px solid var(--line);background:var(--k)}
 .marca{display:flex;align-items:center;gap:12px;min-width:0}
 .marca img{width:40px;height:40px;border-radius:10px}
-.marca img.logo-loja{width:auto;max-width:120px;border-radius:0;object-fit:contain}
+.marca img.logo-loja{width:auto;height:48px;max-width:150px;border-radius:0;object-fit:contain}
+.marca img.sem-logo{display:none}
 .marca b{display:block;font:800 18px/1.15 Manrope,Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .marca small{display:block;font:600 13px/1.2 Inter;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topo .esp{flex:1}
@@ -236,7 +237,7 @@ html.claro .aviso18{background:#fdecec;border-color:#f3c9cb;color:#7a1216}
 <!-- PDV -->
 <section class="tela" id="pdv">
   <header class="topo">
-    <div class="marca"><img id="marcaImg" src="../site/marca/simbolo.svg" alt=""><div><b id="lojaNome">—</b><small id="apNome">PDV do vendedor</small></div></div>
+    <div class="marca"><img id="marcaImg" class="sem-logo" alt=""><div><b id="lojaNome">—</b><small id="apNome">PDV do vendedor</small></div></div>
     <span class="esp"></span>
     <span class="pill teste" id="pillTeste" style="display:none">Loja de teste</span>
     <span class="pill" id="rede"><i></i><span>Online</span></span>
@@ -368,11 +369,11 @@ $('#btnAtivar').onclick=async()=>{if(!lojaEscolhida){$('#msg2').textContent='Esc
  const b=$('#btnAtivar');b.disabled=true;$('#msg2').textContent='';
  try{const r=await api('ativar',{codigo:codigoAtual,local_id:lojaEscolhida,nome:($('#nomeAp').value.trim()||'Vendedor').slice(0,40)});token=r.token;loja=r.loja;ls.set('pv-token',token);ls.set('pv-loja',loja);ls.set('pv-pin',await hashPin(pinN));await sincronizar(true);iniciar();toast('PDV ativado na '+loja.nome)}
  catch(e){$('#msg2').textContent=e.message}b.disabled=false};
-function desativar(expirado){['pv-token','pv-loja','pv-cat','pv-pin','pv-mp','pv-venda','pv-pag'].forEach(ls.del);token=null;loja=null;cat=null;mpCfg=null;pag=null;venda=novaVenda();
+function desativar(expirado){['pv-token','pv-loja','pv-cat','pv-logo','pv-logo-v','pv-pin','pv-mp','pv-venda','pv-pag'].forEach(ls.del);token=null;loja=null;cat=null;mpCfg=null;pag=null;venda=novaVenda();
  document.querySelectorAll('.sob').forEach(s=>s.classList.remove('on'));$('#passo1').style.display='flex';$('#passo2').style.display='none';$('#codigo').value='';mostrar('ativar');if(expirado)toast('Aparelho desativado no Painel. Ative de novo.')}
 
 // ---------- catálogo ----------
-async function sincronizar(silencioso){carregarMp();try{const r=await api('catalogo');cat=r;ls.set('pv-cat',cat);if(!silencioso)toast(r.produtos.length+' produtos atualizados');pintarTopo();desenharChips();buscar();return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
+async function sincronizar(silencioso){carregarMp();try{const r=await api('catalogo');cat=r;ls.set('pv-cat',cat);guardarLogo();if(!silencioso)toast(r.produtos.length+' produtos atualizados');pintarTopo();desenharChips();buscar();return true}catch(e){if(!silencioso)toast('Sem internet: usando a lista salva');return false}}
 function porCodigo(c){if(!cat)return null;const k=nz(c);if(!k)return null;return cat.produtos.find(p=>p.codigos?.some(x=>nz(x)===k))||null}
 const porId=id=>cat?.produtos.find(p=>p.id===id)||null;
 // marca da loja (white label): logo enviado no Painel e cor principal da empresa; sem logo, fica o símbolo PagNow
@@ -384,8 +385,17 @@ function corDaMarca(hex,claro){const m=/^#?([0-9a-f]{6})$/i.exec(String(hex||'')
 function pintarMarca(){const co=cat?.empresa?.cores||{},claro=co.tema==='claro',c=corDaMarca(co.principal,claro),r=document.documentElement.style;
  document.documentElement.classList.toggle('claro',claro);const tc=document.querySelector('meta[name=theme-color]');if(tc)tc.content=claro?'#f5f5f3':'#0b0b0b';
  if(c){r.setProperty('--y',c.hex);r.setProperty('--yr',c.rgb);r.setProperty('--yt',c.texto)}else{r.removeProperty('--y');r.removeProperty('--yr');r.removeProperty('--yt')}
- const i=$('#marcaImg'),u=cat?.empresa?.logo;if(!i)return;i.alt=cat?.empresa?.nome_exibicao||'';
- if(u){i.onerror=()=>{i.onerror=null;i.src='../site/marca/simbolo.svg';i.classList.remove('logo-loja')};i.src=u;i.classList.add('logo-loja')}else{i.onerror=null;i.src='../site/marca/simbolo.svg';i.classList.remove('logo-loja')}}
+ aplicarLogo()}
+// logo guardado no próprio aparelho (como no caixa): continua aparecendo sem internet e depois que o link do servidor vence.
+// Sem logo, só o nome da loja aparece: a marca PagNow não entra na tela de quem compra.
+function aplicarLogo(){const i=$('#marcaImg'),d=ls.get('pv-logo',null);if(!i)return;i.alt=cat?.empresa?.nome_exibicao||'';
+ if(d){i.onerror=()=>{i.onerror=null;i.className='sem-logo'};i.src=d;i.className='logo-loja'}else{i.onerror=null;i.removeAttribute('src');i.className='sem-logo'}}
+async function guardarLogo(){const u=cat?.empresa?.logo,v=cat?.empresa?.logo_versao||'';
+ if(!u){ls.del('pv-logo');ls.del('pv-logo-v');aplicarLogo();return}
+ if(ls.get('pv-logo-v','')!==v||!ls.get('pv-logo',null)){try{const r=await fetch(u);if(!r.ok)throw new Error('logo');const b=await r.blob();
+  if(!/^image\//.test(b.type)||b.size>600000)throw new Error('logo inválido');
+  const d=await new Promise((ok,er)=>{const f=new FileReader();f.onload=()=>ok(f.result);f.onerror=er;f.readAsDataURL(b)});ls.set('pv-logo',d);ls.set('pv-logo-v',v)}catch(e){}}
+ aplicarLogo()}
 function pintarTopo(){pintarMarca();$('#lojaNome').textContent=cat?.loja||loja?.nome||'—';$('#apNome').textContent=(cat?.aparelho||'PDV do vendedor')+' · PDV do vendedor';$('#pillTeste').style.display=cat?.loja_teste?'':'none'}
 
 // filtros: mais vendidos neste aparelho, todos, 18+

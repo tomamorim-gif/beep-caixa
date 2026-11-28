@@ -1,6 +1,6 @@
 // PDV do vendedor: guarda a tela no aparelho para abrir mesmo com a internet oscilando.
 // Escopo próprio (/vendedor/), separado do caixa de autoatendimento. Chamadas à API nunca são cacheadas.
-const V = 'pagnow-vendedor-v3';
+const V = 'pagnow-vendedor-v4';
 const FOTOS = 'beep-fotos'; // mesmas fotos do caixa: guardadas por 7 dias
 const SETE_DIAS = 7 * 24 * 60 * 60 * 1000;
 const ARQ = ['./', './index.html', './manifest.webmanifest', '../site/marca/simbolo.svg', '../site/marca/logo-fundo-escuro.svg', '../site/marca/icone-192.png'];
